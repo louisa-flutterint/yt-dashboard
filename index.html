@@ -606,15 +606,27 @@ const b64u=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,
 async function pkce(){const v=b64u(crypto.getRandomValues(new Uint8Array(32)));const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));return{v,c:b64u(d)};}
 
 async function startOAuth(){
+  hideErr();
   CLIENT=document.getElementById('client-id').value.trim();
   if(!CLIENT){showErr('Enter your OAuth 2.0 Client ID first.');return;}
-  const{v,c}=await pkce();const st=b64u(crypto.getRandomValues(new Uint8Array(16)));
-  sessionStorage.setItem('pkce_v',v);sessionStorage.setItem('oauth_st',st);
-  sessionStorage.setItem('client_id',CLIENT);
-  sessionStorage.setItem('client_secret',document.getElementById('client-secret').value.trim());
-  sessionStorage.setItem('claude_key',document.getElementById('claude-key').value.trim());
-  const redir=location.origin+location.pathname;
-  window.location='https://accounts.google.com/o/oauth2/v2/auth?'+new URLSearchParams({client_id:CLIENT,redirect_uri:redir,response_type:'code',scope:'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly https://www.googleapis.com/auth/yt-analytics-monetary.readonly',access_type:'offline',prompt:'consent',state:st,code_challenge:c,code_challenge_method:'S256'});
+  const secret=document.getElementById('client-secret').value.trim();
+  if(!secret){showErr('Enter your OAuth 2.0 Client Secret first.');return;}
+  try{
+    const{v,c}=await pkce();
+    const st=b64u(crypto.getRandomValues(new Uint8Array(16)));
+    sessionStorage.setItem('pkce_v',v);
+    sessionStorage.setItem('oauth_st',st);
+    sessionStorage.setItem('client_id',CLIENT);
+    sessionStorage.setItem('client_secret',secret);
+    sessionStorage.setItem('claude_key',document.getElementById('claude-key').value.trim());
+    const redir=location.origin+location.pathname;
+    const authUrl='https://accounts.google.com/o/oauth2/v2/auth?'+new URLSearchParams({
+      client_id:CLIENT,redirect_uri:redir,response_type:'code',
+      scope:'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly https://www.googleapis.com/auth/yt-analytics-monetary.readonly',
+      access_type:'offline',prompt:'consent',state:st,code_challenge:c,code_challenge_method:'S256'
+    });
+    window.location=authUrl;
+  }catch(e){showErr('Sign-in failed: '+e.message);}
 }
 async function exchangeCode(code){
   const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:sessionStorage.getItem('client_id'),client_secret:sessionStorage.getItem('client_secret')||'',redirect_uri:location.origin+location.pathname,grant_type:'authorization_code',code,code_verifier:sessionStorage.getItem('pkce_v')})});
@@ -1845,14 +1857,26 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
     return;
   }
 
-  // No data at all — show setup screen, pre-fill any saved credentials
-  if(CLIENT)document.getElementById('client-id').value=CLIENT;
-  if(SECRET)document.getElementById('client-secret').value=SECRET;
-  if(CLAUDE)document.getElementById('claude-key').value=CLAUDE;
-  if(TOKEN){
+  // No full session — show setup screen with pre-filled credentials
+  const savedClient=localStorage.getItem('ytcmd_client_id')||CLIENT;
+  const savedSecret=localStorage.getItem('ytcmd_client_secret')||SECRET;
+  const savedClaude=localStorage.getItem('ytcmd_claude_key')||CLAUDE;
+  if(savedClient)document.getElementById('client-id').value=savedClient;
+  if(savedSecret)document.getElementById('client-secret').value=savedSecret;
+  if(savedClaude)document.getElementById('claude-key').value=savedClaude;
+  // Google button always enabled on setup screen — token from sessionStorage only
+  const sessionToken=sessionStorage.getItem('oauth_token')||'';
+  if(sessionToken){
+    // Still have a live session token — show as signed in, enable Connect
+    TOKEN=sessionToken;
     document.getElementById('connect-btn').disabled=false;
     document.getElementById('google-btn').disabled=true;
+    document.getElementById('google-btn').textContent='✓ Signed in with Google';
     setAuth('ok','Signed in with Google','Revenue metrics unlocked ✓');
+  } else {
+    // No live token — google button fully enabled, ready to sign in
+    document.getElementById('google-btn').disabled=false;
+    document.getElementById('connect-btn').disabled=true;
   }
 })();
 
