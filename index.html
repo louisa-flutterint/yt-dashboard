@@ -606,13 +606,10 @@ const b64u=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,
 async function pkce(){const v=b64u(crypto.getRandomValues(new Uint8Array(32)));const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));return{v,c:b64u(d)};}
 
 async function startOAuth(){
-  console.log('startOAuth called');
   hideErr();
   CLIENT=document.getElementById('client-id').value.trim();
-  console.log('CLIENT:', CLIENT ? CLIENT.slice(0,20)+'...' : 'EMPTY');
   if(!CLIENT){showErr('Enter your OAuth 2.0 Client ID first.');return;}
   const secret=document.getElementById('client-secret').value.trim();
-  console.log('SECRET:', secret ? 'present' : 'EMPTY');
   if(!secret){showErr('Enter your OAuth 2.0 Client Secret first.');return;}
   try{
     const{v,c}=await pkce();
@@ -1669,8 +1666,7 @@ function confirmAddEpisode(){
   let id=null;
   if(tagTabMode==='search'&&selectedTagVideoId){id=selectedTagVideoId;}
   else if(tagTabMode==='paste'){
-    const raw=(document.getElementById('tag-paste-input')?.value||'').trim().split('
-')[0];
+    const raw=(document.getElementById('tag-paste-input')?.value||'').trim().split('\n')[0];
     const m=raw.match(/[?&]v=([^&]+)/);if(m)id=m[1];
     else{const m2=raw.match(/youtu\.be\/([^?]+)/);if(m2)id=m2[1];else id=raw;}
   }
