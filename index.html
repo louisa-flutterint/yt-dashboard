@@ -136,6 +136,10 @@
     <input type="text" id="client-id" placeholder="xxxxxxxxxx.apps.googleusercontent.com" autocomplete="off">
     <div class="field-hint">Credentials → Create Credentials → OAuth 2.0 Client ID → Web application. Set Authorised JavaScript origins and redirect URI to <strong id="this-origin"></strong></div>
 
+    <div class="field-label">OAuth 2.0 Client Secret</div>
+    <input type="password" id="client-secret" placeholder="GOCSPX-…" autocomplete="off">
+    <div class="field-hint">Found on the same credentials page alongside your Client ID. Stays in your browser session only — never sent anywhere except Google's token endpoint.</div>
+
     <div class="info-box"><strong>One-time setup:</strong> In Google Cloud, enable "YouTube Data API v3" and "YouTube Analytics API" (APIs &amp; Services → Library). Then create an OAuth 2.0 Client ID of type "Web application". No server needed — the entire OAuth flow runs in your browser using PKCE.</div>
 
     <div class="field-label">Step 2 — Sign in with Google</div>
@@ -297,6 +301,7 @@ async function startOAuth(){
   sessionStorage.setItem('pkce_v',v);
   sessionStorage.setItem('oauth_st',st);
   sessionStorage.setItem('client_id',CLIENT);
+  sessionStorage.setItem('client_secret',document.getElementById('client-secret').value.trim());
   sessionStorage.setItem('claude_key',document.getElementById('claude-key').value.trim());
   const redir=location.origin+location.pathname;
   const p=new URLSearchParams({
@@ -310,7 +315,7 @@ async function startOAuth(){
 async function exchangeCode(code){
   const r=await fetch('https://oauth2.googleapis.com/token',{
     method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:new URLSearchParams({client_id:sessionStorage.getItem('client_id'),redirect_uri:location.origin+location.pathname,grant_type:'authorization_code',code,code_verifier:sessionStorage.getItem('pkce_v')})
+    body:new URLSearchParams({client_id:sessionStorage.getItem('client_id'),client_secret:sessionStorage.getItem('client_secret')||'',redirect_uri:location.origin+location.pathname,grant_type:'authorization_code',code,code_verifier:sessionStorage.getItem('pkce_v')})
   });
   const d=await r.json();
   if(d.error)throw new Error(d.error_description||d.error);
@@ -331,6 +336,7 @@ async function handleCallback(){
     CLAUDE=sessionStorage.getItem('claude_key')||'';
     sessionStorage.setItem('oauth_token',TOKEN);
     document.getElementById('client-id').value=CLIENT;
+    document.getElementById('client-secret').value=sessionStorage.getItem('client_secret')||'';
     document.getElementById('claude-key').value=CLAUDE;
     document.getElementById('connect-btn').disabled=false;
     document.getElementById('google-btn').disabled=true;
@@ -390,6 +396,7 @@ function disconnect(){
   document.getElementById('setup-screen').style.display='flex';
   document.getElementById('dashboard').style.display='none';
   document.getElementById('client-id').value='';
+  document.getElementById('client-secret').value='';
   document.getElementById('claude-key').value='';
   document.getElementById('connect-btn').disabled=true;
   document.getElementById('google-btn').disabled=false;
@@ -533,6 +540,7 @@ Top performing videos: ${tops||'N/A'}`;
   }
   if(TOKEN){
     document.getElementById('client-id').value=CLIENT;
+    document.getElementById('client-secret').value=sessionStorage.getItem('client_secret')||'';
     document.getElementById('claude-key').value=CLAUDE;
     document.getElementById('connect-btn').disabled=false;
     document.getElementById('google-btn').disabled=true;
