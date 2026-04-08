@@ -312,7 +312,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       <div class="kpi-card" style="--kpi-color:var(--purple)"><div class="kpi-label">Watch time (hrs)</div><div class="kpi-value" id="k-watch">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--green)"><div class="kpi-label">Est. Revenue (USD)</div><div class="kpi-value" id="k-rev">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--accent2)"><div class="kpi-label">CPM (USD)</div><div class="kpi-value" id="k-cpm">—</div></div>
-      <div class="kpi-card" style="--kpi-color:var(--accent)"><div class="kpi-label">CTR</div><div class="kpi-value" id="k-ctr">—</div></div>
+      <div class="kpi-card" style="--kpi-color:var(--accent)"><div class="kpi-label">CTR (per video)</div><div class="kpi-value" id="k-ctr">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--blue)"><div class="kpi-label">Subscribers gained</div><div class="kpi-value" id="k-subs">—</div></div>
     </div>
     <div class="section-head"><div class="section-title">Performance over time</div></div>
@@ -688,13 +688,13 @@ async function loadAnalyticsPage(){
   document.getElementById('lb-wrap').innerHTML='';
 }
 async function loadAnalytics(){
-  const t=await yta('views,estimatedMinutesWatched,subscribersGained,impressions,impressionClickThroughRate,estimatedRevenue,playbackBasedCpm');
-  const[views,mins,subs,impr,ctr,rev,cpm]=t.rows?.[0]||[];
+  const t=await yta('views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,playbackBasedCpm');
+  const[views,mins,subs,rev,cpm]=t.rows?.[0]||[];
   kpi('k-views',fmt(views));kpi('k-watch',mins?fmt(Math.round(mins/60)):'—');
   kpi('k-rev',rev!=null?'$'+parseFloat(rev).toFixed(2):'—');kpi('k-cpm',cpm!=null?'$'+parseFloat(cpm).toFixed(2):'—');
-  kpi('k-ctr',ctr!=null?(ctr*100).toFixed(2)+'%':'—');kpi('k-subs',fmt(subs));
-  ytData.totals={views,mins,subs,impr,ctr,rev,cpm};
-  const ts=await yta('views,estimatedMinutesWatched,estimatedRevenue,impressions,impressionClickThroughRate','day');
+  kpi('k-ctr','See chart');kpi('k-subs',fmt(subs));
+  ytData.totals={views,mins,subs,rev,cpm};
+  const ts=await yta('views,estimatedMinutesWatched,estimatedRevenue,annotationImpressions,impressionClickThroughRate','day');
   ytData.ts=ts.rows||[];renderTime(ts.rows||[]);
   try{const demo=await yta('viewerPercentage','ageGroup,gender');renderDemo(demo.rows||[]);}catch(e){}
   try{const geo=await yta('views','country',{sort:'-views',maxResults:10});renderGeo(geo.rows||[]);}catch(e){}
