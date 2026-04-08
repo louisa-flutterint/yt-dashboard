@@ -962,6 +962,7 @@ function selectStop(key){
   document.querySelectorAll('.tree-stop').forEach(el=>el.classList.remove('active'));
   const el=document.getElementById('tree-stop-'+key);if(el)el.classList.add('active');
   renderStopDetail(key);
+  if(TOKEN)fetchYtMetricsForStop(key);
 }
 
 function renderStopDetail(key){
@@ -980,16 +981,23 @@ function renderStopDetail(key){
 function renderTournamentBlock(stopKey,tournament){
   const stop=campaigns[stopKey];const days=stop.tournaments[tournament].days;
   const dayKeys=Object.keys(days).sort((a,b)=>dayOrder(a)-dayOrder(b));
+  const sk=stopKey.replace(/'/g,"\'");const tn=tournament.replace(/'/g,"\'");
   return`<div class="tournament-block">
     <div class="tournament-header">
       <div><div class="tournament-name">${tournament}</div><div class="tournament-meta">${dayKeys.length} day${dayKeys.length!==1?'s':''} · ${stopKey}</div></div>
+      <button class="tag-btn" style="color:var(--accent);border-color:rgba(255,68,68,0.3);" onclick="deleteTournament('${sk}','${tn}')">Delete tournament</button>
     </div>
     <table class="days-table">
-      <thead><tr><th>Day</th><th>Platform</th><th>Avg viewers</th><th>Peak viewers</th><th>Live views</th><th>Hours watched</th><th>Unique viewers</th><th>YouTube VOD</th></tr></thead>
+      <thead><tr>
+        <th>Day</th><th>Platform</th>
+        <th style="color:var(--twitch)">Avg viewers</th><th style="color:var(--twitch)">Peak viewers</th><th style="color:var(--twitch)">Live views</th><th style="color:var(--twitch)">Hours watched</th><th style="color:var(--twitch)">Unique viewers</th>
+        <th style="color:var(--accent)">YT views</th><th style="color:var(--accent)">YT watch hrs</th><th style="color:var(--accent)">YT CTR</th>
+        <th>VOD tagged</th><th></th>
+      </tr></thead>
       <tbody>${dayKeys.map(day=>renderDayRow(stopKey,tournament,day)).join('')}</tbody>
     </table>
     <div style="padding:10px 14px;border-top:1px solid var(--border);">
-      <button class="tag-btn" onclick="openTagModal('${stopKey}','${tournament}','new')">+ Add day / tag video</button>
+      <button class="tag-btn" onclick="openTagModal('${sk}','${tn}','new')">+ Add day / tag video</button>
     </div>
   </div>`;
 }
@@ -1009,23 +1017,120 @@ function renderDayRow(stopKey,tournament,day){
       twCells=`<td class="mono twitch">${fmt(avgV)}</td><td class="mono twitch">${fmt(peakV)}</td><td class="mono">${fmt(liveV)}</td><td class="mono">${fmt(Math.round(hrs))}</td><td class="mono">${fmt(uniq)}</td>`;
     }
   }
-  // YouTube tags — show title from cache if available
+  // YouTube tags — show title, edit and remove per video
   const ytCell=dayData.yt.length
-    ?dayData.yt.map(id=>{
+    ?`<div>${dayData.yt.map((id,idx)=>{
       const cached=allYTVideos.find(v=>v.id===id);
-      const label=cached?cached.title.slice(0,40)+(cached.title.length>40?'…':''):'YT: '+id.slice(0,12)+'…';
+      const label=cached?cached.title.slice(0,36)+(cached.title.length>36?'\u2026':''):'ID: '+id.slice(0,14)+'\u2026';
       const dateStr=cached?.date?new Date(cached.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
-      return`<div class="tagged-video" style="margin-bottom:4px;"><span class="yt-badge" title="${id}">YT</span><span style="font-size:11px;color:var(--text)">${label}</span>${dateStr?`<span style="color:var(--muted);font-size:10px;font-family:var(--font-mono)">${dateStr}</span>`:''}</div>`;
-    }).join('')+`<button class="tag-btn" style="margin-top:4px;" onclick="openTagModal('${stopKey}','${tournament}','${day}')">+ Add</button>`
+      return`<div class="tagged-video" style="margin-bottom:6px;align-items:flex-start;">
+        <span class="yt-badge" title="${id}">YT</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>
+          ${dateStr?`<div style="font-size:10px;color:var(--muted);font-family:var(--font-mono);">${dateStr}</div>`:''}
+        </div>
+        <button class="tag-btn" style="flex-shrink:0;padding:2px 7px;font-size:10px;" onclick="editYtTag('${stopKey}','${tournament}','${day}',${idx})">Edit</button>
+        <button class="tag-btn" style="flex-shrink:0;padding:2px 7px;font-size:10px;color:var(--accent);border-color:var(--accent);" onclick="removeYtTag('${stopKey}','${tournament}','${day}',${idx})">\u2715</button>
+      </div>`;
+    }).join('')}<button class="tag-btn" style="margin-top:2px;" onclick="openTagModal('${stopKey}','${tournament}','${day}')">+ Add</button></div>`
     :`<button class="tag-btn" onclick="openTagModal('${stopKey}','${tournament}','${day}')">Tag video</button>`;
   const platDot=dayData.tw.length?'<span class="platform-dot tw"></span>':'';
   const ytDot=dayData.yt.length?'<span class="platform-dot yt"></span>':'';
+  // Day label with rename + delete
+  const dayCell=`<div style="display:flex;align-items:center;gap:6px;">
+    <span class="day-label">${day}</span>
+    <button class="tag-btn" style="padding:1px 6px;font-size:10px;" onclick="renameDay('${stopKey}','${tournament}','${day}')">\u270e</button>
+    <button class="tag-btn" style="padding:1px 6px;font-size:10px;color:var(--accent);border-color:var(--accent);" onclick="deleteDay('${stopKey}','${tournament}','${day}')">\u2715</button>
+  </div>`;
   return`<tr>
-    <td><span class="day-label">${day}</span></td>
+    <td>${dayCell}</td>
     <td>${platDot}${ytDot}</td>
     ${twCells}
     <td>${ytCell}</td>
   </tr>`;
+}
+
+// ── DELETE FUNCTIONS ──
+function deleteDay(stopKey,tournament,day){
+  if(!confirm(`Delete day "${day}" and all its tags?`))return;
+  delete campaigns[stopKey].tournaments[tournament].days[day];
+  saveCampaignsToStorage();renderStopDetail(stopKey);
+}
+function deleteTournament(stopKey,tournament){
+  if(!confirm(`Delete tournament "${tournament}" and all its days?`))return;
+  delete campaigns[stopKey].tournaments[tournament];
+  saveCampaignsToStorage();renderStopDetail(stopKey);
+}
+function removeYtTag(stopKey,tournament,day,idx){
+  if(!confirm('Remove this video tag?'))return;
+  campaigns[stopKey].tournaments[tournament].days[day].yt.splice(idx,1);
+  delete campaigns[stopKey].tournaments[tournament].days[day].ytMetrics;
+  saveCampaignsToStorage();renderStopDetail(stopKey);
+}
+
+function editYtTag(stopKey,tournament,day,idx){
+  // Open the tag modal in replace mode — on confirm, swap the video at idx
+  tagCtx={stopKey,tournament,day,editIdx:idx};
+  selectedTagVideoId=null;
+  document.getElementById('tag-modal-title').textContent='Replace tagged video';
+  document.getElementById('tag-modal-sub').textContent=campaigns[stopKey]?.stop+' · '+tournament+' · '+day;
+  document.getElementById('tag-search-input').value='';
+  document.getElementById('tag-paste-input').value='';
+  document.getElementById('tag-confirm-btn').disabled=true;
+  document.getElementById('tag-confirm-btn').textContent='Replace video';
+  document.getElementById('new-day-wrap').style.display='none';
+  switchTagTab('search',document.querySelector('.tab-switch .ai-tab'));
+  document.getElementById('tag-modal').classList.add('open');
+  prefetchVideos();
+}
+
+function renameDay(stopKey,tournament,day){
+  const newName=prompt('Rename day label:',day);
+  if(!newName||newName===day)return;
+  const days=campaigns[stopKey].tournaments[tournament].days;
+  if(days[newName]){alert('A day with that label already exists.');return;}
+  days[newName]=days[day];
+  delete days[day];
+  saveCampaignsToStorage();renderStopDetail(stopKey);
+}
+
+// ── YOUTUBE METRICS PER DAY ──
+// After rendering a stop, fetch YT analytics for each tagged video
+async function fetchYtMetricsForStop(stopKey){
+  const stop=campaigns[stopKey];if(!stop)return;
+  let changed=false;
+  for(const tournament of Object.keys(stop.tournaments)){
+    for(const day of Object.keys(stop.tournaments[tournament].days)){
+      const dayData=stop.tournaments[tournament].days[day];
+      if(!dayData.yt||!dayData.yt.length)continue;
+      if(dayData.ytMetrics)continue; // already fetched
+      try{
+        // Fetch per-video analytics for all tagged videos in this day
+        const ids=dayData.yt.join(',');
+        const r=await yta('views,estimatedMinutesWatched,impressionClickThroughRate','video',{filters:'video=='+dayData.yt.join(',video==')});
+        // Sum across all tagged videos
+        const rows=r.rows||[];
+        let views=0,mins=0,ctrSum=0,ctrCount=0;
+        rows.forEach(row=>{
+          views+=row[1]||0;
+          mins+=row[2]||0;
+          if(row[3]!=null){ctrSum+=row[3];ctrCount++;}
+        });
+        dayData.ytMetrics={views,mins,ctr:ctrCount?ctrSum/ctrCount:null};
+        changed=true;
+      }catch(e){
+        console.warn('YT metrics for day',day,':',e.message);
+        dayData.ytMetrics={views:null,mins:null,ctr:null};
+        changed=true;
+      }
+    }
+  }
+  if(changed){
+    saveCampaignsToStorage();
+    // Re-render the stop to show new metrics without full page reload
+    const activeStop=document.querySelector('.tree-stop.active');
+    if(activeStop)renderStopDetail(stopKey);
+  }
 }
 
 function dayOrder(d){
@@ -1135,18 +1240,26 @@ function confirmTag(){
   }
   if(!campaigns[stopKey].tournaments[tournament])campaigns[stopKey].tournaments[tournament]={days:{}};
   if(!campaigns[stopKey].tournaments[tournament].days[day])campaigns[stopKey].tournaments[tournament].days[day]={yt:[],tw:[]};
+  const dayYt=campaigns[stopKey].tournaments[tournament].days[day].yt;
+  const editIdx=tagCtx.editIdx!=null?tagCtx.editIdx:-1;
   if(tagTabMode==='search'&&selectedTagVideoId){
-    if(!campaigns[stopKey].tournaments[tournament].days[day].yt.includes(selectedTagVideoId))
-      campaigns[stopKey].tournaments[tournament].days[day].yt.push(selectedTagVideoId);
+    if(editIdx>=0){dayYt[editIdx]=selectedTagVideoId;}
+    else if(!dayYt.includes(selectedTagVideoId)){dayYt.push(selectedTagVideoId);}
   }else if(tagTabMode==='paste'){
     const lines=document.getElementById('tag-paste-input').value.split('\n').map(l=>l.trim()).filter(Boolean);
-    lines.forEach(l=>{
+    lines.forEach((l,i)=>{
       let id=l;const m=l.match(/[?&]v=([^&]+)/);if(m)id=m[1];const m2=l.match(/youtu\.be\/([^?]+)/);if(m2)id=m2[1];
-      if(id&&!campaigns[stopKey].tournaments[tournament].days[day].yt.includes(id))
-        campaigns[stopKey].tournaments[tournament].days[day].yt.push(id);
+      if(!id)return;
+      if(editIdx>=0&&i===0){dayYt[editIdx]=id;}
+      else if(!dayYt.includes(id)){dayYt.push(id);}
     });
   }
-  saveCampaignsToStorage();closeModal('tag-modal');renderStopDetail(stopKey);
+  tagCtx.editIdx=null;
+  saveCampaignsToStorage();
+  closeModal('tag-modal');
+  // Reset confirm button text
+  document.getElementById('tag-confirm-btn').textContent='Tag video';
+  renderStopDetail(stopKey);
 }
 
 function closeModal(id){document.getElementById(id).classList.remove('open');}
