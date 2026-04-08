@@ -1005,13 +1005,17 @@ function parseTitleMeta(title,publishDate){
 }
 
 function normaliseTournamentName(raw){
-  const t=raw.toUpperCase().trim();
-  if(t.includes('MAIN EVENT')||t==='ME')return'Main Event';
+  // Strip day/FT markers first, then match tournament name
+  const stripped=raw.replace(/\s*(FT-?\d+|Day\s*\d+[A-Za-z]?|Final\s*Table)\s*/gi,'').trim();
+  const t=stripped.toUpperCase();
+  if(!t)return'Main Event'; // if nothing left after stripping, it was a standalone FT row
+  if(t==='ME'||t.includes('MAIN EVENT'))return'Main Event';
   if(t.includes('SPIN')&&t.includes('GO'))return'Spin & Go Championship Live';
-  if(t.includes('SUPER HIGH ROLLER')||t.includes('SHR'))return'Super High Roller';
+  if(t.includes('SUPER HIGH ROLLER')||t==='SHR')return'Super High Roller';
   if(t.includes('HIGH ROLLER'))return'High Roller';
   if(t.includes('MYSTERY BOUNTY'))return'Mystery Bounty';
-  return raw.trim().replace(/\b\w/g,c=>c.toUpperCase());
+  if(t.includes('TURBO'))return'Turbo Series';
+  return stripped.replace(/\b\w/g,c=>c.toUpperCase());
 }
 
 function normaliseDayFromTitle(raw){
@@ -1043,8 +1047,8 @@ function autoPopulateCampaigns(source){
       if(!stop)return;
       const stopKey=stop+'-'+year;
       if(!campaigns[stopKey])campaigns[stopKey]={stop,year,series,tournaments:{}};
-      // ME FT-x → tournament=Main Event, day=FT-x
-      const tournament=normaliseTournamentName(rawT.replace(/\s*FT-?\d+\s*/i,'').replace(/\s*Day\s*\d+\s*/i,'').trim()||rawT);
+      // normaliseTournamentName handles stripping FT/Day suffixes internally
+      const tournament=normaliseTournamentName(rawT);
       const day=normaliseDay(rawT);
       if(!campaigns[stopKey].tournaments[tournament])campaigns[stopKey].tournaments[tournament]={days:{}};
       if(!campaigns[stopKey].tournaments[tournament].days[day])campaigns[stopKey].tournaments[tournament].days[day]={ytH:[],ytV:[],tw:[]};
@@ -1269,16 +1273,16 @@ function renderMetricCells(m){
     <td class="mono">${m.ytvCtr!=null?m.ytvCtr.toFixed(2)+'%':'—'}</td>
     <td class="mono">${m.ytvRev!=null?'€'+m.ytvRev.toFixed(2):'—'}</td>`;
   }
-  // Combined
-  const avgV=mergeAvg([m.twAvgV]);
-  const peakV=mergePeak([m.twPeak]);
+  // Combined — avg from Twitch (live viewers), peak from Twitch
+  const avgV=m.twAvgV!=null?fmt(m.twAvgV):'—';
+  const peakV=m.twPeak!=null?fmt(m.twPeak):'—';
   const views=mergeSum([m.twViews,m.ythViews,m.ytvViews]);
   const hrs=mergeSum([m.twHrs,m.ythHrs,m.ytvHrs]);
   const uniq='—'; // unique across platforms not addable
   const impr=mergeSum([m.ythImpr,m.ytvImpr]);
   const ctr=mergeAvg([m.ythCtr,m.ytvCtr]);
   const rev=mergeSum([m.ythRev,m.ytvRev]);
-  return`<td class="mono twitch">${avgV}</td><td class="mono twitch">${peakV}</td>
+  return`<td class="mono twitch">${typeof avgV==='string'?avgV:(avgV!=null?fmt(avgV):'—')}</td><td class="mono twitch">${typeof peakV==='string'?peakV:(peakV!=null?fmt(peakV):'—')}</td>
     <td class="mono">${views}</td><td class="mono">${hrs!=null?fmt(Math.round(hrs)):hrs}</td>
     <td class="mono" style="color:var(--muted);font-size:10px;">N/A</td>
     <td class="mono">${impr!=null?fmt(impr):'—'}</td>
@@ -1327,8 +1331,11 @@ function renderTournamentTotals(stopKey,tournament,dayKeys){
   if(!dayKeys.length)return'';
   // Aggregate across days
   const allM=dayKeys.map(d=>getDayMetrics(stopKey,tournament,d));
-  const totAvgV=allM.filter(m=>m.twAvgV!=null).length?Math.round(allM.filter(m=>m.twAvgV!=null).reduce((a,m)=>a+m.twAvgV,0)/allM.filter(m=>m.twAvgV!=null).length):null;
-  const totPeak=allM.filter(m=>m.twPeak!=null).length?Math.max(...allM.filter(m=>m.twPeak!=null).map(m=>m.twPeak)):null;
+  // Avg and peak viewers depend on platform toggle
+  const avgSrc=liveViewMode==='twitch'?'twAvgV':liveViewMode==='yth'?null:liveViewMode==='ytv'?null:'twAvgV';
+  const peakSrc=liveViewMode==='twitch'?'twPeak':liveViewMode==='yth'?null:liveViewMode==='ytv'?null:'twPeak';
+  const totAvgV=avgSrc&&allM.filter(m=>m[avgSrc]!=null).length?Math.round(allM.filter(m=>m[avgSrc]!=null).reduce((a,m)=>a+m[avgSrc],0)/allM.filter(m=>m[avgSrc]!=null).length):null;
+  const totPeak=peakSrc&&allM.filter(m=>m[peakSrc]!=null).length?Math.max(...allM.filter(m=>m[peakSrc]!=null).map(m=>m[peakSrc])):null;
   const totViews=mergeSum(allM.map(m=>liveViewMode==='twitch'?m.twViews:liveViewMode==='ytv'?m.ytvViews:liveViewMode==='yth'?m.ythViews:mergeSum([m.twViews,m.ythViews,m.ytvViews])));
   const totHrs=mergeSum(allM.map(m=>liveViewMode==='twitch'?m.twHrs:liveViewMode==='ytv'?m.ytvHrs:liveViewMode==='yth'?m.ythHrs:mergeSum([m.twHrs,m.ythHrs,m.ytvHrs])));
   const totImpr=liveViewMode!=='twitch'?mergeSum(allM.map(m=>liveViewMode==='ytv'?m.ytvImpr:mergeSum([m.ythImpr,m.ytvImpr]))):null;
@@ -1466,20 +1473,21 @@ async function prefetchVideos(){
   resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading videos…</div>';
   try{
     let all=[];let pageToken='';
-    for(let page=0;page<4;page++){
+    for(let page=0;page<10;page++){ // up to 500 videos
       const params={part:'snippet',channelId:CHANNEL,type:'video',maxResults:50,order:'date'};
       if(pageToken)params.pageToken=pageToken;
       const r=await gapi('/youtube/v3/search',params);
       all=all.concat((r.items||[]).map(i=>({id:i.id?.videoId,title:i.snippet.title,date:i.snippet.publishedAt,thumb:i.snippet.thumbnails?.default?.url})).filter(v=>v.id));
       if(!r.nextPageToken)break;
       pageToken=r.nextPageToken;
+      if(resultsEl)resultsEl.innerHTML=`<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading… ${all.length} videos</div>`;
     }
     allYTVideos=all;searchVideos('');
-  }catch(e){resultsEl.innerHTML=`<div style="padding:12px;text-align:center;color:var(--accent);font-size:12px;">Could not load videos: ${e.message}</div>`;}
+  }catch(e){if(resultsEl)resultsEl.innerHTML=`<div style="padding:12px;text-align:center;color:var(--accent);font-size:12px;">Could not load videos: ${e.message}</div>`;}
 }
 function searchVideos(q){
   const filtered=q?allYTVideos.filter(v=>v.title.toLowerCase().includes(q.toLowerCase())):allYTVideos;
-  document.getElementById('tag-search-results').innerHTML=filtered.slice(0,20).map(v=>`
+  document.getElementById('tag-search-results').innerHTML=filtered.slice(0,50).map(v=>`
     <div class="search-result-item${selectedTagVideoId===v.id?' selected':''}" onclick="selectTagVideo('${v.id}',this)">
       <img class="result-thumb" src="${v.thumb||''}" alt="" loading="lazy">
       <div><div class="result-title">${v.title}</div><div class="result-date">${v.date?new Date(v.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):''}</div></div>
@@ -1590,7 +1598,7 @@ function renderSubCampBlock(campName,subName,filterAds){
         <th style="color:var(--blue)">Views</th><th style="color:var(--purple)">Watch hrs</th>
         <th style="color:var(--muted)">Impressions</th><th style="color:var(--muted)">CTR</th>
         <th style="color:var(--green)">Revenue</th>
-        <th style="font-size:10px;color:var(--muted)">${windowLabel}</th>
+        <th style="font-size:10px;color:var(--muted)">Actions</th>
       </tr></thead>
       <tbody>
         ${eps.length?eps.map((ep,i)=>renderEpisodeRow(campName,subName,ep,i,filterAds)).join(''):'<tr><td colspan="9" style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No episodes yet — click + Episode to add.</td></tr>'}
@@ -1601,14 +1609,16 @@ function renderSubCampBlock(campName,subName,filterAds){
 
 function renderEpisodeRow(campName,subName,ep,idx,filterAds){
   const imp=ytImportedRows.find(r=>r.id===ep.videoId);
+  const cached=allYTVideos.find(v=>v.id===ep.videoId);
   // Get metrics from imported data or show — if not imported
   const views=imp?fmt(imp.views):'—';
   const hrs=imp?fmt(Math.round(imp.watchHrs)):'—';
   const impr=imp?fmt(imp.impressions):'—';
   const ctr=imp?imp.ctr.toFixed(2)+'%':'—';
   const rev=imp?'€'+imp.revenue.toFixed(2):'—';
-  const title=imp?.title||ep.videoId;
-  const date=imp?.publishDate?new Date(imp.publishDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
+  // Title: use stored label > imported title > cached YT search title > video ID
+  const title=ep.label||imp?.title||cached?.title||ep.videoId;
+  const date=imp?.publishDate?new Date(imp.publishDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):cached?.date?new Date(cached.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
   return`<tr>
     <td class="mono" style="font-weight:500">Ep.${idx+1}</td>
     <td style="max-width:200px;"><div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(title)}">${title}</div></td>
@@ -1618,8 +1628,9 @@ function renderEpisodeRow(campName,subName,ep,idx,filterAds){
     <td class="mono">${impr}</td>
     <td class="mono">${ctr}</td>
     <td class="mono" style="color:var(--green);">${rev}</td>
-    <td>
-      <button class="tag-btn" style="padding:1px 5px;font-size:9px;" onclick="editEpisode('${esc(campName)}','${esc(subName)}',${idx})">✎</button>
+    <td style="white-space:nowrap;">
+      <button class="tag-btn" style="padding:1px 5px;font-size:9px;" onclick="renameEpisode('${esc(campName)}','${esc(subName)}',${idx})">Label</button>
+      <button class="tag-btn" style="padding:1px 5px;font-size:9px;" onclick="editEpisode('${esc(campName)}','${esc(subName)}',${idx})">Video</button>
       <button class="tag-btn" style="padding:1px 5px;font-size:9px;color:var(--accent);border-color:var(--accent);" onclick="removeEpisode('${esc(campName)}','${esc(subName)}',${idx})">✕</button>
     </td>
   </tr>`;
@@ -1685,13 +1696,14 @@ async function prefetchEpisodeVideos(){
   if(resultsEl)resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading videos…</div>';
   try{
     let all=[];let pageToken='';
-    for(let page=0;page<4;page++){
+    for(let page=0;page<10;page++){
       const params={part:'snippet',channelId:CHANNEL,type:'video',maxResults:50,order:'date'};
       if(pageToken)params.pageToken=pageToken;
       const r=await gapi('/youtube/v3/search',params);
       all=all.concat((r.items||[]).map(i=>({id:i.id?.videoId,title:i.snippet.title,date:i.snippet.publishedAt,thumb:i.snippet.thumbnails?.default?.url})).filter(v=>v.id));
       if(!r.nextPageToken)break;
       pageToken=r.nextPageToken;
+      if(resultsEl)resultsEl.innerHTML=`<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading… ${all.length} videos</div>`;
     }
     allYTVideos=all;searchEpisodeVideos('');
   }catch(e){if(resultsEl)resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--accent);font-size:12px;">Could not load: '+e.message+'</div>';}
@@ -1700,7 +1712,7 @@ function searchEpisodeVideos(q){
   const filtered=q?allYTVideos.filter(v=>v.title.toLowerCase().includes(q.toLowerCase())):allYTVideos;
   const el=document.getElementById('ep-search-results');
   if(!el)return;
-  el.innerHTML=filtered.slice(0,20).map(v=>`
+  el.innerHTML=filtered.slice(0,50).map(v=>`
     <div class="search-result-item${selectedTagVideoId===v.id?' selected':''}" onclick="selectTagVideo('${v.id}',this)">
       <img class="result-thumb" src="${v.thumb||''}" alt="" loading="lazy">
       <div><div class="result-title">${v.title}</div><div class="result-date">${v.date?new Date(v.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):''}</div></div>
@@ -1721,6 +1733,14 @@ function editEpisode(campName,subName,idx){
 function removeEpisode(campName,subName,idx){
   if(!confirm('Remove episode?'))return;
   vidCampaigns[campName].subs[subName].episodes.splice(idx,1);
+  saveVidCampsToStorage();renderVidCamps();
+}
+function renameEpisode(campName,subName,idx){
+  const ep=vidCampaigns[campName].subs[subName].episodes[idx];
+  const current=ep.label||'';
+  const n=prompt('Episode label (shown as title if no CSV imported):',current);
+  if(n===null)return;
+  ep.label=n.trim();
   saveVidCampsToStorage();renderVidCamps();
 }
 
