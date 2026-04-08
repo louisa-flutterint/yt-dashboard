@@ -285,6 +285,11 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
     <button class="nav-tab active" onclick="showPage('analytics',this)"><span class="tab-icon">📊</span>Analytics</button>
     <button class="nav-tab" onclick="showPage('campaigns',this)"><span class="tab-icon">🏆</span>Campaigns</button>
     <button class="nav-tab" onclick="showPage('twitch',this)"><span class="tab-icon">🟣</span>Twitch</button>
+    <button class="nav-tab" onclick="showPage('settings',this)"><span class="tab-icon">⚙️</span>Settings</button>
+  </div>
+  <div id="worker-banner" style="display:none;background:rgba(255,136,0,0.08);border-bottom:1px solid rgba(255,136,0,0.2);padding:10px 24px;align-items:center;gap:12px;font-size:13px;">
+    <span style="color:#ffaa44;">⚠ Cloudflare Worker not configured — YouTube Analytics cannot load.</span>
+    <button onclick="showPage('settings',document.querySelectorAll('.nav-tab')[3])" style="margin-left:auto;background:var(--accent2);border:none;border-radius:6px;padding:6px 14px;color:white;font-size:12px;cursor:pointer;font-family:var(--font-body);">Go to Settings →</button>
   </div>
 
   <!-- ── ANALYTICS PAGE ── -->
@@ -405,6 +410,32 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
   </div>
 </div>
 
+  <!-- ── SETTINGS PAGE ── -->
+  <div class="page" id="page-settings">
+    <div class="section-head" style="margin-top:0;"><div class="section-title">Settings</div></div>
+    <div class="chart-card" style="max-width:560px;">
+      <div class="chart-title">Cloudflare Worker URL</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">All YouTube Analytics API requests are proxied through your Cloudflare Worker to bypass browser CORS restrictions. Deploy the worker first, then paste its URL here.</p>
+      <div class="field-label">Worker URL</div>
+      <input type="text" id="worker-url-input" placeholder="https://yt-command.YOUR-SUBDOMAIN.workers.dev" style="margin-bottom:8px;">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Find this on your Cloudflare dashboard under Workers &amp; Pages after deploying.</p>
+      <button class="btn-primary" style="width:auto;padding:10px 24px;font-size:13px;" onclick="saveWorkerUrl()">Save Worker URL</button>
+      <div id="worker-url-saved" style="display:none;margin-top:10px;font-size:12px;color:var(--green);">✓ Saved — reload the Analytics tab to fetch data</div>
+    </div>
+
+    <div class="chart-card" style="max-width:560px;margin-top:16px;">
+      <div class="chart-title">Saved credentials</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">These are stored in your browser localStorage. Clearing your browser data will remove them.</p>
+      <table style="width:100%;font-size:12px;border-collapse:collapse;">
+        <tr><td style="padding:6px 0;color:var(--muted);font-family:var(--font-mono);">OAuth Client ID</td><td id="s-client" style="text-align:right;font-family:var(--font-mono);">—</td></tr>
+        <tr><td style="padding:6px 0;color:var(--muted);font-family:var(--font-mono);">Channel ID</td><td id="s-channel" style="text-align:right;font-family:var(--font-mono);">—</td></tr>
+        <tr><td style="padding:6px 0;color:var(--muted);font-family:var(--font-mono);">Worker URL</td><td id="s-worker" style="text-align:right;font-family:var(--font-mono);">—</td></tr>
+        <tr><td style="padding:6px 0;color:var(--muted);font-family:var(--font-mono);">Twitch rows</td><td id="s-twitch" style="text-align:right;font-family:var(--font-mono);">—</td></tr>
+        <tr><td style="padding:6px 0;color:var(--muted);font-family:var(--font-mono);">Campaign stops</td><td id="s-camps" style="text-align:right;font-family:var(--font-mono);">—</td></tr>
+      </table>
+    </div>
+  </div>
+
 <!-- ══ MODALS ══ -->
 <!-- Tag video modal -->
 <div class="modal-overlay" id="tag-modal">
@@ -474,6 +505,7 @@ function showPage(name,btn){
   btn.classList.add('active');
   if(name==='campaigns')renderCampaignTree();
   if(name==='twitch')renderTwitchPage();
+  if(name==='settings')populateSettingsPage();
 }
 
 // ══════════════════════════════════════════════
@@ -582,6 +614,7 @@ function showDashboard(){
   S=ago(28);E=today();
   document.getElementById('date-start').value=S;document.getElementById('date-end').value=E;
   loadCampaignsFromStorage();loadTwitchFromStorage();
+  if(!localStorage.getItem('ytcmd_worker_url')) showWorkerBanner();
   loadAnalyticsPage();
 }
 function disconnect(){
@@ -602,15 +635,44 @@ function disconnect(){
 }
 
 // ══════════════════════════════════════════════
-// API HELPERS
+// API HELPERS — routed through Cloudflare Worker
 // ══════════════════════════════════════════════
-async function gapi(path,params={}){
-  const u=new URL('https://www.googleapis.com'+path);Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
-  const r=await fetch(u,{headers:{Authorization:'Bearer '+TOKEN}});const d=await r.json();
-  if(d.error)throw new Error(d.error.message);return d;
+
+// Set your Cloudflare Worker URL in the Settings panel or paste it here:
+// const WORKER_URL = 'https://yt-command.YOUR-SUBDOMAIN.workers.dev';
+const WORKER_URL = localStorage.getItem('ytcmd_worker_url') || '';
+
+async function proxyFetch(url, method='GET', extraHeaders={}, reqBody=null){
+  if(!WORKER_URL){
+    showWorkerBanner();
+    throw new Error('Cloudflare Worker URL not configured. See the banner above.');
+  }
+  const payload = { url, method, headers: { Authorization: 'Bearer '+TOKEN, ...extraHeaders } };
+  if(reqBody) payload.body = reqBody;
+  const r = await fetch(WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const text = await r.text();
+  let d;
+  try { d = JSON.parse(text); } catch(e) { throw new Error('Worker returned non-JSON: '+text.slice(0,200)); }
+  if(d.error) throw new Error(typeof d.error==='string' ? d.error : (d.error.message || JSON.stringify(d.error)));
+  return d;
 }
-async function yta(metrics,dims,extra={}){
-  return gapi('/youtube/analytics/v2/reports',{ids:'channel=='+CHANNEL,startDate:S,endDate:E,metrics,...(dims?{dimensions:dims}:{}), ...extra});
+
+async function gapi(path, params={}){
+  const u = new URL('https://www.googleapis.com'+path);
+  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
+  return proxyFetch(u.toString());
+}
+
+async function yta(metrics, dims, extra={}){
+  const params = { ids:'channel=='+CHANNEL, startDate:S, endDate:E, metrics,
+    ...(dims?{dimensions:dims}:{}), ...extra };
+  const u = new URL('https://youtubeanalytics.googleapis.com/v2/reports');
+  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, String(v)));
+  return proxyFetch(u.toString());
 }
 
 // ══════════════════════════════════════════════
@@ -1058,6 +1120,37 @@ function kpi(id,v){const el=document.getElementById(id);if(el){el.textContent=v;
 function fmt(n){if(n==null||isNaN(n))return'—';n=parseInt(n);if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toLocaleString();}
 function showErr(m){const e=document.getElementById('error-msg');e.textContent=m;e.style.display='block';}
 function hideErr(){document.getElementById('error-msg').style.display='none';}
+
+// ══════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════
+function saveWorkerUrl(){
+  const url = document.getElementById('worker-url-input').value.trim().replace(/\/+$/, '');
+  if(!url){ alert('Please enter a Worker URL.'); return; }
+  localStorage.setItem('ytcmd_worker_url', url);
+  document.getElementById('worker-url-saved').style.display='block';
+  document.getElementById('worker-banner').style.display='none';
+  // Reload WORKER_URL in memory without page refresh
+  location.reload();
+}
+
+function showWorkerBanner(){
+  const b = document.getElementById('worker-banner');
+  if(b) b.style.display='flex';
+}
+
+function populateSettingsPage(){
+  const el = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v||'—'; };
+  const cid = localStorage.getItem('ytcmd_client_id')||'';
+  el('s-client', cid ? cid.slice(0,20)+'…' : '—');
+  el('s-channel', localStorage.getItem('ytcmd_channel_id')||'—');
+  const wu = localStorage.getItem('ytcmd_worker_url')||'';
+  el('s-worker', wu ? wu.replace('https://','') : 'Not set');
+  el('s-twitch', twitchRows.length+' rows');
+  el('s-camps', Object.keys(campaigns).length+' stops');
+  const wInput = document.getElementById('worker-url-input');
+  if(wInput && wu) wInput.value = wu;
+}
 
 // Close modals on overlay click
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
