@@ -529,6 +529,9 @@ async function handleCallback(){
   try{
     TOKEN=await exchangeCode(code);CLIENT=sessionStorage.getItem('client_id')||'';CLAUDE=sessionStorage.getItem('claude_key')||'';
     sessionStorage.setItem('oauth_token',TOKEN);
+    localStorage.setItem('ytcmd_client_id',CLIENT);
+    localStorage.setItem('ytcmd_client_secret',sessionStorage.getItem('client_secret')||'');
+    localStorage.setItem('ytcmd_claude_key',CLAUDE);
     document.getElementById('client-id').value=CLIENT;
     document.getElementById('client-secret').value=sessionStorage.getItem('client_secret')||'';
     document.getElementById('claude-key').value=CLAUDE;
@@ -556,6 +559,13 @@ async function connectChannel(){
     if(!r.items?.length)throw new Error('No channel found.');
     const ch=r.items[0];CHANNEL=ch.id;
     sessionStorage.setItem('channel_id',ch.id);sessionStorage.setItem('channel_snippet',JSON.stringify(ch.snippet));sessionStorage.setItem('channel_stats',JSON.stringify(ch.statistics));sessionStorage.setItem('claude_key',CLAUDE);
+    // Also persist to localStorage so credentials survive tab closes
+    localStorage.setItem('ytcmd_client_id',CLIENT);
+    localStorage.setItem('ytcmd_client_secret',sessionStorage.getItem('client_secret')||'');
+    localStorage.setItem('ytcmd_claude_key',CLAUDE);
+    localStorage.setItem('ytcmd_channel_id',ch.id);
+    localStorage.setItem('ytcmd_channel_snippet',JSON.stringify(ch.snippet));
+    localStorage.setItem('ytcmd_channel_stats',JSON.stringify(ch.statistics));
     setChannelBadge(ch.snippet,ch.statistics);showDashboard();
   }catch(e){showErr(e.message||'Connection failed.');btn.disabled=false;btn.textContent='Connect Channel →';}
 }
@@ -575,7 +585,12 @@ function showDashboard(){
   loadAnalyticsPage();
 }
 function disconnect(){
-  sessionStorage.clear();TOKEN=CLAUDE=CHANNEL=CLIENT='';
+  // Only clear session auth — preserve Twitch data and campaigns in localStorage
+  sessionStorage.clear();
+  localStorage.removeItem('ytcmd_channel_id');
+  localStorage.removeItem('ytcmd_channel_snippet');
+  localStorage.removeItem('ytcmd_channel_stats');
+  TOKEN=CLAUDE=CHANNEL=CLIENT='';
   document.getElementById('setup-screen').style.display='flex';
   document.getElementById('dashboard').style.display='none';
   ['client-id','client-secret','claude-key'].forEach(id=>document.getElementById(id).value='');
@@ -1051,25 +1066,74 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 // INIT
 // ══════════════════════════════════════════════
 (async function(){
+  // Always load persistent data first — regardless of auth state
+  loadCampaignsFromStorage();
+  loadTwitchFromStorage();
+
   if(location.search.includes('code=')||location.search.includes('error='))await handleCallback();
+
+  // Try session storage first (tab still open), then localStorage fallback for credentials
   TOKEN=sessionStorage.getItem('oauth_token')||'';
-  CLAUDE=sessionStorage.getItem('claude_key')||'';
-  CHANNEL=sessionStorage.getItem('channel_id')||'';
-  CLIENT=sessionStorage.getItem('client_id')||'';
+  CLAUDE=sessionStorage.getItem('claude_key')||localStorage.getItem('ytcmd_claude_key')||'';
+  CHANNEL=sessionStorage.getItem('channel_id')||localStorage.getItem('ytcmd_channel_id')||'';
+  CLIENT=sessionStorage.getItem('client_id')||localStorage.getItem('ytcmd_client_id')||'';
+  const SECRET=sessionStorage.getItem('client_secret')||localStorage.getItem('ytcmd_client_secret')||'';
+
+  // If we have Twitch or campaign data, show the dashboard shell even without YouTube
+  const hasPersistentData=twitchRows.length>0||Object.keys(campaigns).length>0;
+
   if(TOKEN&&CLAUDE&&CHANNEL){
-    const sn=JSON.parse(sessionStorage.getItem('channel_snippet')||'{}');
-    const st=JSON.parse(sessionStorage.getItem('channel_stats')||'{}');
-    setChannelBadge(sn,st);showDashboard();return;
+    // Fully connected — show everything
+    const sn=JSON.parse(sessionStorage.getItem('channel_snippet')||localStorage.getItem('ytcmd_channel_snippet')||'{}');
+    const st=JSON.parse(sessionStorage.getItem('channel_stats')||localStorage.getItem('ytcmd_channel_stats')||'{}');
+    setChannelBadge(sn,st);
+    showDashboard();
+    return;
   }
+
+  if(hasPersistentData){
+    // Show dashboard with Twitch/campaign data even without YouTube connected
+    document.getElementById('setup-screen').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    S=ago(28);E=today();
+    document.getElementById('date-start').value=S;
+    document.getElementById('date-end').value=E;
+    // Show reconnect banner
+    showReconnectBanner();
+    return;
+  }
+
+  // No data at all — show setup screen, pre-fill any saved credentials
+  if(CLIENT)document.getElementById('client-id').value=CLIENT;
+  if(SECRET)document.getElementById('client-secret').value=SECRET;
+  if(CLAUDE)document.getElementById('claude-key').value=CLAUDE;
   if(TOKEN){
-    document.getElementById('client-id').value=CLIENT;
-    document.getElementById('client-secret').value=sessionStorage.getItem('client_secret')||'';
-    document.getElementById('claude-key').value=CLAUDE;
     document.getElementById('connect-btn').disabled=false;
     document.getElementById('google-btn').disabled=true;
     setAuth('ok','Signed in with Google','Revenue metrics unlocked ✓');
   }
 })();
+
+function showReconnectBanner(){
+  // Insert a subtle banner prompting YouTube reconnect
+  const banner=document.createElement('div');
+  banner.id='reconnect-banner';
+  banner.style.cssText='background:rgba(255,136,0,0.08);border-bottom:1px solid rgba(255,136,0,0.2);padding:10px 24px;display:flex;align-items:center;gap:12px;font-size:13px;';
+  banner.innerHTML=`<span style="color:#ffaa44;">⚠ YouTube not connected — Analytics tab unavailable. Campaign tagging and Twitch data are fully available.</span><button onclick="goToSetup()" style="margin-left:auto;background:var(--accent);border:none;border-radius:6px;padding:6px 14px;color:white;font-size:12px;cursor:pointer;font-family:var(--font-body);">Reconnect YouTube →</button>`;
+  document.getElementById('dashboard').insertBefore(banner,document.querySelector('.nav-tabs'));
+}
+
+function goToSetup(){
+  document.getElementById('setup-screen').style.display='flex';
+  document.getElementById('dashboard').style.display='none';
+  // Pre-fill saved credentials
+  const CLIENT=localStorage.getItem('ytcmd_client_id')||'';
+  const SECRET=localStorage.getItem('ytcmd_client_secret')||'';
+  const CLAUDE_KEY=localStorage.getItem('ytcmd_claude_key')||'';
+  if(CLIENT)document.getElementById('client-id').value=CLIENT;
+  if(SECRET)document.getElementById('client-secret').value=SECRET;
+  if(CLAUDE_KEY)document.getElementById('claude-key').value=CLAUDE_KEY;
+}
 </script>
 </body>
 </html>
