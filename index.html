@@ -318,7 +318,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
     <div class="section-head"><div class="section-title">Performance over time</div></div>
     <div class="chart-grid">
       <div class="chart-card full"><div class="chart-title">Views &amp; Watch Time</div><canvas id="c-views" height="100"></canvas></div>
-      <div class="chart-card"><div class="chart-title">Estimated Revenue (USD/day)</div><canvas id="c-rev" height="160"></canvas></div>
+      <div class="chart-card"><div class="chart-title">Estimated Revenue (EUR/day)</div><canvas id="c-rev" height="160"></canvas></div>
       <div class="chart-card"><div class="chart-title">CTR &amp; Impressions</div><canvas id="c-ctr" height="160"></canvas></div>
     </div>
     <div class="section-head"><div class="section-title">Audience demographics</div></div>
@@ -442,16 +442,21 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
   <div class="modal">
     <div class="modal-title" id="tag-modal-title">Tag a YouTube video</div>
     <div class="modal-sub" id="tag-modal-sub">Search or paste a video URL/ID</div>
+    <!-- Day label input — only shown when adding a new day -->
+    <div id="new-day-wrap" style="display:none;margin-bottom:12px;">
+      <div class="field-label" style="margin-bottom:6px;">Day label</div>
+      <input type="text" class="search-input" id="new-day-input" placeholder="e.g. Day 2, FT-1, Final Table" style="margin-bottom:0;">
+    </div>
     <div class="tab-switch">
       <button class="ai-tab active" onclick="switchTagTab('search',this)">Search</button>
       <button class="ai-tab" onclick="switchTagTab('paste',this)">Paste URL / ID</button>
     </div>
     <div id="tag-search-panel">
       <input type="text" class="search-input" id="tag-search-input" placeholder="Search your videos…" oninput="searchVideos(this.value)">
-      <div class="search-results" id="tag-search-results"></div>
+      <div class="search-results" id="tag-search-results"><div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading your videos…</div></div>
     </div>
     <div id="tag-paste-panel" style="display:none">
-      <textarea class="paste-area" id="tag-paste-input" placeholder="Paste one YouTube video URL or ID per line&#10;https://youtube.com/watch?v=xxxxx&#10;xxxxx"></textarea>
+      <textarea class="paste-area" id="tag-paste-input" placeholder="Paste one YouTube video URL or ID per line&#10;https://youtube.com/watch?v=xxxxx&#10;xxxxx" oninput="document.getElementById('tag-confirm-btn').disabled=!this.value.trim()"></textarea>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('tag-modal')">Cancel</button>
@@ -695,10 +700,10 @@ async function loadAnalytics(){
   setRevenueKpis(rev,cpm);
   kpi('k-ctr','See chart');kpi('k-subs',fmt(subs));
   ytData.totals={views,mins,subs,rev,cpm};
-  const ts=await yta('views,estimatedMinutesWatched,estimatedRevenue,annotationImpressions,impressionClickThroughRate','day');
+  const ts=await yta('views,estimatedMinutesWatched,estimatedRevenue','day');
   ytData.ts=ts.rows||[];renderTime(ts.rows||[]);
-  try{const demo=await yta('viewerPercentage','ageGroup,gender');renderDemo(demo.rows||[]);}catch(e){}
-  try{const geo=await yta('views','country',{sort:'-views',maxResults:10});renderGeo(geo.rows||[]);}catch(e){}
+  try{const demo=await yta('viewerPercentage','ageGroup,gender');renderDemo(demo.rows||[]);}catch(e){console.warn('Demographics:',e.message);}
+  try{const geo=await yta('views','country',{sort:'-views',maxResults:10});renderGeo(geo.rows||[]);}catch(e){console.warn('Geo:',e.message);}
 }
 async function loadTopVideos(){
   try{
@@ -723,10 +728,33 @@ function co(y,y1){
   return b;
 }
 function renderTime(rows){
-  const L=rows.map(r=>r[0]),V=rows.map(r=>r[1]||0),W=rows.map(r=>r[2]?Math.round(r[2]/60):0),R=rows.map(r=>r[3]?parseFloat(r[3].toFixed(2)):0),I=rows.map(r=>r[4]||0),C=rows.map(r=>r[5]?parseFloat((r[5]*100).toFixed(2)):0);
-  mk('views','line',{labels:L,datasets:[{label:'Views',data:V,borderColor:'#4488ff',backgroundColor:'rgba(68,136,255,0.08)',tension:0.4,pointRadius:0,yAxisID:'y'},{label:'Watch hrs',data:W,borderColor:'#aa66ff',backgroundColor:'rgba(170,102,255,0.06)',tension:0.4,pointRadius:0,yAxisID:'y1'}]},co('Views','Watch hrs'));
-  mk('rev','bar',{labels:L,datasets:[{label:'Revenue (USD)',data:R,backgroundColor:'rgba(0,229,160,0.6)',borderColor:'#00e5a0',borderWidth:1,borderRadius:3}]},co('USD'));
-  mk('ctr','line',{labels:L,datasets:[{label:'CTR %',data:C,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.07)',tension:0.4,pointRadius:0,yAxisID:'y'},{label:'Impressions',data:I,borderColor:'#ff8800',backgroundColor:'rgba(255,136,0,0.05)',tension:0.4,pointRadius:0,yAxisID:'y1'}]},co('CTR %','Impressions'));
+  if(!rows||!rows.length){console.warn('No time series rows');return;}
+  const L=rows.map(r=>r[0]);
+  const V=rows.map(r=>r[1]||0);
+  const W=rows.map(r=>r[2]?Math.round(r[2]/60):0);
+  const R=rows.map(r=>r[3]?parseFloat((usdToEur(r[3])).toFixed(2)):0);
+  mk('views','line',{labels:L,datasets:[
+    {label:'Views',data:V,borderColor:'#4488ff',backgroundColor:'rgba(68,136,255,0.08)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y'},
+    {label:'Watch hrs',data:W,borderColor:'#aa66ff',backgroundColor:'rgba(170,102,255,0.06)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y1'}
+  ]},co('Views','Watch hrs'));
+  mk('rev','bar',{labels:L,datasets:[
+    {label:'Revenue (EUR)',data:R,backgroundColor:'rgba(0,229,160,0.6)',borderColor:'#00e5a0',borderWidth:1,borderRadius:3}
+  ]},co('EUR'));
+  // CTR chart — pull separately per video dimension
+  loadCtrChart();
+}
+async function loadCtrChart(){
+  try{
+    const ctrData=await yta('impressionClickThroughRate,impressions','day');
+    const rows=ctrData.rows||[];
+    const L=rows.map(r=>r[0]);
+    const C=rows.map(r=>r[1]?parseFloat((r[1]*100).toFixed(2)):0);
+    const I=rows.map(r=>r[2]||0);
+    mk('ctr','line',{labels:L,datasets:[
+      {label:'CTR %',data:C,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.07)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y'},
+      {label:'Impressions',data:I,borderColor:'#ff8800',backgroundColor:'rgba(255,136,0,0.05)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y1'}
+    ]},co('CTR %','Impressions'));
+  }catch(e){console.warn('CTR chart unavailable:',e.message);}
 }
 function renderDemo(rows){
   const g={};rows.forEach(([age,gender,pct])=>{if(!g[age])g[age]={m:0,f:0};if(gender==='male')g[age].m=parseFloat(pct.toFixed(1));else if(gender==='female')g[age].f=parseFloat(pct.toFixed(1));});
@@ -981,9 +1009,14 @@ function renderDayRow(stopKey,tournament,day){
       twCells=`<td class="mono twitch">${fmt(avgV)}</td><td class="mono twitch">${fmt(peakV)}</td><td class="mono">${fmt(liveV)}</td><td class="mono">${fmt(Math.round(hrs))}</td><td class="mono">${fmt(uniq)}</td>`;
     }
   }
-  // YouTube tags
+  // YouTube tags — show title from cache if available
   const ytCell=dayData.yt.length
-    ?dayData.yt.map(id=>`<span class="yt-badge" title="${id}">YT</span>`).join(' ')+` <button class="tag-btn" onclick="openTagModal('${stopKey}','${tournament}','${day}')">+</button>`
+    ?dayData.yt.map(id=>{
+      const cached=allYTVideos.find(v=>v.id===id);
+      const label=cached?cached.title.slice(0,40)+(cached.title.length>40?'…':''):'YT: '+id.slice(0,12)+'…';
+      const dateStr=cached?.date?new Date(cached.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+      return`<div class="tagged-video" style="margin-bottom:4px;"><span class="yt-badge" title="${id}">YT</span><span style="font-size:11px;color:var(--text)">${label}</span>${dateStr?`<span style="color:var(--muted);font-size:10px;font-family:var(--font-mono)">${dateStr}</span>`:''}</div>`;
+    }).join('')+`<button class="tag-btn" style="margin-top:4px;" onclick="openTagModal('${stopKey}','${tournament}','${day}')">+ Add</button>`
     :`<button class="tag-btn" onclick="openTagModal('${stopKey}','${tournament}','${day}')">Tag video</button>`;
   const platDot=dayData.tw.length?'<span class="platform-dot tw"></span>':'';
   const ytDot=dayData.yt.length?'<span class="platform-dot yt"></span>':'';
@@ -1031,29 +1064,41 @@ function openTagModal(stopKey,tournament,day){
   const isNew=day==='new';
   document.getElementById('tag-modal-title').textContent=isNew?'Add day & tag video':'Tag YouTube video';
   document.getElementById('tag-modal-sub').textContent=`${campaigns[stopKey]?.stop} · ${tournament}${isNew?'':' · '+day}`;
-  document.getElementById('tag-search-results').innerHTML='';
   document.getElementById('tag-search-input').value='';
+  document.getElementById('tag-paste-input').value='';
   document.getElementById('tag-confirm-btn').disabled=true;
+  // Show/hide day label field
+  document.getElementById('new-day-wrap').style.display=isNew?'block':'none';
+  if(isNew)document.getElementById('new-day-input').value='';
+  // Reset to search tab
+  switchTagTab('search',document.querySelector('.tab-switch .ai-tab'));
   document.getElementById('tag-modal').classList.add('open');
-  if(isNew){
-    // Show day input
-    if(!document.getElementById('new-day-input')){
-      const inp=document.createElement('input');inp.type='text';inp.id='new-day-input';inp.className='search-input';inp.placeholder='Day label e.g. Day 2, FT-1, Final Table';inp.style.marginBottom='10px';
-      document.getElementById('tag-search-panel').prepend(inp);
-    }
-    document.getElementById('new-day-input').style.display='block';
-  }else{
-    const nd=document.getElementById('new-day-input');if(nd)nd.style.display='none';
-  }
   prefetchVideos();
 }
 
 async function prefetchVideos(){
-  if(allYTVideos.length)return;
+  const resultsEl=document.getElementById('tag-search-results');
+  // Show cached results immediately if we have them
+  if(allYTVideos.length){ searchVideos(''); return; }
+  resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading your videos…</div>';
   try{
-    const r=await gapi('/youtube/v3/search',{part:'snippet',channelId:CHANNEL,type:'video',maxResults:50,order:'date'});
-    allYTVideos=(r.items||[]).map(i=>({id:i.id.videoId,title:i.snippet.title,date:i.snippet.publishedAt,thumb:i.snippet.thumbnails?.default?.url}));
-  }catch(e){console.warn('Video prefetch:',e.message);}
+    // Fetch up to 200 most recent videos using pagination
+    let all=[];let pageToken='';
+    for(let page=0;page<4;page++){
+      const params={part:'snippet',channelId:CHANNEL,type:'video',maxResults:50,order:'date'};
+      if(pageToken)params.pageToken=pageToken;
+      const r=await gapi('/youtube/v3/search',params);
+      const items=(r.items||[]).map(i=>({id:i.id?.videoId,title:i.snippet.title,date:i.snippet.publishedAt,thumb:i.snippet.thumbnails?.default?.url})).filter(v=>v.id);
+      all=all.concat(items);
+      if(!r.nextPageToken)break;
+      pageToken=r.nextPageToken;
+    }
+    allYTVideos=all;
+    searchVideos('');
+  }catch(e){
+    console.warn('Video prefetch:',e.message);
+    resultsEl.innerHTML=`<div style="padding:12px;text-align:center;color:var(--accent);font-size:12px;">Could not load videos: ${e.message}<br>Use the Paste tab instead.</div>`;
+  }
 }
 
 function searchVideos(q){
@@ -1085,8 +1130,8 @@ function confirmTag(){
   const{stopKey,tournament,day:rawDay}=tagCtx;
   let day=rawDay;
   if(rawDay==='new'){
-    const nd=document.getElementById('new-day-input');
-    day=nd?.value.trim()||'New day';
+    day=document.getElementById('new-day-input')?.value.trim();
+    if(!day){ alert('Please enter a day label (e.g. Day 2, FT-1, Final Table)'); return; }
   }
   if(!campaigns[stopKey].tournaments[tournament])campaigns[stopKey].tournaments[tournament]={days:{}};
   if(!campaigns[stopKey].tournaments[tournament].days[day])campaigns[stopKey].tournaments[tournament].days[day]={yt:[],tw:[]};
