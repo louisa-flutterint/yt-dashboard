@@ -606,10 +606,13 @@ const b64u=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,
 async function pkce(){const v=b64u(crypto.getRandomValues(new Uint8Array(32)));const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));return{v,c:b64u(d)};}
 
 async function startOAuth(){
+  console.log('startOAuth called');
   hideErr();
   CLIENT=document.getElementById('client-id').value.trim();
+  console.log('CLIENT:', CLIENT ? CLIENT.slice(0,20)+'...' : 'EMPTY');
   if(!CLIENT){showErr('Enter your OAuth 2.0 Client ID first.');return;}
   const secret=document.getElementById('client-secret').value.trim();
+  console.log('SECRET:', secret ? 'present' : 'EMPTY');
   if(!secret){showErr('Enter your OAuth 2.0 Client Secret first.');return;}
   try{
     const{v,c}=await pkce();
