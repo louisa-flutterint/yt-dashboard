@@ -7,162 +7,263 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0a0f; --surface: #111118; --surface2: #18181f;
-    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
-    --text: #f0f0f5; --muted: #7a7a8e;
-    --accent: #ff4444; --accent2: #ff8800; --green: #00e5a0; --blue: #4488ff; --purple: #aa66ff;
-    --radius: 12px;
-    --font-head: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif; --font-mono: 'DM Mono', monospace;
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+:root{
+  --bg:#0a0a0f;--surface:#111118;--surface2:#18181f;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#f0f0f5;--muted:#7a7a8e;
+  --accent:#ff4444;--accent2:#ff8800;--green:#00e5a0;--blue:#4488ff;--purple:#aa66ff;--twitch:#9147ff;
+  --radius:12px;
+  --font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'DM Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;line-height:1.6;min-height:100vh;}
 
-  /* SETUP */
-  #setup-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
-  #setup-screen::before { content:''; position:fixed; top:-200px; left:50%; transform:translateX(-50%); width:600px; height:600px; background:radial-gradient(circle,rgba(255,68,68,0.12) 0%,transparent 70%); pointer-events:none; }
-  .setup-card { background:var(--surface); border:1px solid var(--border2); border-radius:20px; padding:48px; max-width:580px; width:100%; }
-  .logo-mark { display:flex; align-items:center; gap:10px; margin-bottom:36px; }
-  .logo-icon { width:36px; height:36px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
-  .logo-text { font-family:var(--font-head); font-size:20px; font-weight:800; letter-spacing:-0.5px; }
-  .logo-text span { color:var(--accent); }
-  h1.setup-title { font-family:var(--font-head); font-size:32px; font-weight:800; letter-spacing:-1px; line-height:1.1; margin-bottom:12px; }
-  .setup-subtitle { color:var(--muted); font-size:14px; margin-bottom:32px; line-height:1.7; }
-  .field-label { font-family:var(--font-mono); font-size:11px; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
-  .field-label a { color:var(--accent); text-decoration:none; font-size:10px; }
-  .field-label a:hover { text-decoration:underline; }
-  input[type="text"], input[type="password"] { width:100%; background:var(--bg); border:1px solid var(--border2); border-radius:8px; padding:12px 16px; color:var(--text); font-family:var(--font-mono); font-size:13px; outline:none; transition:border-color 0.2s; margin-bottom:6px; }
-  input[type="text"]:focus, input[type="password"]:focus { border-color:var(--accent); }
-  .field-hint { font-size:12px; color:var(--muted); margin-bottom:20px; line-height:1.5; }
-  .info-box { background:rgba(68,136,255,0.08); border:1px solid rgba(68,136,255,0.2); border-radius:8px; padding:12px 14px; font-size:12px; color:#88aaff; margin-bottom:20px; line-height:1.6; }
-  .info-box strong { color:#aaccff; }
-  .divider { border:none; border-top:1px solid var(--border); margin:24px 0; }
-  .auth-status { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:10px; border:1px solid var(--border); background:var(--surface2); margin-bottom:14px; }
-  .auth-status.ok { border-color:rgba(0,229,160,0.3); background:rgba(0,229,160,0.06); }
-  .auth-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0; }
-  .auth-dot.green { background:var(--green); }
-  .auth-status-text { font-size:13px; flex:1; }
-  .auth-status-sub { font-size:11px; color:var(--muted); font-family:var(--font-mono); }
-  .btn-primary { width:100%; background:var(--accent); color:white; border:none; border-radius:10px; padding:14px; font-family:var(--font-head); font-size:15px; font-weight:700; cursor:pointer; transition:opacity 0.2s,transform 0.1s; margin-top:4px; }
-  .btn-primary:hover { opacity:0.9; }
-  .btn-primary:active { transform:scale(0.99); }
-  .btn-primary:disabled { opacity:0.4; cursor:not-allowed; }
-  .btn-google { width:100%; background:white; color:#1a1a1a; border:1px solid #dadce0; border-radius:10px; padding:13px; font-family:var(--font-body); font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; transition:background 0.15s; margin-bottom:8px; }
-  .btn-google:hover { background:#f8f8f8; }
-  .btn-google:disabled { opacity:0.5; cursor:not-allowed; }
-  #error-msg { background:rgba(255,68,68,0.1); border:1px solid rgba(255,68,68,0.3); border-radius:8px; padding:12px 16px; font-size:13px; color:#ff8888; margin-top:12px; display:none; }
+/* ── SETUP ── */
+#setup-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;}
+#setup-screen::before{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(255,68,68,0.12) 0%,transparent 70%);pointer-events:none;}
+.setup-card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:48px;max-width:580px;width:100%;}
+.logo-mark{display:flex;align-items:center;gap:10px;margin-bottom:36px;}
+.logo-icon{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.logo-text{font-family:var(--font-head);font-size:20px;font-weight:800;letter-spacing:-0.5px;}
+.logo-text span{color:var(--accent);}
+h1.setup-title{font-family:var(--font-head);font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:12px;}
+.setup-subtitle{color:var(--muted);font-size:14px;margin-bottom:32px;line-height:1.7;}
+.field-label{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.field-label a{color:var(--accent);text-decoration:none;font-size:10px;}
+.field-label a:hover{text-decoration:underline;}
+input[type="text"],input[type="password"]{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px 16px;color:var(--text);font-family:var(--font-mono);font-size:13px;outline:none;transition:border-color 0.2s;margin-bottom:6px;}
+input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent);}
+.field-hint{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+.info-box{background:rgba(68,136,255,0.08);border:1px solid rgba(68,136,255,0.2);border-radius:8px;padding:12px 14px;font-size:12px;color:#88aaff;margin-bottom:20px;line-height:1.6;}
+.info-box strong{color:#aaccff;}
+.divider{border:none;border-top:1px solid var(--border);margin:24px 0;}
+.auth-status{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);margin-bottom:14px;}
+.auth-status.ok{border-color:rgba(0,229,160,0.3);background:rgba(0,229,160,0.06);}
+.auth-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.auth-dot.green{background:var(--green);}
+.auth-status-text{font-size:13px;flex:1;}
+.auth-status-sub{font-size:11px;color:var(--muted);font-family:var(--font-mono);}
+.btn-primary{width:100%;background:var(--accent);color:white;border:none;border-radius:10px;padding:14px;font-family:var(--font-head);font-size:15px;font-weight:700;cursor:pointer;transition:opacity 0.2s,transform 0.1s;margin-top:4px;}
+.btn-primary:hover{opacity:0.9;}
+.btn-primary:active{transform:scale(0.99);}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-google{width:100%;background:white;color:#1a1a1a;border:1px solid #dadce0;border-radius:10px;padding:13px;font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background 0.15s;margin-bottom:8px;}
+.btn-google:hover{background:#f8f8f8;}
+.btn-google:disabled{opacity:0.5;cursor:not-allowed;}
+#error-msg{background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:8px;padding:12px 16px;font-size:13px;color:#ff8888;margin-top:12px;display:none;}
 
-  /* DASHBOARD */
-  #dashboard { display:none; }
-  .topbar { display:flex; align-items:center; justify-content:space-between; padding:16px 28px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:100; gap:12px; flex-wrap:wrap; }
-  .channel-badge { display:flex; align-items:center; gap:10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 14px; }
-  .channel-avatar { width:28px; height:28px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:white; flex-shrink:0; overflow:hidden; }
-  .channel-avatar img { width:100%; height:100%; object-fit:cover; }
-  .channel-name { font-weight:500; font-size:13px; }
-  .channel-subs { font-size:11px; color:var(--muted); font-family:var(--font-mono); }
-  .oauth-badge { display:flex; align-items:center; gap:6px; background:rgba(0,229,160,0.08); border:1px solid rgba(0,229,160,0.2); border-radius:6px; padding:5px 10px; font-size:11px; color:var(--green); font-family:var(--font-mono); }
-  .topbar-right { display:flex; align-items:center; gap:8px; }
-  .btn-sm { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:8px 14px; color:var(--text); font-size:12px; cursor:pointer; font-family:var(--font-body); transition:background 0.15s; white-space:nowrap; }
-  .btn-sm:hover { background:var(--border); }
-  .btn-sm.active { background:var(--accent); border-color:var(--accent); color:white; }
-  .main { padding:28px; max-width:1400px; margin:0 auto; }
-  .controls-bar { display:flex; gap:8px; align-items:center; margin-bottom:28px; flex-wrap:wrap; }
-  .controls-label { font-family:var(--font-mono); font-size:11px; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; margin-right:4px; }
-  .date-range-input { background:var(--surface); border:1px solid var(--border2); border-radius:8px; padding:7px 12px; color:var(--text); font-family:var(--font-mono); font-size:12px; outline:none; }
-  .section-head { display:flex; align-items:center; gap:10px; margin-bottom:16px; margin-top:36px; }
-  .section-head:first-child { margin-top:0; }
-  .section-title { font-family:var(--font-head); font-size:15px; font-weight:700; letter-spacing:-0.2px; }
-  .section-pill { font-family:var(--font-mono); font-size:10px; background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:3px 10px; color:var(--muted); }
-  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; margin-bottom:8px; }
-  .kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; position:relative; overflow:hidden; transition:border-color 0.2s; }
-  .kpi-card:hover { border-color:var(--border2); }
-  .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--kpi-color,var(--accent)); }
-  .kpi-label { font-family:var(--font-mono); font-size:10px; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px; }
-  .kpi-value { font-family:var(--font-head); font-size:26px; font-weight:800; letter-spacing:-1px; line-height:1; margin-bottom:6px; }
-  .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:8px; }
-  .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; }
-  .chart-card.full { grid-column:1/-1; }
-  .chart-title { font-family:var(--font-mono); font-size:11px; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:20px; }
-  .demo-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  .video-table { width:100%; border-collapse:collapse; }
-  .video-table th { font-family:var(--font-mono); font-size:10px; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); white-space:nowrap; }
-  .video-table td { padding:14px 12px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle; }
-  .video-table tr:last-child td { border-bottom:none; }
-  .video-table tr:hover td { background:var(--surface2); }
-  .video-rank { font-family:var(--font-mono); font-size:12px; color:var(--muted); width:32px; }
-  .video-thumb { width:56px; height:36px; border-radius:4px; object-fit:cover; background:var(--surface2); display:block; }
-  .video-title-text { font-weight:500; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
-  .video-date { font-size:11px; color:var(--muted); margin-top:2px; font-family:var(--font-mono); }
-  .mono { font-family:var(--font-mono); font-size:12px; color:var(--muted); }
-  .mono.hi { color:var(--green); }
-  .ai-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:8px; }
-  .ai-panel-header { display:flex; align-items:center; gap:10px; padding:16px 20px; border-bottom:1px solid var(--border); background:var(--surface2); }
-  .ai-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
-  .ai-panel-title { font-family:var(--font-head); font-size:13px; font-weight:700; }
-  .ai-panel-sub { font-size:11px; color:var(--muted); margin-left:auto; font-family:var(--font-mono); }
-  .ai-body { padding:20px; }
-  .ai-tabs { display:flex; gap:4px; margin-bottom:16px; flex-wrap:wrap; }
-  .ai-tab { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:5px 14px; font-size:12px; cursor:pointer; color:var(--muted); transition:all 0.15s; font-family:var(--font-body); }
-  .ai-tab.active { background:var(--accent); border-color:var(--accent); color:white; }
-  .ai-output { font-size:14px; line-height:1.8; color:var(--text); min-height:80px; white-space:pre-wrap; }
-  .ai-output.loading { color:var(--muted); font-style:italic; }
-  .btn-generate { background:transparent; border:1px solid var(--accent); border-radius:8px; padding:8px 18px; color:var(--accent); font-size:12px; cursor:pointer; font-family:var(--font-mono); transition:all 0.15s; margin-top:12px; letter-spacing:0.04em; }
-  .btn-generate:hover { background:var(--accent); color:white; }
-  .btn-generate:disabled { opacity:0.4; cursor:not-allowed; }
-  .loading-bar { height:2px; background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent)); background-size:200%; animation:shimmer 1.2s infinite; border-radius:2px; margin-bottom:24px; }
-  @keyframes shimmer { 0%{background-position:200% center}100%{background-position:-200% center} }
-  .spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:6px; }
-  @keyframes spin { to{transform:rotate(360deg)} }
-  .fade-in { animation:fadeIn 0.4s ease forwards; }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
-  @media(max-width:768px){.chart-grid,.demo-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}.setup-card{padding:28px 20px}.main{padding:16px}.topbar{padding:12px 16px}}
+/* ── SHELL ── */
+#dashboard{display:none;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:200;gap:12px;flex-wrap:wrap;}
+.channel-badge{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;}
+.channel-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0;overflow:hidden;}
+.channel-avatar img{width:100%;height:100%;object-fit:cover;}
+.channel-name{font-weight:500;font-size:13px;}
+.channel-subs{font-size:11px;color:var(--muted);font-family:var(--font-mono);}
+.oauth-badge{display:flex;align-items:center;gap:6px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--green);font-family:var(--font-mono);}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.btn-sm{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:7px 13px;color:var(--text);font-size:12px;cursor:pointer;font-family:var(--font-body);transition:background 0.15s;white-space:nowrap;}
+.btn-sm:hover{background:var(--border);}
+.btn-sm.active{background:var(--accent);border-color:var(--accent);color:white;}
+
+/* ── NAV TABS ── */
+.nav-tabs{display:flex;gap:2px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:57px;z-index:199;}
+.nav-tab{padding:12px 18px;font-size:13px;font-family:var(--font-body);font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color 0.15s,border-color 0.15s;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;}
+.nav-tab:hover{color:var(--text);}
+.nav-tab.active{color:var(--text);border-bottom-color:var(--accent);}
+.nav-tab .tab-icon{margin-right:6px;font-size:12px;}
+
+/* ── PAGES ── */
+.page{display:none;padding:28px;max-width:1400px;margin:0 auto;}
+.page.active{display:block;}
+
+/* ── COMMON COMPONENTS ── */
+.controls-bar{display:flex;gap:8px;align-items:center;margin-bottom:28px;flex-wrap:wrap;}
+.controls-label{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-right:4px;}
+.date-range-input{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;color:var(--text);font-family:var(--font-mono);font-size:12px;outline:none;}
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;margin-top:32px;}
+.section-head:first-child{margin-top:0;}
+.section-title{font-family:var(--font-head);font-size:15px;font-weight:700;letter-spacing:-0.2px;}
+.section-pill{font-family:var(--font-mono);font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--muted);}
+.section-pill.purple{background:rgba(145,71,255,0.1);border-color:rgba(145,71,255,0.3);color:#bb88ff;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:8px;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;transition:border-color 0.2s;}
+.kpi-card:hover{border-color:var(--border2);}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-color,var(--accent));}
+.kpi-label{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;}
+.kpi-value{font-family:var(--font-head);font-size:24px;font-weight:800;letter-spacing:-1px;line-height:1;margin-bottom:4px;}
+.kpi-sub{font-size:11px;color:var(--muted);font-family:var(--font-mono);}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;}
+.chart-card.full{grid-column:1/-1;}
+.chart-title{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:20px;}
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.video-table{width:100%;border-collapse:collapse;}
+.video-table th{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.video-table td{padding:12px 12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+.video-table tr:last-child td{border-bottom:none;}
+.video-table tr:hover td{background:var(--surface2);}
+.video-rank{font-family:var(--font-mono);font-size:12px;color:var(--muted);width:28px;}
+.video-thumb{width:56px;height:36px;border-radius:4px;object-fit:cover;background:var(--surface2);display:block;}
+.video-title-text{font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px;}
+.video-date{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--font-mono);}
+.mono{font-family:var(--font-mono);font-size:12px;color:var(--muted);}
+.mono.hi{color:var(--green);}
+.mono.twitch{color:var(--twitch);}
+.ai-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;}
+.ai-panel-header{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.ai-panel-title{font-family:var(--font-head);font-size:13px;font-weight:700;}
+.ai-panel-sub{font-size:11px;color:var(--muted);margin-left:auto;font-family:var(--font-mono);}
+.ai-body{padding:20px;}
+.ai-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;}
+.ai-tab{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;cursor:pointer;color:var(--muted);transition:all 0.15s;font-family:var(--font-body);}
+.ai-tab.active{background:var(--accent);border-color:var(--accent);color:white;}
+.ai-output{font-size:14px;line-height:1.8;color:var(--text);min-height:80px;white-space:pre-wrap;}
+.ai-output.loading{color:var(--muted);font-style:italic;}
+.btn-generate{background:transparent;border:1px solid var(--accent);border-radius:8px;padding:8px 18px;color:var(--accent);font-size:12px;cursor:pointer;font-family:var(--font-mono);transition:all 0.15s;margin-top:12px;letter-spacing:0.04em;}
+.btn-generate:hover{background:var(--accent);color:white;}
+.btn-generate:disabled{opacity:0.4;cursor:not-allowed;}
+.loading-bar{height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent));background-size:200%;animation:shimmer 1.2s infinite;border-radius:2px;margin-bottom:24px;}
+@keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fade-in{animation:fadeIn 0.4s ease forwards;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CAMPAIGNS PAGE ── */
+.campaign-layout{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start;}
+.campaign-sidebar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;position:sticky;top:110px;}
+.sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sidebar-title{font-family:var(--font-head);font-size:13px;font-weight:700;}
+.btn-icon{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font-body);transition:all 0.15s;}
+.btn-icon:hover{color:var(--text);border-color:var(--border2);}
+.campaign-tree{padding:8px 0;max-height:60vh;overflow-y:auto;}
+.tree-campaign{border-bottom:1px solid var(--border);}
+.tree-campaign:last-child{border-bottom:none;}
+.tree-campaign-header{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;font-weight:500;font-size:13px;transition:background 0.1s;}
+.tree-campaign-header:hover{background:var(--surface2);}
+.tree-campaign-header.active{color:var(--accent);}
+.tree-chevron{font-size:10px;color:var(--muted);transition:transform 0.2s;flex-shrink:0;}
+.tree-chevron.open{transform:rotate(90deg);}
+.tree-stop{padding:6px 14px 6px 32px;font-size:12px;color:var(--muted);cursor:pointer;transition:background 0.1s,color 0.1s;}
+.tree-stop:hover{background:var(--surface2);color:var(--text);}
+.tree-stop.active{color:var(--accent);background:rgba(255,68,68,0.05);}
+.campaign-main{}
+.campaign-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;color:var(--muted);}
+.campaign-empty-icon{font-size:32px;margin-bottom:12px;}
+.campaign-empty-text{font-size:14px;line-height:1.6;}
+
+/* Campaign detail */
+.stop-header{margin-bottom:20px;}
+.stop-title{font-family:var(--font-head);font-size:24px;font-weight:800;letter-spacing:-0.5px;}
+.stop-meta{font-size:12px;color:var(--muted);font-family:var(--font-mono);margin-top:4px;}
+.tournament-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;}
+.tournament-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.tournament-header:hover{background:var(--surface2);}
+.tournament-name{font-family:var(--font-head);font-size:14px;font-weight:700;}
+.tournament-meta{font-size:11px;color:var(--muted);font-family:var(--font-mono);}
+.platform-toggle{display:flex;gap:4px;}
+.ptog{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:var(--font-mono);color:var(--muted);transition:all 0.15s;}
+.ptog.yt.active{background:rgba(255,68,68,0.15);border-color:var(--accent);color:var(--accent);}
+.ptog.tw.active{background:rgba(145,71,255,0.15);border-color:var(--twitch);color:var(--twitch);}
+.days-table{width:100%;border-collapse:collapse;}
+.days-table th{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;padding:8px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.days-table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle;}
+.days-table tr:last-child td{border-bottom:none;}
+.days-table tr:hover td{background:var(--surface2);}
+.day-label{font-weight:500;font-family:var(--font-mono);font-size:12px;}
+.platform-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;flex-shrink:0;}
+.platform-dot.yt{background:var(--accent);}
+.platform-dot.tw{background:var(--twitch);}
+.tag-btn{background:transparent;border:1px dashed var(--border2);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--font-mono);transition:all 0.15s;}
+.tag-btn:hover{border-color:var(--accent);color:var(--accent);}
+.tagged-video{display:flex;align-items:center;gap:6px;font-size:11px;}
+.yt-badge{background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.2);color:#ff8888;border-radius:4px;padding:2px 6px;font-size:10px;font-family:var(--font-mono);}
+.tw-badge{background:rgba(145,71,255,0.1);border:1px solid rgba(145,71,255,0.2);color:#bb88ff;border-radius:4px;padding:2px 6px;font-size:10px;font-family:var(--font-mono);}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:28px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;}
+.modal-title{font-family:var(--font-head);font-size:18px;font-weight:700;margin-bottom:4px;}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+.search-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--font-mono);font-size:13px;outline:none;margin-bottom:12px;}
+.search-input:focus{border-color:var(--accent);}
+.search-results{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;}
+.search-result-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background 0.15s;border:1px solid transparent;}
+.search-result-item:hover{background:var(--surface2);border-color:var(--border);}
+.search-result-item.selected{background:rgba(255,68,68,0.08);border-color:var(--accent);}
+.result-thumb{width:48px;height:30px;border-radius:4px;object-fit:cover;background:var(--surface2);flex-shrink:0;}
+.result-title{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.result-date{font-size:11px;color:var(--muted);font-family:var(--font-mono);}
+.modal-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;}
+.btn-cancel{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 16px;color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--font-body);}
+.btn-confirm{background:var(--accent);border:none;border-radius:8px;padding:9px 18px;color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);}
+.btn-confirm:disabled{opacity:0.4;cursor:not-allowed;}
+.paste-area{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--font-mono);font-size:12px;outline:none;resize:vertical;min-height:80px;margin-bottom:8px;}
+.paste-area:focus{border-color:var(--accent);}
+.tab-switch{display:flex;gap:4px;margin-bottom:16px;}
+
+/* ── TWITCH PAGE ── */
+.twitch-import-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:40px;text-align:center;cursor:pointer;transition:border-color 0.2s;margin-bottom:20px;}
+.twitch-import-zone:hover,.twitch-import-zone.drag-over{border-color:var(--twitch);}
+.twitch-import-icon{font-size:28px;margin-bottom:10px;color:var(--twitch);}
+.twitch-import-text{font-size:14px;color:var(--muted);line-height:1.6;}
+.twitch-import-text strong{color:var(--text);}
+.twitch-stats-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+.tw-stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;flex:1;min-width:120px;}
+.tw-stat-label{font-family:var(--font-mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;}
+.tw-stat-value{font-family:var(--font-head);font-size:20px;font-weight:800;color:var(--twitch);}
+.compare-toggle{display:flex;gap:4px;margin-bottom:16px;}
+.ctog{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;color:var(--muted);font-family:var(--font-body);transition:all 0.15s;}
+.ctog.active{background:var(--surface);border-color:var(--border2);color:var(--text);}
+
+@media(max-width:768px){
+  .chart-grid,.demo-grid{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .campaign-layout{grid-template-columns:1fr;}
+  .campaign-sidebar{position:static;}
+  .setup-card{padding:28px 20px;}
+  .page{padding:16px;}
+  .topbar{padding:12px 16px;}
+  .nav-tabs{padding:0 16px;overflow-x:auto;}
+}
 </style>
 </head>
 <body>
 
-<!-- SETUP -->
+<!-- ══ SETUP ══ -->
 <div id="setup-screen">
   <div class="setup-card">
-    <div class="logo-mark">
-      <div class="logo-icon">▶</div>
-      <div class="logo-text">YT<span>Command</span></div>
-    </div>
+    <div class="logo-mark"><div class="logo-icon">▶</div><div class="logo-text">YT<span>Command</span></div></div>
     <h1 class="setup-title">Your YouTube analytics, automated.</h1>
-    <p class="setup-subtitle">Full revenue data, AI insights, and live metrics — no CSV exports. Uses OAuth 2.0 so revenue metrics are fully unlocked.</p>
-
+    <p class="setup-subtitle">Full revenue data, campaign reporting, Twitch data — no CSV exports required.</p>
     <div class="field-label">Step 1 — OAuth 2.0 Client ID <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console ↗</a></div>
     <input type="text" id="client-id" placeholder="xxxxxxxxxx.apps.googleusercontent.com" autocomplete="off">
-    <div class="field-hint">Credentials → Create Credentials → OAuth 2.0 Client ID → Web application. Set Authorised JavaScript origins and redirect URI to <strong id="this-origin"></strong></div>
-
+    <div class="field-hint">Credentials → OAuth 2.0 Client ID → Web application. Origins + redirect URI: <strong id="this-origin"></strong></div>
     <div class="field-label">OAuth 2.0 Client Secret</div>
     <input type="password" id="client-secret" placeholder="GOCSPX-…" autocomplete="off">
-    <div class="field-hint">Found on the same credentials page alongside your Client ID. Stays in your browser session only — never sent anywhere except Google's token endpoint.</div>
-
-    <div class="info-box"><strong>One-time setup:</strong> In Google Cloud, enable "YouTube Data API v3" and "YouTube Analytics API" (APIs &amp; Services → Library). Then create an OAuth 2.0 Client ID of type "Web application". No server needed — the entire OAuth flow runs in your browser using PKCE.</div>
-
+    <div class="field-hint">Found alongside your Client ID on the credentials page.</div>
+    <div class="info-box"><strong>One-time setup:</strong> Enable "YouTube Data API v3" and "YouTube Analytics API" in Google Cloud → APIs &amp; Services → Library.</div>
     <div class="field-label">Step 2 — Sign in with Google</div>
-    <div class="auth-status" id="auth-box">
-      <div class="auth-dot" id="auth-dot"></div>
-      <div><div class="auth-status-text" id="auth-text">Not signed in</div><div class="auth-status-sub" id="auth-sub">Click below to authenticate with your YouTube account</div></div>
-    </div>
+    <div class="auth-status" id="auth-box"><div class="auth-dot" id="auth-dot"></div><div><div class="auth-status-text" id="auth-text">Not signed in</div><div class="auth-status-sub" id="auth-sub">Click below to authenticate</div></div></div>
     <button class="btn-google" id="google-btn" onclick="startOAuth()">
       <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
       Sign in with Google
     </button>
-
     <hr class="divider">
     <div class="field-label">Step 3 — Claude API Key <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic Console ↗</a></div>
     <input type="password" id="claude-key" placeholder="sk-ant-..." autocomplete="off">
-    <div class="field-hint">Powers AI summaries, anomaly detection, and content ideas. Stays in your browser only.</div>
-
+    <div class="field-hint">Powers AI summaries, anomaly detection, and content ideas.</div>
     <button class="btn-primary" id="connect-btn" onclick="connectChannel()" disabled>Connect Channel →</button>
     <div id="error-msg"></div>
   </div>
 </div>
 
-<!-- DASHBOARD -->
+<!-- ══ DASHBOARD SHELL ══ -->
 <div id="dashboard">
   <nav class="topbar">
     <div style="display:flex;align-items:center;gap:8px;">
@@ -175,14 +276,20 @@
     </div>
     <div class="oauth-badge">✓ OAuth · Revenue unlocked</div>
     <div class="topbar-right">
-      <button class="btn-sm" onclick="loadDashboard()">↻ Refresh</button>
+      <button class="btn-sm" onclick="loadAnalyticsPage()">↻ Refresh</button>
       <button class="btn-sm" onclick="disconnect()">Disconnect</button>
     </div>
   </nav>
 
-  <div class="main">
-    <div id="lb-wrap"></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('analytics',this)"><span class="tab-icon">📊</span>Analytics</button>
+    <button class="nav-tab" onclick="showPage('campaigns',this)"><span class="tab-icon">🏆</span>Campaigns</button>
+    <button class="nav-tab" onclick="showPage('twitch',this)"><span class="tab-icon">🟣</span>Twitch</button>
+  </div>
 
+  <!-- ── ANALYTICS PAGE ── -->
+  <div class="page active" id="page-analytics">
+    <div id="lb-wrap"></div>
     <div class="controls-bar">
       <span class="controls-label">Period</span>
       <button class="btn-sm active" onclick="setPreset('28d',this)">Last 28 days</button>
@@ -194,11 +301,7 @@
       <span style="color:var(--muted);font-size:12px;">→</span>
       <input type="date" class="date-range-input" id="date-end" onchange="customRange()">
     </div>
-
-    <div class="section-head">
-      <div class="section-title">Key metrics</div>
-      <div class="section-pill" id="period-label">Last 28 days</div>
-    </div>
+    <div class="section-head"><div class="section-title">Key metrics</div><div class="section-pill" id="period-label">Last 28 days</div></div>
     <div class="kpi-grid">
       <div class="kpi-card" style="--kpi-color:var(--blue)"><div class="kpi-label">Views</div><div class="kpi-value" id="k-views">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--purple)"><div class="kpi-label">Watch time (hrs)</div><div class="kpi-value" id="k-watch">—</div></div>
@@ -207,35 +310,27 @@
       <div class="kpi-card" style="--kpi-color:var(--accent)"><div class="kpi-label">CTR</div><div class="kpi-value" id="k-ctr">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--blue)"><div class="kpi-label">Subscribers gained</div><div class="kpi-value" id="k-subs">—</div></div>
     </div>
-
     <div class="section-head"><div class="section-title">Performance over time</div></div>
     <div class="chart-grid">
       <div class="chart-card full"><div class="chart-title">Views &amp; Watch Time</div><canvas id="c-views" height="100"></canvas></div>
       <div class="chart-card"><div class="chart-title">Estimated Revenue (USD/day)</div><canvas id="c-rev" height="160"></canvas></div>
       <div class="chart-card"><div class="chart-title">CTR &amp; Impressions</div><canvas id="c-ctr" height="160"></canvas></div>
     </div>
-
     <div class="section-head"><div class="section-title">Audience demographics</div></div>
     <div class="demo-grid">
       <div class="chart-card"><div class="chart-title">Age &amp; Gender</div><canvas id="c-age" height="200"></canvas></div>
       <div class="chart-card"><div class="chart-title">Top countries by views</div><canvas id="c-geo" height="200"></canvas></div>
     </div>
-
     <div class="section-head"><div class="section-title">Top performing videos</div><div class="section-pill">by revenue</div></div>
     <div class="chart-card" style="padding:0;overflow:hidden;margin-bottom:8px;">
       <table class="video-table">
-        <thead><tr><th>#</th><th>Thumbnail</th><th>Title</th><th>Views</th><th>Watch time</th><th>Revenue</th><th>CTR</th></tr></thead>
+        <thead><tr><th>#</th><th>Thumb</th><th>Title</th><th>Views</th><th>Watch time</th><th>Revenue</th><th>CTR</th></tr></thead>
         <tbody id="v-tbody"></tbody>
       </table>
     </div>
-
     <div class="section-head"><div class="section-title">AI analysis</div><div class="section-pill">Claude</div></div>
     <div class="ai-panel">
-      <div class="ai-panel-header">
-        <div class="ai-dot"></div>
-        <div class="ai-panel-title">Claude is ready</div>
-        <div class="ai-panel-sub">claude-sonnet-4-20250514</div>
-      </div>
+      <div class="ai-panel-header"><div class="ai-dot"></div><div class="ai-panel-title">Claude is ready</div><div class="ai-panel-sub">claude-sonnet-4-20250514</div></div>
       <div class="ai-body">
         <div class="ai-tabs">
           <button class="ai-tab active" onclick="selTab('summary',this)">Performance summary</button>
@@ -247,18 +342,143 @@
       </div>
     </div>
   </div>
+
+  <!-- ── CAMPAIGNS PAGE ── -->
+  <div class="page" id="page-campaigns">
+    <div class="section-head" style="margin-top:0;">
+      <div class="section-title">Campaign reporting</div>
+      <div class="section-pill">EPT hierarchy</div>
+    </div>
+    <div class="campaign-layout">
+      <!-- Sidebar tree -->
+      <div class="campaign-sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-title">Stops</span>
+          <button class="btn-icon" onclick="openNewStopModal()">+ New stop</button>
+        </div>
+        <div class="campaign-tree" id="campaign-tree">
+          <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">No stops yet.<br>Import Twitch data or add a stop manually.</div>
+        </div>
+      </div>
+      <!-- Main area -->
+      <div class="campaign-main" id="campaign-main">
+        <div class="campaign-empty">
+          <div class="campaign-empty-icon">🏆</div>
+          <div class="campaign-empty-text">Select a stop from the sidebar to view its campaign data.<br><br>Each stop groups tournaments and days, comparing YouTube VOD and Twitch live metrics side by side.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TWITCH PAGE ── */
+  <div class="page" id="page-twitch">
+    <div class="section-head" style="margin-top:0;">
+      <div class="section-title">Twitch data</div>
+      <div class="section-pill purple">Import &amp; manage</div>
+    </div>
+
+    <!-- Import zone -->
+    <div class="twitch-import-zone" id="tw-drop-zone" onclick="document.getElementById('tw-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleTwitchDrop(event)">
+      <div class="twitch-import-icon">🟣</div>
+      <div class="twitch-import-text"><strong>Drop your Twitch CSV here</strong> or click to browse<br>One row per stream · CEN channel only · columns auto-detected</div>
+    </div>
+    <input type="file" id="tw-file-input" accept=".csv" style="display:none" onchange="handleTwitchFile(this)">
+
+    <!-- Stats bar (shown after import) -->
+    <div id="tw-stats-bar" style="display:none;">
+      <div class="twitch-stats-bar" id="tw-kpi-bar"></div>
+      <div class="section-head"><div class="section-title">All streams</div><div id="tw-record-count" class="section-pill"></div><button class="btn-sm" style="margin-left:auto;" onclick="clearTwitchData()">Clear data</button></div>
+      <div class="chart-card" style="padding:0;overflow:hidden;margin-bottom:8px;">
+        <table class="video-table" id="tw-table">
+          <thead><tr><th>Series</th><th>Stop</th><th>Tournament</th><th>Date</th><th>Avg viewers</th><th>Peak viewers</th><th>Live views</th><th>Unique viewers</th><th>Hours watched</th><th>Duration</th><th>New followers</th></tr></thead>
+          <tbody id="tw-tbody"></tbody>
+        </table>
+      </div>
+      <div class="section-head"><div class="section-title">Performance over time</div></div>
+      <div class="chart-grid">
+        <div class="chart-card full"><div class="chart-title">Peak &amp; Average viewers by stream</div><canvas id="c-tw-viewers" height="100"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Hours watched per stream</div><canvas id="c-tw-hours" height="160"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Live views per stream</div><canvas id="c-tw-views" height="160"></canvas></div>
+      </div>
+    </div>
+    <div id="tw-empty" style="padding:40px;text-align:center;color:var(--muted);font-size:13px;">Import your Twitch CSV above to get started. Data is stored locally in your browser.</div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<!-- Tag video modal -->
+<div class="modal-overlay" id="tag-modal">
+  <div class="modal">
+    <div class="modal-title" id="tag-modal-title">Tag a YouTube video</div>
+    <div class="modal-sub" id="tag-modal-sub">Search or paste a video URL/ID</div>
+    <div class="tab-switch">
+      <button class="ai-tab active" onclick="switchTagTab('search',this)">Search</button>
+      <button class="ai-tab" onclick="switchTagTab('paste',this)">Paste URL / ID</button>
+    </div>
+    <div id="tag-search-panel">
+      <input type="text" class="search-input" id="tag-search-input" placeholder="Search your videos…" oninput="searchVideos(this.value)">
+      <div class="search-results" id="tag-search-results"></div>
+    </div>
+    <div id="tag-paste-panel" style="display:none">
+      <textarea class="paste-area" id="tag-paste-input" placeholder="Paste one YouTube video URL or ID per line&#10;https://youtube.com/watch?v=xxxxx&#10;xxxxx"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('tag-modal')">Cancel</button>
+      <button class="btn-confirm" id="tag-confirm-btn" onclick="confirmTag()">Tag video</button>
+    </div>
+  </div>
+</div>
+
+<!-- New stop modal -->
+<div class="modal-overlay" id="stop-modal">
+  <div class="modal">
+    <div class="modal-title">Add a new stop</div>
+    <div class="modal-sub">Manually create a stop within the EPT campaign</div>
+    <div class="field-label">Stop name (city)</div>
+    <input type="text" id="new-stop-name" placeholder="e.g. Barcelona" style="margin-bottom:12px;">
+    <div class="field-label">Year</div>
+    <input type="text" id="new-stop-year" placeholder="e.g. 2024" style="margin-bottom:12px;">
+    <div class="field-label">Tournaments (one per line)</div>
+    <textarea class="paste-area" id="new-stop-tournaments" placeholder="Main Event&#10;Spin &amp; Go Championship Live&#10;Super High Roller"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('stop-modal')">Cancel</button>
+      <button class="btn-confirm" onclick="confirmNewStop()">Create stop</button>
+    </div>
+  </div>
 </div>
 
 <script>
-// ── STATE ──
-let TOKEN='', CLAUDE='', CHANNEL='', CLIENT='';
-let S='', E='';
-let data={}, CH={}, activeTab='summary';
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let TOKEN='',CLAUDE='',CHANNEL='',CLIENT='';
+let S='',E='';
+let ytData={},CH={},activeTab='summary';
+// Campaign state — persisted to localStorage
+let campaigns={}; // { 'Paris-2024': { stop:'Paris', year:2024, tournaments:{ 'Main Event': { days:{ 'FT-1':{ yt:[videoId,...], tw:[rowIdx,...] } } } } } }
+let twitchRows=[]; // parsed CSV rows (CEN only)
+let tagCtx={}; // context for tag modal { stopKey, tournament, day }
+let tagTabMode='search';
+let selectedTagVideoId=null;
+let allYTVideos=[]; // cache of channel videos for search
 
-// Show this page's origin as the redirect URI hint
-document.getElementById('this-origin').textContent = location.origin + location.pathname;
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+document.getElementById('this-origin').textContent=location.origin+location.pathname;
 
-// ── DATE ──
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='campaigns')renderCampaignTree();
+  if(name==='twitch')renderTwitchPage();
+}
+
+// ══════════════════════════════════════════════
+// DATE HELPERS
+// ══════════════════════════════════════════════
 const today=()=>new Date().toISOString().split('T')[0];
 const ago=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().split('T')[0];};
 const mo1=()=>{const d=new Date();d.setDate(1);return d.toISOString().split('T')[0];};
@@ -268,111 +488,77 @@ function setPreset(p,btn){
   document.querySelectorAll('.controls-bar .btn-sm').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   const t=today();
-  if(p==='28d'){S=ago(28);E=t;}
-  if(p==='90d'){S=ago(90);E=t;}
-  if(p==='month'){S=mo1();E=t;}
-  if(p==='year'){S=yr1();E=t;}
-  document.getElementById('date-start').value=S;
-  document.getElementById('date-end').value=E;
-  loadDashboard();
+  if(p==='28d'){S=ago(28);E=t;}if(p==='90d'){S=ago(90);E=t;}
+  if(p==='month'){S=mo1();E=t;}if(p==='year'){S=yr1();E=t;}
+  document.getElementById('date-start').value=S;document.getElementById('date-end').value=E;
+  loadAnalyticsPage();
 }
 function customRange(){
-  const s=document.getElementById('date-start').value;
-  const e=document.getElementById('date-end').value;
-  if(s&&e&&s<=e){
-    document.querySelectorAll('.controls-bar .btn-sm').forEach(b=>b.classList.remove('active'));
-    S=s;E=e;loadDashboard();
-  }
+  const s=document.getElementById('date-start').value,e=document.getElementById('date-end').value;
+  if(s&&e&&s<=e){document.querySelectorAll('.controls-bar .btn-sm').forEach(b=>b.classList.remove('active'));S=s;E=e;loadAnalyticsPage();}
 }
 
-// ── PKCE / OAUTH ──
+// ══════════════════════════════════════════════
+// OAUTH / AUTH
+// ══════════════════════════════════════════════
 const b64u=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-async function pkce(){
-  const v=b64u(crypto.getRandomValues(new Uint8Array(32)));
-  const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));
-  return{v,c:b64u(d)};
-}
+async function pkce(){const v=b64u(crypto.getRandomValues(new Uint8Array(32)));const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));return{v,c:b64u(d)};}
 
 async function startOAuth(){
   CLIENT=document.getElementById('client-id').value.trim();
   if(!CLIENT){showErr('Enter your OAuth 2.0 Client ID first.');return;}
-  const{v,c}=await pkce();
-  const st=b64u(crypto.getRandomValues(new Uint8Array(16)));
-  sessionStorage.setItem('pkce_v',v);
-  sessionStorage.setItem('oauth_st',st);
+  const{v,c}=await pkce();const st=b64u(crypto.getRandomValues(new Uint8Array(16)));
+  sessionStorage.setItem('pkce_v',v);sessionStorage.setItem('oauth_st',st);
   sessionStorage.setItem('client_id',CLIENT);
   sessionStorage.setItem('client_secret',document.getElementById('client-secret').value.trim());
   sessionStorage.setItem('claude_key',document.getElementById('claude-key').value.trim());
   const redir=location.origin+location.pathname;
-  const p=new URLSearchParams({
-    client_id:CLIENT,redirect_uri:redir,response_type:'code',
-    scope:'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly https://www.googleapis.com/auth/yt-analytics-monetary.readonly',
-    access_type:'offline',prompt:'consent',state:st,code_challenge:c,code_challenge_method:'S256'
-  });
-  window.location='https://accounts.google.com/o/oauth2/v2/auth?'+p;
+  window.location='https://accounts.google.com/o/oauth2/v2/auth?'+new URLSearchParams({client_id:CLIENT,redirect_uri:redir,response_type:'code',scope:'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly https://www.googleapis.com/auth/yt-analytics-monetary.readonly',access_type:'offline',prompt:'consent',state:st,code_challenge:c,code_challenge_method:'S256'});
 }
-
 async function exchangeCode(code){
-  const r=await fetch('https://oauth2.googleapis.com/token',{
-    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:new URLSearchParams({client_id:sessionStorage.getItem('client_id'),client_secret:sessionStorage.getItem('client_secret')||'',redirect_uri:location.origin+location.pathname,grant_type:'authorization_code',code,code_verifier:sessionStorage.getItem('pkce_v')})
-  });
-  const d=await r.json();
-  if(d.error)throw new Error(d.error_description||d.error);
-  return d.access_token;
+  const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:sessionStorage.getItem('client_id'),client_secret:sessionStorage.getItem('client_secret')||'',redirect_uri:location.origin+location.pathname,grant_type:'authorization_code',code,code_verifier:sessionStorage.getItem('pkce_v')})});
+  const d=await r.json();if(d.error)throw new Error(d.error_description||d.error);return d.access_token;
 }
-
 async function handleCallback(){
-  const p=new URLSearchParams(location.search);
-  const code=p.get('code'),st=p.get('state'),err=p.get('error');
+  const p=new URLSearchParams(location.search);const code=p.get('code'),st=p.get('state'),err=p.get('error');
   history.replaceState({},'',location.pathname);
   if(err){showErr('Google sign-in was declined. Please try again.');return;}
   if(!code)return;
-  if(st!==sessionStorage.getItem('oauth_st')){showErr('Security state mismatch. Please try again.');return;}
-  setAuth('loading','Signing in…','Exchanging authorisation code…');
+  if(st!==sessionStorage.getItem('oauth_st')){showErr('Security state mismatch.');return;}
+  setAuth('loading','Signing in…','Exchanging code…');
   try{
-    TOKEN=await exchangeCode(code);
-    CLIENT=sessionStorage.getItem('client_id')||'';
-    CLAUDE=sessionStorage.getItem('claude_key')||'';
+    TOKEN=await exchangeCode(code);CLIENT=sessionStorage.getItem('client_id')||'';CLAUDE=sessionStorage.getItem('claude_key')||'';
     sessionStorage.setItem('oauth_token',TOKEN);
     document.getElementById('client-id').value=CLIENT;
     document.getElementById('client-secret').value=sessionStorage.getItem('client_secret')||'';
     document.getElementById('claude-key').value=CLAUDE;
     document.getElementById('connect-btn').disabled=false;
-    document.getElementById('google-btn').disabled=true;
-    document.getElementById('google-btn').textContent='✓ Signed in with Google';
+    document.getElementById('google-btn').disabled=true;document.getElementById('google-btn').textContent='✓ Signed in';
     setAuth('ok','Signed in with Google','Revenue metrics unlocked ✓');
-  }catch(e){setAuth('','Sign-in failed',e.message);showErr('Token exchange failed: '+e.message+'. Ensure this page URL is listed as an Authorised redirect URI in Google Cloud Console.');}
+  }catch(e){setAuth('','Sign-in failed',e.message);showErr('Token exchange failed: '+e.message);}
 }
-
 function setAuth(cls,txt,sub){
   document.getElementById('auth-box').className='auth-status'+(cls?' '+cls:'');
   document.getElementById('auth-dot').className='auth-dot'+(cls==='ok'?' green':'');
-  document.getElementById('auth-text').textContent=txt;
-  document.getElementById('auth-sub').textContent=sub;
+  document.getElementById('auth-text').textContent=txt;document.getElementById('auth-sub').textContent=sub;
 }
 
-// ── CONNECT ──
+// ══════════════════════════════════════════════
+// CONNECT
+// ══════════════════════════════════════════════
 async function connectChannel(){
   CLAUDE=document.getElementById('claude-key').value.trim();
   if(!TOKEN){showErr('Sign in with Google first.');return;}
   if(!CLAUDE){showErr('Enter your Claude API key.');return;}
-  const btn=document.getElementById('connect-btn');
-  btn.disabled=true;btn.textContent='Connecting…';hideErr();
+  const btn=document.getElementById('connect-btn');btn.disabled=true;btn.textContent='Connecting…';hideErr();
   try{
     const r=await gapi('/youtube/v3/channels?part=snippet,statistics&mine=true');
-    if(!r.items?.length)throw new Error('No channel found for this Google account.');
-    const ch=r.items[0];
-    CHANNEL=ch.id;
-    sessionStorage.setItem('channel_id',ch.id);
-    sessionStorage.setItem('channel_snippet',JSON.stringify(ch.snippet));
-    sessionStorage.setItem('channel_stats',JSON.stringify(ch.statistics));
-    sessionStorage.setItem('claude_key',CLAUDE);
-    setChannelBadge(ch.snippet,ch.statistics);
-    showDashboard();
+    if(!r.items?.length)throw new Error('No channel found.');
+    const ch=r.items[0];CHANNEL=ch.id;
+    sessionStorage.setItem('channel_id',ch.id);sessionStorage.setItem('channel_snippet',JSON.stringify(ch.snippet));sessionStorage.setItem('channel_stats',JSON.stringify(ch.statistics));sessionStorage.setItem('claude_key',CLAUDE);
+    setChannelBadge(ch.snippet,ch.statistics);showDashboard();
   }catch(e){showErr(e.message||'Connection failed.');btn.disabled=false;btn.textContent='Connect Channel →';}
 }
-
 function setChannelBadge(sn,st){
   document.getElementById('ch-name').textContent=sn.title||'—';
   document.getElementById('ch-subs').textContent=fmt(st?.subscriberCount)+' subscribers';
@@ -380,88 +566,78 @@ function setChannelBadge(sn,st){
   if(sn.thumbnails?.default?.url)av.innerHTML=`<img src="${sn.thumbnails.default.url}" alt="">`;
   else av.textContent=(sn.title||'?')[0].toUpperCase();
 }
-
 function showDashboard(){
   document.getElementById('setup-screen').style.display='none';
   document.getElementById('dashboard').style.display='block';
   S=ago(28);E=today();
-  document.getElementById('date-start').value=S;
-  document.getElementById('date-end').value=E;
-  loadDashboard();
+  document.getElementById('date-start').value=S;document.getElementById('date-end').value=E;
+  loadCampaignsFromStorage();loadTwitchFromStorage();
+  loadAnalyticsPage();
 }
-
 function disconnect(){
-  sessionStorage.clear();
-  TOKEN=CLAUDE=CHANNEL=CLIENT='';
+  sessionStorage.clear();TOKEN=CLAUDE=CHANNEL=CLIENT='';
   document.getElementById('setup-screen').style.display='flex';
   document.getElementById('dashboard').style.display='none';
-  document.getElementById('client-id').value='';
-  document.getElementById('client-secret').value='';
-  document.getElementById('claude-key').value='';
+  ['client-id','client-secret','claude-key'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('connect-btn').disabled=true;
   document.getElementById('google-btn').disabled=false;
   document.getElementById('google-btn').innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Sign in with Google`;
-  setAuth('','Not signed in','Click below to authenticate with your YouTube account');
-  Object.values(CH).forEach(c=>c.destroy&&c.destroy());CH={};data={};
+  setAuth('','Not signed in','Click below to authenticate');
+  Object.values(CH).forEach(c=>c.destroy&&c.destroy());CH={};ytData={};
 }
 
-// ── API ──
+// ══════════════════════════════════════════════
+// API HELPERS
+// ══════════════════════════════════════════════
 async function gapi(path,params={}){
-  const u=new URL('https://www.googleapis.com'+path);
-  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
-  const r=await fetch(u,{headers:{Authorization:'Bearer '+TOKEN}});
-  const d=await r.json();
-  if(d.error)throw new Error(d.error.message);
-  return d;
+  const u=new URL('https://www.googleapis.com'+path);Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
+  const r=await fetch(u,{headers:{Authorization:'Bearer '+TOKEN}});const d=await r.json();
+  if(d.error)throw new Error(d.error.message);return d;
 }
 async function yta(metrics,dims,extra={}){
   return gapi('/youtube/analytics/v2/reports',{ids:'channel=='+CHANNEL,startDate:S,endDate:E,metrics,...(dims?{dimensions:dims}:{}), ...extra});
 }
 
-// ── LOAD ──
-async function loadDashboard(){
+// ══════════════════════════════════════════════
+// ANALYTICS PAGE
+// ══════════════════════════════════════════════
+async function loadAnalyticsPage(){
   document.getElementById('lb-wrap').innerHTML='<div class="loading-bar"></div>';
-  document.getElementById('ai-out').textContent='Select a tab and click Generate to get Claude\'s analysis of your channel data.';
+  document.getElementById('ai-out').textContent='Select a tab and click Generate to get Claude\'s analysis.';
   const s=new Date(S).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
   const e=new Date(E).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
   document.getElementById('period-label').textContent=s+' – '+e;
   try{await Promise.all([loadAnalytics(),loadTopVideos()]);}catch(e){console.error(e);}
   document.getElementById('lb-wrap').innerHTML='';
 }
-
 async function loadAnalytics(){
   const t=await yta('views,estimatedMinutesWatched,subscribersGained,impressions,impressionClickThroughRate,estimatedRevenue,playbackBasedCpm');
   const[views,mins,subs,impr,ctr,rev,cpm]=t.rows?.[0]||[];
-  kpi('k-views',fmt(views));
-  kpi('k-watch',mins?fmt(Math.round(mins/60)):'—');
-  kpi('k-rev',rev!=null?'$'+parseFloat(rev).toFixed(2):'—');
-  kpi('k-cpm',cpm!=null?'$'+parseFloat(cpm).toFixed(2):'—');
-  kpi('k-ctr',ctr!=null?(ctr*100).toFixed(2)+'%':'—');
-  kpi('k-subs',fmt(subs));
-  data.totals={views,mins,subs,impr,ctr,rev,cpm};
-
+  kpi('k-views',fmt(views));kpi('k-watch',mins?fmt(Math.round(mins/60)):'—');
+  kpi('k-rev',rev!=null?'$'+parseFloat(rev).toFixed(2):'—');kpi('k-cpm',cpm!=null?'$'+parseFloat(cpm).toFixed(2):'—');
+  kpi('k-ctr',ctr!=null?(ctr*100).toFixed(2)+'%':'—');kpi('k-subs',fmt(subs));
+  ytData.totals={views,mins,subs,impr,ctr,rev,cpm};
   const ts=await yta('views,estimatedMinutesWatched,estimatedRevenue,impressions,impressionClickThroughRate','day');
-  data.ts=ts.rows||[];renderTime(ts.rows||[]);
-
-  try{const demo=await yta('viewerPercentage','ageGroup,gender');data.demo=demo.rows||[];renderDemo(demo.rows||[]);}catch(e){console.warn('Demo:',e.message);}
-  try{const geo=await yta('views','country',{sort:'-views',maxResults:10});data.geo=geo.rows||[];renderGeo(geo.rows||[]);}catch(e){console.warn('Geo:',e.message);}
+  ytData.ts=ts.rows||[];renderTime(ts.rows||[]);
+  try{const demo=await yta('viewerPercentage','ageGroup,gender');renderDemo(demo.rows||[]);}catch(e){}
+  try{const geo=await yta('views','country',{sort:'-views',maxResults:10});renderGeo(geo.rows||[]);}catch(e){}
 }
-
 async function loadTopVideos(){
   try{
     const top=await yta('views,estimatedMinutesWatched,estimatedRevenue,impressionClickThroughRate','video',{sort:'-estimatedRevenue',maxResults:10});
     const rows=top.rows||[];
-    data.topVideos=rows;
-    if(!rows.length){document.getElementById('v-tbody').innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">No video data for this period.</td></tr>';return;}
+    if(!rows.length){document.getElementById('v-tbody').innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">No video data.</td></tr>';return;}
     const ids=rows.map(r=>r[0]).join(',');
     const vd=await gapi('/youtube/v3/videos',{part:'snippet',id:ids});
     const map={};(vd.items||[]).forEach(v=>map[v.id]=v.snippet);
     const enriched=rows.map(r=>({id:r[0],sn:map[r[0]],m:r.slice(1)}));
-    data.topEnriched=enriched;renderVideos(enriched);
-  }catch(e){console.warn('Top videos:',e.message);document.getElementById('v-tbody').innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">'+e.message+'</td></tr>';}
+    ytData.topEnriched=enriched;renderVideos(enriched);
+  }catch(e){document.getElementById('v-tbody').innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">'+e.message+'</td></tr>';}
 }
 
-// ── CHARTS ──
+// ══════════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════════
 function mk(k,t,d,o){if(CH[k]){CH[k].destroy();delete CH[k];}const el=document.getElementById('c-'+k);if(el)CH[k]=new Chart(el.getContext('2d'),{type:t,data:d,options:o});}
 function co(y,y1){
   const b={responsive:true,plugins:{legend:{labels:{color:'#7a7a8e',font:{family:'DM Mono',size:11},boxWidth:12,padding:12}},tooltip:{backgroundColor:'#18181f',titleColor:'#f0f0f5',bodyColor:'#7a7a8e',borderColor:'rgba(255,255,255,0.07)',borderWidth:1}},scales:{x:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10},maxTicksLimit:8},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'},title:{display:!!y,text:y||'',color:'#7a7a8e',font:{size:10}}}}};
@@ -479,54 +655,401 @@ function renderDemo(rows){
   const L=Object.keys(g).map(a=>a.replace('age','').replace('_','–'));
   mk('age','bar',{labels:L,datasets:[{label:'Male',data:Object.values(g).map(x=>x.m),backgroundColor:'rgba(68,136,255,0.7)',borderRadius:3},{label:'Female',data:Object.values(g).map(x=>x.f),backgroundColor:'rgba(255,68,68,0.7)',borderRadius:3}]},co('% viewers'));
 }
-function renderGeo(rows){
-  mk('geo','bar',{labels:rows.map(r=>r[0]),datasets:[{label:'Views',data:rows.map(r=>r[1]),backgroundColor:'rgba(170,102,255,0.7)',borderRadius:3}]},{...co('Views'),indexAxis:'y'});
-}
+function renderGeo(rows){mk('geo','bar',{labels:rows.map(r=>r[0]),datasets:[{label:'Views',data:rows.map(r=>r[1]),backgroundColor:'rgba(170,102,255,0.7)',borderRadius:3}]},{...co('Views'),indexAxis:'y'});}
 function renderVideos(enriched){
   document.getElementById('v-tbody').innerHTML=enriched.map((v,i)=>{
-    const[views,mins,rev,ctr]=v.m;
-    const title=v.sn?.title||v.id;
+    const[views,mins,rev,ctr]=v.m;const title=v.sn?.title||v.id;
     const thumb=v.sn?.thumbnails?.medium?.url||v.sn?.thumbnails?.default?.url||'';
     const date=v.sn?.publishedAt?new Date(v.sn.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
-    return`<tr><td class="video-rank">${i+1}</td><td><img class="video-thumb" src="${thumb}" alt="" loading="lazy"></td><td style="max-width:280px"><div class="video-title-text" title="${title.replace(/"/g,'&quot;')}">${title}</div><div class="video-date">${date}</div></td><td class="mono">${fmt(views)}</td><td class="mono">${mins?fmt(Math.round(mins/60))+'h':'—'}</td><td class="mono hi">${rev!=null?'$'+parseFloat(rev).toFixed(2):'—'}</td><td class="mono">${ctr!=null?(parseFloat(ctr)*100).toFixed(2)+'%':'—'}</td></tr>`;
+    return`<tr><td class="video-rank">${i+1}</td><td><img class="video-thumb" src="${thumb}" alt="" loading="lazy"></td><td style="max-width:240px"><div class="video-title-text" title="${title.replace(/"/g,'&quot;')}">${title}</div><div class="video-date">${date}</div></td><td class="mono">${fmt(views)}</td><td class="mono">${mins?fmt(Math.round(mins/60))+'h':'—'}</td><td class="mono hi">${rev!=null?'$'+parseFloat(rev).toFixed(2):'—'}</td><td class="mono">${ctr!=null?(parseFloat(ctr)*100).toFixed(2)+'%':'—'}</td></tr>`;
   }).join('');
 }
 
-function kpi(id,v){const el=document.getElementById(id);if(el){el.textContent=v;el.classList.add('fade-in');}}
-function fmt(n){if(n==null||isNaN(n))return'—';n=parseInt(n);if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toLocaleString();}
-function showErr(m){const e=document.getElementById('error-msg');e.textContent=m;e.style.display='block';}
-function hideErr(){document.getElementById('error-msg').style.display='none';}
-
-// ── AI ──
+// ══════════════════════════════════════════════
+// AI
+// ══════════════════════════════════════════════
 function selTab(tab,btn){activeTab=tab;document.querySelectorAll('.ai-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('ai-out').textContent='Click Generate to get Claude\'s analysis.';}
 async function generateAI(){
   const btn=document.getElementById('ai-btn'),out=document.getElementById('ai-out');
   btn.disabled=true;out.className='ai-output loading';out.innerHTML='<span class="spinner"></span> Claude is analysing your data…';
-  const t=data.totals||{};
-  const tops=(data.topEnriched||[]).slice(0,5).map(v=>v.sn?.title||v.id).join(', ');
-  const ctx=`YouTube channel analytics (${S} to ${E})
-Views: ${fmt(t.views)}
-Watch time (hours): ${fmt(t.mins?Math.round(t.mins/60):null)}
-Estimated revenue: $${t.rev!=null?t.rev.toFixed(2):'N/A'}
-CPM: $${t.cpm!=null?t.cpm.toFixed(2):'N/A'}
-CTR: ${t.ctr!=null?(t.ctr*100).toFixed(2)+'%':'N/A'}
-Subscribers gained: ${fmt(t.subs)}
-Top performing videos: ${tops||'N/A'}`;
-  const prompts={
-    summary:`You are a YouTube analytics expert. Write a concise executive summary (3-4 paragraphs) covering overall performance, what's working, what needs attention, and one key takeaway for the brand.\n\n${ctx}`,
-    anomalies:`You are a YouTube analytics expert. Identify notable anomalies or unexpected patterns. For each, explain what it might indicate and what action to consider. Format as a bulleted list.\n\n${ctx}`,
-    ideas:`You are a YouTube content strategist. Suggest 5 specific video ideas based on this channel's performance and top videos. For each: a compelling title, the hook/angle, and why it should perform well.\n\n${ctx}`
-  };
+  const t=ytData.totals||{};const tops=(ytData.topEnriched||[]).slice(0,5).map(v=>v.sn?.title||v.id).join(', ');
+  const ctx=`YouTube channel analytics (${S} to ${E})\nViews: ${fmt(t.views)}\nWatch time (hours): ${fmt(t.mins?Math.round(t.mins/60):null)}\nEstimated revenue: $${t.rev!=null?t.rev.toFixed(2):'N/A'}\nCPM: $${t.cpm!=null?t.cpm.toFixed(2):'N/A'}\nCTR: ${t.ctr!=null?(t.ctr*100).toFixed(2)+'%':'N/A'}\nSubscribers gained: ${fmt(t.subs)}\nTop videos: ${tops||'N/A'}`;
+  const prompts={summary:`You are a YouTube analytics expert. Write a concise executive summary (3-4 paragraphs) covering overall performance, what's working, what needs attention, and one key takeaway.\n\n${ctx}`,anomalies:`You are a YouTube analytics expert. Identify notable anomalies or unexpected patterns. For each, explain what it might indicate and what action to consider. Format as a bulleted list.\n\n${ctx}`,ideas:`You are a YouTube content strategist. Suggest 5 specific video ideas based on this channel's performance. For each: a compelling title, the hook/angle, and why it should perform well.\n\n${ctx}`};
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompts[activeTab]}]})});
-    const d=await r.json();
-    if(d.error)throw new Error(d.error.message);
+    const d=await r.json();if(d.error)throw new Error(d.error.message);
     out.className='ai-output fade-in';out.textContent=d.content?.[0]?.text||'No response.';
   }catch(e){out.className='ai-output';out.textContent='Error: '+(e.message||'Check your Claude API key.');}
   btn.disabled=false;
 }
 
-// ── INIT ──
+// ══════════════════════════════════════════════
+// TWITCH CSV IMPORT
+// ══════════════════════════════════════════════
+function handleTwitchDrop(e){
+  e.preventDefault();document.getElementById('tw-drop-zone').classList.remove('drag-over');
+  const file=e.dataTransfer.files[0];if(file)parseTwitchCSV(file);
+}
+function handleTwitchFile(input){const file=input.files[0];if(file)parseTwitchCSV(file);input.value='';}
+
+function parseTwitchCSV(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.split('\n').filter(l=>l.trim());
+    if(!lines.length)return;
+    const headers=parseCSVLine(lines[0]);
+    const rows=[];
+    for(let i=1;i<lines.length;i++){
+      const vals=parseCSVLine(lines[i]);
+      if(vals.length<3)continue;
+      const row={};headers.forEach((h,j)=>row[h.trim()]=vals[j]?.trim()||'');
+      // Filter CEN only
+      if((row['Channel']||'').toUpperCase()!=='CEN')continue;
+      // Filter out reruns
+      if(row['Rerun']&&row['Rerun'].trim()!=='')continue;
+      rows.push(row);
+    }
+    twitchRows=rows;
+    saveTwitchToStorage();
+    // Auto-populate campaign tree from Twitch data
+    autoPopulateCampaigns();
+    renderTwitchPage();
+  };
+  reader.readAsText(file);
+}
+
+function parseCSVLine(line){
+  const result=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){result.push(cur);cur='';}
+    else cur+=c;
+  }
+  result.push(cur);return result;
+}
+
+function autoPopulateCampaigns(){
+  twitchRows.forEach(row=>{
+    const series=row['Series']||'EPT';
+    const stop=row['Event']||'';
+    const rawTournament=row['Tournament']||'';
+    const year=row['Year']||'';
+    if(!stop)return;
+    const stopKey=stop+'-'+year;
+    if(!campaigns[stopKey])campaigns[stopKey]={stop,year,series,tournaments:{}};
+    // Normalise tournament name
+    const tournament=normaliseTournament(rawTournament);
+    if(!campaigns[stopKey].tournaments[tournament])campaigns[stopKey].tournaments[tournament]={days:{}};
+    // Normalise day label
+    const day=normaliseDay(rawTournament);
+    if(!campaigns[stopKey].tournaments[tournament].days[day])campaigns[stopKey].tournaments[tournament].days[day]={yt:[],tw:[]};
+    // Tag the Twitch row index
+    const idx=twitchRows.indexOf(row);
+    if(!campaigns[stopKey].tournaments[tournament].days[day].tw.includes(idx)){
+      campaigns[stopKey].tournaments[tournament].days[day].tw.push(idx);
+    }
+  });
+  saveCampaignsToStorage();
+}
+
+function normaliseTournament(raw){
+  // Strip day indicators from tournament name
+  return raw.replace(/\s*(FT-\d+|Day\s*\d+|Final\s*Table)\s*/i,'').trim()||raw;
+}
+function normaliseDay(raw){
+  const ft=raw.match(/FT-(\d+)/i);if(ft)return'FT-'+ft[1];
+  const day=raw.match(/Day\s*(\d+)/i);if(day)return'Day '+day[1];
+  if(/Final\s*Table/i.test(raw))return'Final Table';
+  return raw;
+}
+
+function renderTwitchPage(){
+  if(!twitchRows.length){
+    document.getElementById('tw-stats-bar').style.display='none';
+    document.getElementById('tw-empty').style.display='block';
+    return;
+  }
+  document.getElementById('tw-empty').style.display='none';
+  document.getElementById('tw-stats-bar').style.display='block';
+
+  // KPI bar
+  const totalHrs=twitchRows.reduce((a,r)=>a+numericVal(r['Hours Watched']),0);
+  const totalViews=twitchRows.reduce((a,r)=>a+numericVal(r['Live Views']),0);
+  const totalUnique=twitchRows.reduce((a,r)=>a+numericVal(r['Unique Viewers']),0);
+  const peakMax=Math.max(...twitchRows.map(r=>numericVal(r['Max. Viewers'])));
+  const avgAvg=Math.round(twitchRows.reduce((a,r)=>a+numericVal(r['Average Viewers']),0)/twitchRows.length);
+  document.getElementById('tw-kpi-bar').innerHTML=`
+    <div class="tw-stat"><div class="tw-stat-label">Total streams</div><div class="tw-stat-value">${twitchRows.length}</div></div>
+    <div class="tw-stat"><div class="tw-stat-label">Total hours watched</div><div class="tw-stat-value">${fmt(Math.round(totalHrs))}</div></div>
+    <div class="tw-stat"><div class="tw-stat-label">Total live views</div><div class="tw-stat-value">${fmt(totalViews)}</div></div>
+    <div class="tw-stat"><div class="tw-stat-label">Total unique viewers</div><div class="tw-stat-value">${fmt(totalUnique)}</div></div>
+    <div class="tw-stat"><div class="tw-stat-label">All-time peak viewers</div><div class="tw-stat-value">${fmt(peakMax)}</div></div>
+    <div class="tw-stat"><div class="tw-stat-label">Avg viewers (mean)</div><div class="tw-stat-value">${fmt(avgAvg)}</div></div>`;
+
+  document.getElementById('tw-record-count').textContent=twitchRows.length+' CEN streams';
+
+  // Table
+  document.getElementById('tw-tbody').innerHTML=twitchRows.map(r=>`<tr>
+    <td class="mono">${r['Series']||'—'}</td>
+    <td style="font-weight:500">${r['Event']||'—'}</td>
+    <td class="mono">${r['Tournament']||'—'}</td>
+    <td class="mono">${r['MM/YY']||'—'}</td>
+    <td class="mono twitch">${fmt(numericVal(r['Average Viewers']))}</td>
+    <td class="mono twitch">${fmt(numericVal(r['Max. Viewers']))}</td>
+    <td class="mono">${fmt(numericVal(r['Live Views']))}</td>
+    <td class="mono">${fmt(numericVal(r['Unique Viewers']))}</td>
+    <td class="mono">${fmt(Math.round(numericVal(r['Hours Watched'])))}</td>
+    <td class="mono">${r['Duration text']||'—'}</td>
+    <td class="mono">${fmt(numericVal(r['New Followers']))}</td>
+  </tr>`).join('');
+
+  // Charts
+  const labels=twitchRows.map(r=>(r['Event']||'')+' '+((r['Tournament']||'').slice(0,10)));
+  mk('tw-viewers','line',{labels,datasets:[
+    {label:'Peak viewers',data:twitchRows.map(r=>numericVal(r['Max. Viewers'])),borderColor:'#9147ff',backgroundColor:'rgba(145,71,255,0.08)',tension:0.4,pointRadius:2},
+    {label:'Avg viewers',data:twitchRows.map(r=>numericVal(r['Average Viewers'])),borderColor:'#c084fc',backgroundColor:'rgba(192,132,252,0.06)',tension:0.4,pointRadius:2}
+  ]},co('Viewers'));
+  mk('tw-hours','bar',{labels,datasets:[{label:'Hours watched',data:twitchRows.map(r=>Math.round(numericVal(r['Hours Watched']))),backgroundColor:'rgba(145,71,255,0.6)',borderColor:'#9147ff',borderWidth:1,borderRadius:3}]},co('Hours'));
+  mk('tw-views','bar',{labels,datasets:[{label:'Live views',data:twitchRows.map(r=>numericVal(r['Live Views'])),backgroundColor:'rgba(192,132,252,0.6)',borderColor:'#c084fc',borderWidth:1,borderRadius:3}]},co('Views'));
+}
+
+function clearTwitchData(){
+  if(!confirm('Clear all imported Twitch data? Campaign tags will be preserved.'))return;
+  twitchRows=[];localStorage.removeItem('ytcmd_twitch');renderTwitchPage();
+}
+
+function numericVal(v){
+  if(v==null||v==='')return 0;
+  return parseFloat(String(v).replace(/,/g,''))||0;
+}
+
+// ══════════════════════════════════════════════
+// CAMPAIGNS
+// ══════════════════════════════════════════════
+function renderCampaignTree(){
+  const tree=document.getElementById('campaign-tree');
+  const keys=Object.keys(campaigns);
+  if(!keys.length){tree.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Import Twitch data or add a stop manually.</div>';return;}
+  // Group by series
+  const bySeries={};
+  keys.forEach(k=>{const s=campaigns[k].series||'EPT';if(!bySeries[s])bySeries[s]=[];bySeries[s].push(k);});
+  tree.innerHTML=Object.entries(bySeries).map(([series,stopKeys])=>`
+    <div class="tree-campaign">
+      <div class="tree-campaign-header" onclick="toggleSeries(this)">
+        <span class="tree-chevron open">▶</span>
+        <span>${series}</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:var(--font-mono)">${stopKeys.length} stops</span>
+      </div>
+      <div class="tree-stops">
+        ${stopKeys.sort().map(k=>`<div class="tree-stop" onclick="selectStop('${k}')" id="tree-stop-${k}">${campaigns[k].stop} <span style="color:var(--muted)">${campaigns[k].year}</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleSeries(el){
+  const ch=el.querySelector('.tree-chevron');const stops=el.nextElementSibling;
+  ch.classList.toggle('open');stops.style.display=stops.style.display==='none'?'block':'none';
+}
+
+function selectStop(key){
+  document.querySelectorAll('.tree-stop').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('tree-stop-'+key);if(el)el.classList.add('active');
+  renderStopDetail(key);
+}
+
+function renderStopDetail(key){
+  const stop=campaigns[key];if(!stop)return;
+  const main=document.getElementById('campaign-main');
+  const tournamentNames=Object.keys(stop.tournaments);
+  main.innerHTML=`
+    <div class="stop-header">
+      <div class="stop-title">${stop.stop}</div>
+      <div class="stop-meta">${stop.series||'EPT'} · ${stop.year} · ${tournamentNames.length} tournament${tournamentNames.length!==1?'s':''}</div>
+    </div>
+    ${tournamentNames.map(t=>renderTournamentBlock(key,t)).join('')}
+    <button class="btn-sm" style="margin-top:12px;" onclick="addTournament('${key}')">+ Add tournament</button>`;
+}
+
+function renderTournamentBlock(stopKey,tournament){
+  const stop=campaigns[stopKey];const days=stop.tournaments[tournament].days;
+  const dayKeys=Object.keys(days).sort((a,b)=>dayOrder(a)-dayOrder(b));
+  return`<div class="tournament-block">
+    <div class="tournament-header">
+      <div><div class="tournament-name">${tournament}</div><div class="tournament-meta">${dayKeys.length} day${dayKeys.length!==1?'s':''} · ${stopKey}</div></div>
+    </div>
+    <table class="days-table">
+      <thead><tr><th>Day</th><th>Platform</th><th>Avg viewers</th><th>Peak viewers</th><th>Live views</th><th>Hours watched</th><th>Unique viewers</th><th>YouTube VOD</th></tr></thead>
+      <tbody>${dayKeys.map(day=>renderDayRow(stopKey,tournament,day)).join('')}</tbody>
+    </table>
+    <div style="padding:10px 14px;border-top:1px solid var(--border);">
+      <button class="tag-btn" onclick="openTagModal('${stopKey}','${tournament}','new')">+ Add day / tag video</button>
+    </div>
+  </div>`;
+}
+
+function renderDayRow(stopKey,tournament,day){
+  const dayData=campaigns[stopKey].tournaments[tournament].days[day];
+  // Twitch metrics
+  let twCells='<td class="mono" colspan="5" style="color:var(--muted)">—</td>';
+  if(dayData.tw.length){
+    const rows=dayData.tw.map(i=>twitchRows[i]).filter(Boolean);
+    if(rows.length){
+      const avgV=Math.round(rows.reduce((a,r)=>a+numericVal(r['Average Viewers']),0)/rows.length);
+      const peakV=Math.max(...rows.map(r=>numericVal(r['Max. Viewers'])));
+      const liveV=rows.reduce((a,r)=>a+numericVal(r['Live Views']),0);
+      const hrs=rows.reduce((a,r)=>a+numericVal(r['Hours Watched']),0);
+      const uniq=rows.reduce((a,r)=>a+numericVal(r['Unique Viewers']),0);
+      twCells=`<td class="mono twitch">${fmt(avgV)}</td><td class="mono twitch">${fmt(peakV)}</td><td class="mono">${fmt(liveV)}</td><td class="mono">${fmt(Math.round(hrs))}</td><td class="mono">${fmt(uniq)}</td>`;
+    }
+  }
+  // YouTube tags
+  const ytCell=dayData.yt.length
+    ?dayData.yt.map(id=>`<span class="yt-badge" title="${id}">YT</span>`).join(' ')+` <button class="tag-btn" onclick="openTagModal('${stopKey}','${tournament}','${day}')">+</button>`
+    :`<button class="tag-btn" onclick="openTagModal('${stopKey}','${tournament}','${day}')">Tag video</button>`;
+  const platDot=dayData.tw.length?'<span class="platform-dot tw"></span>':'';
+  const ytDot=dayData.yt.length?'<span class="platform-dot yt"></span>':'';
+  return`<tr>
+    <td><span class="day-label">${day}</span></td>
+    <td>${platDot}${ytDot}</td>
+    ${twCells}
+    <td>${ytCell}</td>
+  </tr>`;
+}
+
+function dayOrder(d){
+  const ft=d.match(/FT-(\d+)/i);if(ft)return 1000-parseInt(ft[1]);
+  if(/Final\s*Table/i.test(d))return 999;
+  const day=d.match(/Day\s*(\d+)/i);if(day)return parseInt(day[1]);
+  return 500;
+}
+
+function addTournament(stopKey){
+  const name=prompt('Tournament name (e.g. Main Event):');
+  if(!name)return;
+  if(!campaigns[stopKey].tournaments[name])campaigns[stopKey].tournaments[name]={days:{}};
+  saveCampaignsToStorage();renderStopDetail(stopKey);
+}
+
+// ── New stop modal ──
+function openNewStopModal(){document.getElementById('stop-modal').classList.add('open');}
+function confirmNewStop(){
+  const stop=document.getElementById('new-stop-name').value.trim();
+  const year=document.getElementById('new-stop-year').value.trim();
+  const tLines=document.getElementById('new-stop-tournaments').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!stop||!year)return;
+  const key=stop+'-'+year;
+  if(!campaigns[key])campaigns[key]={stop,year,series:'EPT',tournaments:{}};
+  tLines.forEach(t=>{if(!campaigns[key].tournaments[t])campaigns[key].tournaments[t]={days:{}};});
+  saveCampaignsToStorage();
+  closeModal('stop-modal');
+  document.getElementById('new-stop-name').value='';document.getElementById('new-stop-year').value='';document.getElementById('new-stop-tournaments').value='';
+  renderCampaignTree();
+}
+
+// ── Tag video modal ──
+function openTagModal(stopKey,tournament,day){
+  tagCtx={stopKey,tournament,day};selectedTagVideoId=null;
+  const isNew=day==='new';
+  document.getElementById('tag-modal-title').textContent=isNew?'Add day & tag video':'Tag YouTube video';
+  document.getElementById('tag-modal-sub').textContent=`${campaigns[stopKey]?.stop} · ${tournament}${isNew?'':' · '+day}`;
+  document.getElementById('tag-search-results').innerHTML='';
+  document.getElementById('tag-search-input').value='';
+  document.getElementById('tag-confirm-btn').disabled=true;
+  document.getElementById('tag-modal').classList.add('open');
+  if(isNew){
+    // Show day input
+    if(!document.getElementById('new-day-input')){
+      const inp=document.createElement('input');inp.type='text';inp.id='new-day-input';inp.className='search-input';inp.placeholder='Day label e.g. Day 2, FT-1, Final Table';inp.style.marginBottom='10px';
+      document.getElementById('tag-search-panel').prepend(inp);
+    }
+    document.getElementById('new-day-input').style.display='block';
+  }else{
+    const nd=document.getElementById('new-day-input');if(nd)nd.style.display='none';
+  }
+  prefetchVideos();
+}
+
+async function prefetchVideos(){
+  if(allYTVideos.length)return;
+  try{
+    const r=await gapi('/youtube/v3/search',{part:'snippet',channelId:CHANNEL,type:'video',maxResults:50,order:'date'});
+    allYTVideos=(r.items||[]).map(i=>({id:i.id.videoId,title:i.snippet.title,date:i.snippet.publishedAt,thumb:i.snippet.thumbnails?.default?.url}));
+  }catch(e){console.warn('Video prefetch:',e.message);}
+}
+
+function searchVideos(q){
+  const results=document.getElementById('tag-search-results');
+  const filtered=q?allYTVideos.filter(v=>v.title.toLowerCase().includes(q.toLowerCase())):allYTVideos;
+  results.innerHTML=filtered.slice(0,20).map(v=>`
+    <div class="search-result-item${selectedTagVideoId===v.id?' selected':''}" onclick="selectTagVideo('${v.id}',this)">
+      <img class="result-thumb" src="${v.thumb||''}" alt="" loading="lazy">
+      <div><div class="result-title">${v.title}</div><div class="result-date">${v.date?new Date(v.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):''}</div></div>
+    </div>`).join('');
+}
+
+function selectTagVideo(id,el){
+  selectedTagVideoId=id;
+  document.querySelectorAll('.search-result-item').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('tag-confirm-btn').disabled=false;
+}
+
+function switchTagTab(tab,btn){
+  tagTabMode=tab;
+  document.querySelectorAll('.tab-switch .ai-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.getElementById('tag-search-panel').style.display=tab==='search'?'block':'none';
+  document.getElementById('tag-paste-panel').style.display=tab==='paste'?'block':'none';
+  document.getElementById('tag-confirm-btn').disabled=tab==='search'?!selectedTagVideoId:false;
+}
+
+function confirmTag(){
+  const{stopKey,tournament,day:rawDay}=tagCtx;
+  let day=rawDay;
+  if(rawDay==='new'){
+    const nd=document.getElementById('new-day-input');
+    day=nd?.value.trim()||'New day';
+  }
+  if(!campaigns[stopKey].tournaments[tournament])campaigns[stopKey].tournaments[tournament]={days:{}};
+  if(!campaigns[stopKey].tournaments[tournament].days[day])campaigns[stopKey].tournaments[tournament].days[day]={yt:[],tw:[]};
+  if(tagTabMode==='search'&&selectedTagVideoId){
+    if(!campaigns[stopKey].tournaments[tournament].days[day].yt.includes(selectedTagVideoId))
+      campaigns[stopKey].tournaments[tournament].days[day].yt.push(selectedTagVideoId);
+  }else if(tagTabMode==='paste'){
+    const lines=document.getElementById('tag-paste-input').value.split('\n').map(l=>l.trim()).filter(Boolean);
+    lines.forEach(l=>{
+      let id=l;const m=l.match(/[?&]v=([^&]+)/);if(m)id=m[1];const m2=l.match(/youtu\.be\/([^?]+)/);if(m2)id=m2[1];
+      if(id&&!campaigns[stopKey].tournaments[tournament].days[day].yt.includes(id))
+        campaigns[stopKey].tournaments[tournament].days[day].yt.push(id);
+    });
+  }
+  saveCampaignsToStorage();closeModal('tag-modal');renderStopDetail(stopKey);
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ══════════════════════════════════════════════
+// PERSISTENCE
+// ══════════════════════════════════════════════
+function saveCampaignsToStorage(){try{localStorage.setItem('ytcmd_campaigns',JSON.stringify(campaigns));}catch(e){}}
+function loadCampaignsFromStorage(){try{const d=localStorage.getItem('ytcmd_campaigns');if(d)campaigns=JSON.parse(d);}catch(e){campaigns={};}}
+function saveTwitchToStorage(){try{localStorage.setItem('ytcmd_twitch',JSON.stringify(twitchRows));}catch(e){console.warn('Twitch storage full — data not persisted.');}}
+function loadTwitchFromStorage(){try{const d=localStorage.getItem('ytcmd_twitch');if(d)twitchRows=JSON.parse(d);}catch(e){twitchRows=[];}}
+
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
+function kpi(id,v){const el=document.getElementById(id);if(el){el.textContent=v;el.classList.add('fade-in');}}
+function fmt(n){if(n==null||isNaN(n))return'—';n=parseInt(n);if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toLocaleString();}
+function showErr(m){const e=document.getElementById('error-msg');e.textContent=m;e.style.display='block';}
+function hideErr(){document.getElementById('error-msg').style.display='none';}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
 (async function(){
   if(location.search.includes('code=')||location.search.includes('error='))await handleCallback();
   TOKEN=sessionStorage.getItem('oauth_token')||'';
