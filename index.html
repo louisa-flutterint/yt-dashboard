@@ -306,18 +306,26 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       <span style="color:var(--muted);font-size:12px;">→</span>
       <input type="date" class="date-range-input" id="date-end" onchange="customRange()">
     </div>
-    <div class="section-head"><div class="section-title">Key metrics</div><div class="section-pill" id="period-label">Last 28 days</div></div>
+    <div class="section-head">
+      <div class="section-title">Key metrics</div>
+      <div class="section-pill" id="period-label">Last 28 days</div>
+      <div style="margin-left:auto;display:flex;gap:4px;">
+        <button class="btn-sm active" id="views-toggle-btn" onclick="toggleViewsMode('views',this)" title="Total views">Views</button>
+        <button class="btn-sm" id="engaged-toggle-btn" onclick="toggleViewsMode('engaged',this)" title="Views minus ad-only views">Engaged views</button>
+      </div>
+    </div>
     <div class="kpi-grid">
-      <div class="kpi-card" style="--kpi-color:var(--blue)"><div class="kpi-label">Views</div><div class="kpi-value" id="k-views">—</div></div>
+      <div class="kpi-card" style="--kpi-color:var(--blue)"><div class="kpi-label" id="k-views-label">Views</div><div class="kpi-value" id="k-views">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--purple)"><div class="kpi-label">Watch time (hrs)</div><div class="kpi-value" id="k-watch">—</div></div>
-      <div class="kpi-card" style="--kpi-color:var(--green)"><div class="kpi-label">Est. Revenue (EUR)</div><div class="kpi-value" id="k-rev">—</div></div>
-      <div class="kpi-card" style="--kpi-color:var(--accent2)"><div class="kpi-label">CPM (EUR)</div><div class="kpi-value" id="k-cpm">—</div></div>
-      <div class="kpi-card" style="--kpi-color:var(--accent)"><div class="kpi-label">CTR (per video)</div><div class="kpi-value" id="k-ctr">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--blue)"><div class="kpi-label">Subscribers gained</div><div class="kpi-value" id="k-subs">—</div></div>
+      <div class="kpi-card" style="--kpi-color:var(--green)"><div class="kpi-label">Est. Revenue (EUR)</div><div class="kpi-value" id="k-rev">—</div></div>
+      <div class="kpi-card" style="--kpi-color:var(--accent2)"><div class="kpi-label">Impressions</div><div class="kpi-value" id="k-impr">—</div></div>
+      <div class="kpi-card" style="--kpi-color:var(--accent)"><div class="kpi-label">Avg CTR</div><div class="kpi-value" id="k-ctr">—</div></div>
     </div>
     <div class="section-head"><div class="section-title">Performance over time</div></div>
     <div class="chart-grid">
-      <div class="chart-card full"><div class="chart-title">Views &amp; Watch Time</div><canvas id="c-views" height="100"></canvas></div>
+      <div class="chart-card full"><div class="chart-title">Views — current vs previous year</div><canvas id="c-views" height="100"></canvas></div>
+      <div class="chart-card full"><div class="chart-title">Watch time (hours) — current vs previous year</div><canvas id="c-watch" height="100"></canvas></div>
       <div class="chart-card"><div class="chart-title">Estimated Revenue (EUR/day)</div><canvas id="c-rev" height="160"></canvas></div>
       <div class="chart-card"><div class="chart-title">CTR &amp; Impressions</div><canvas id="c-ctr" height="160"></canvas></div>
     </div>
@@ -769,21 +777,56 @@ async function loadAnalyticsPage(){
   try{await Promise.all([loadAnalytics(),loadTopVideos()]);}catch(e){console.error(e);}
   document.getElementById('lb-wrap').innerHTML='';
 }
+let viewsMode='views';
+function toggleViewsMode(mode,btn){
+  viewsMode=mode;
+  document.querySelectorAll('#views-toggle-btn,#engaged-toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('k-views-label').textContent=mode==='engaged'?'Engaged views':'Views';
+  kpi('k-views',fmt(ytData.totals?.views));
+  if(ytData.ts)renderViewsChart(ytData.ts,ytData.prevTs||[]);
+}
 async function loadAnalytics(){
   const t=await yta('views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,playbackBasedCpm');
   const[views,mins,subs,rev,cpm]=t.rows?.[0]||[];
-  kpi('k-views',fmt(views));kpi('k-watch',mins?fmt(Math.round(mins/60)):'—');
-  setRevenueKpis(rev,cpm);
-  kpi('k-ctr','See chart');kpi('k-subs',fmt(subs));
   ytData.totals={views,mins,subs,rev,cpm};
+  kpi('k-views',fmt(views));
+  kpi('k-watch',mins?fmt(Math.round(mins/60)):'—');
+  setRevenueKpis(rev,cpm);
+  kpi('k-subs',fmt(subs));
+  // Impressions + CTR
+  try{
+    const ic=await yta('impressions,impressionClickThroughRate');
+    const[impr,ctrAvg]=ic.rows?.[0]||[];
+    kpi('k-impr',impr!=null?fmt(impr):'—');
+    kpi('k-ctr',ctrAvg!=null?(ctrAvg*100).toFixed(2)+'%':'—');
+  }catch(e){console.warn('Impressions/CTR totals:',e.message);}
+  // Current period time series
   const ts=await yta('views,estimatedMinutesWatched,estimatedRevenue','day');
-  ytData.ts=ts.rows||[];renderTime(ts.rows||[]);
+  ytData.ts=ts.rows||[];
+  // Previous year comparison
+  const py=prevYearRange(S,E);
+  let prevTs=[];
+  try{const prev=await ytaRange('views,estimatedMinutesWatched',py.start,py.end,'day');prevTs=prev.rows||[];}catch(e){console.warn('Prev year:',e.message);}
+  ytData.prevTs=prevTs;
+  renderTime(ts.rows||[],prevTs);
   try{const demo=await yta('viewerPercentage','ageGroup,gender');renderDemo(demo.rows||[]);}catch(e){console.warn('Demographics:',e.message);}
   try{const geo=await yta('views','country',{sort:'-views',maxResults:10});renderGeo(geo.rows||[]);}catch(e){console.warn('Geo:',e.message);}
 }
+function prevYearRange(start,end){
+  const s=new Date(start),e=new Date(end);
+  s.setFullYear(s.getFullYear()-1);e.setFullYear(e.getFullYear()-1);
+  return{start:s.toISOString().split('T')[0],end:e.toISOString().split('T')[0]};
+}
+async function ytaRange(metrics,start,end,dims,extra={}){
+  const params={ids:'channel=='+CHANNEL,startDate:start,endDate:end,metrics,...(dims?{dimensions:dims}:{}), ...extra};
+  const u=new URL('https://youtubeanalytics.googleapis.com/v2/reports');
+  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,String(v)));
+  return proxyFetch(u.toString());
+}
 async function loadTopVideos(){
   try{
-    const top=await yta('views,estimatedMinutesWatched,estimatedRevenue,impressionClickThroughRate','video',{sort:'-estimatedRevenue',maxResults:10});
+    const top=await yta('views,estimatedMinutesWatched,estimatedRevenue,impressionClickThroughRate','video',{sort:'-views',maxResults:10});
     const rows=top.rows||[];
     if(!rows.length){document.getElementById('v-tbody').innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">No video data.</td></tr>';return;}
     const ids=rows.map(r=>r[0]).join(',');
@@ -803,41 +846,98 @@ function co(y,y1){
   if(y1)b.scales.y1={position:'right',ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{drawOnChartArea:false},title:{display:true,text:y1,color:'#7a7a8e',font:{size:10}}};
   return b;
 }
-function renderTime(rows){
+function renderTime(rows,prevRows){
   if(!rows||!rows.length){console.warn('No time series rows');return;}
-  const L=rows.map(r=>r[0]);
-  const V=rows.map(r=>r[1]||0);
-  const W=rows.map(r=>r[2]?Math.round(r[2]/60):0);
+  renderViewsChart(rows,prevRows||[]);
+  renderWatchChart(rows,prevRows||[]);
   const R=rows.map(r=>r[3]?parseFloat((usdToEur(r[3])).toFixed(2)):0);
-  mk('views','line',{labels:L,datasets:[
-    {label:'Views',data:V,borderColor:'#4488ff',backgroundColor:'rgba(68,136,255,0.08)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y'},
-    {label:'Watch hrs',data:W,borderColor:'#aa66ff',backgroundColor:'rgba(170,102,255,0.06)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y1'}
-  ]},co('Views','Watch hrs'));
-  mk('rev','bar',{labels:L,datasets:[
+  mk('rev','bar',{labels:rows.map(r=>r[0]),datasets:[
     {label:'Revenue (EUR)',data:R,backgroundColor:'rgba(0,229,160,0.6)',borderColor:'#00e5a0',borderWidth:1,borderRadius:3}
   ]},co('EUR'));
-  // CTR chart — pull separately per video dimension
   loadCtrChart();
 }
+function renderViewsChart(rows,prevRows){
+  const L=rows.map(r=>r[0]);
+  const V=rows.map(r=>r[1]||0);
+  const datasets=[{label:'Views '+new Date(S).getFullYear(),data:V,borderColor:'#4488ff',backgroundColor:'rgba(68,136,255,0.1)',tension:0.4,pointRadius:2,pointHoverRadius:4,fill:true}];
+  if(prevRows&&prevRows.length){
+    const PV=prevRows.map(r=>r[1]||0);
+    // Pad or trim to same length as current
+    while(PV.length<V.length)PV.push(null);
+    datasets.push({label:'Views '+(new Date(S).getFullYear()-1),data:PV.slice(0,V.length),borderColor:'rgba(68,136,255,0.35)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:0});
+  }
+  mk('views','line',{labels:L,datasets},co('Views'));
+}
+function renderWatchChart(rows,prevRows){
+  const L=rows.map(r=>r[0]);
+  const W=rows.map(r=>r[2]?Math.round(r[2]/60):0);
+  const datasets=[{label:'Watch hrs '+new Date(S).getFullYear(),data:W,borderColor:'#aa66ff',backgroundColor:'rgba(170,102,255,0.1)',tension:0.4,pointRadius:2,pointHoverRadius:4,fill:true}];
+  if(prevRows&&prevRows.length){
+    const PW=prevRows.map(r=>r[2]?Math.round(r[2]/60):0);
+    while(PW.length<W.length)PW.push(null);
+    datasets.push({label:'Watch hrs '+(new Date(S).getFullYear()-1),data:PW.slice(0,W.length),borderColor:'rgba(170,102,255,0.35)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:0});
+  }
+  mk('watch','line',{labels:L,datasets},co('Hours'));
+}
 async function loadCtrChart(){
+  // Try impressions first, fall back to cardImpressions
+  let ctrRows=[];
   try{
-    const ctrData=await yta('impressionClickThroughRate,impressions','day');
-    const rows=ctrData.rows||[];
-    const L=rows.map(r=>r[0]);
-    const C=rows.map(r=>r[1]?parseFloat((r[1]*100).toFixed(2)):0);
-    const I=rows.map(r=>r[2]||0);
-    mk('ctr','line',{labels:L,datasets:[
-      {label:'CTR %',data:C,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.07)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y'},
-      {label:'Impressions',data:I,borderColor:'#ff8800',backgroundColor:'rgba(255,136,0,0.05)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y1'}
-    ]},co('CTR %','Impressions'));
-  }catch(e){console.warn('CTR chart unavailable:',e.message);}
+    const d=await yta('impressions,impressionClickThroughRate','day');
+    ctrRows=d.rows||[];
+  }catch(e){
+    try{
+      const d2=await yta('cardImpressions,cardClickRate','day');
+      ctrRows=(d2.rows||[]).map(r=>[r[0],r[2],r[1]]); // reorder to match expected
+    }catch(e2){console.warn('CTR/Impressions unavailable:',e2.message);return;}
+  }
+  if(!ctrRows.length){console.warn('CTR rows empty');return;}
+  const L=ctrRows.map(r=>r[0]);
+  const I=ctrRows.map(r=>r[1]||0);
+  const C=ctrRows.map(r=>r[2]?parseFloat((r[2]*100).toFixed(2)):0);
+  mk('ctr','line',{labels:L,datasets:[
+    {label:'CTR %',data:C,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.07)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y'},
+    {label:'Impressions',data:I,borderColor:'#ff8800',backgroundColor:'rgba(255,136,0,0.05)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y1'}
+  ]},co('CTR %','Impressions'));
 }
 function renderDemo(rows){
-  const g={};rows.forEach(([age,gender,pct])=>{if(!g[age])g[age]={m:0,f:0};if(gender==='male')g[age].m=parseFloat(pct.toFixed(1));else if(gender==='female')g[age].f=parseFloat(pct.toFixed(1));});
+  const EXCLUDE=['age13_17','age13-17'];
+  const g={};rows.forEach(([age,gender,pct])=>{
+    if(EXCLUDE.includes(age))return;
+    if(!g[age])g[age]={m:0,f:0};
+    if(gender==='male')g[age].m=parseFloat(pct.toFixed(1));
+    else if(gender==='female')g[age].f=parseFloat(pct.toFixed(1));
+  });
   const L=Object.keys(g).map(a=>a.replace('age','').replace('_','–'));
   mk('age','bar',{labels:L,datasets:[{label:'Male',data:Object.values(g).map(x=>x.m),backgroundColor:'rgba(68,136,255,0.7)',borderRadius:3},{label:'Female',data:Object.values(g).map(x=>x.f),backgroundColor:'rgba(255,68,68,0.7)',borderRadius:3}]},co('% viewers'));
 }
-function renderGeo(rows){mk('geo','bar',{labels:rows.map(r=>r[0]),datasets:[{label:'Views',data:rows.map(r=>r[1]),backgroundColor:'rgba(170,102,255,0.7)',borderRadius:3}]},{...co('Views'),indexAxis:'y'});}
+function renderGeo(rows){
+  const CC={
+    'AF':'Afghanistan','AL':'Albania','DZ':'Algeria','AR':'Argentina','AU':'Australia',
+    'AT':'Austria','BE':'Belgium','BR':'Brazil','CA':'Canada','CL':'Chile','CN':'China',
+    'CO':'Colombia','HR':'Croatia','CZ':'Czech Republic','DK':'Denmark','EG':'Egypt',
+    'FI':'Finland','FR':'France','DE':'Germany','GR':'Greece','HK':'Hong Kong',
+    'HU':'Hungary','IN':'India','ID':'Indonesia','IE':'Ireland','IL':'Israel',
+    'IT':'Italy','JP':'Japan','MX':'Mexico','NL':'Netherlands','NZ':'New Zealand',
+    'NO':'Norway','PK':'Pakistan','PE':'Peru','PH':'Philippines','PL':'Poland',
+    'PT':'Portugal','RO':'Romania','RU':'Russia','SA':'Saudi Arabia','RS':'Serbia',
+    'SG':'Singapore','SK':'Slovakia','ZA':'South Africa','ES':'Spain','SE':'Sweden',
+    'CH':'Switzerland','TW':'Taiwan','TH':'Thailand','TR':'Turkey','UA':'Ukraine',
+    'GB':'United Kingdom','US':'United States','VE':'Venezuela','VN':'Vietnam'
+  };
+  const labels=rows.map(r=>CC[r[0]]||r[0]);
+  const views=rows.map(r=>r[1]);
+  const total=views.reduce((a,b)=>a+b,0);
+  const pcts=views.map(v=>total?parseFloat((v/total*100).toFixed(1)):0);
+  const colors=['#9147ff','#4488ff','#00e5a0','#ff8800','#ff4444','#aa66ff','#00c4ff','#ffcc00','#ff6b9d','#7ee8a2'];
+  mk('geo','doughnut',{labels,datasets:[{data:pcts,backgroundColor:colors.slice(0,rows.length),borderColor:'var(--bg)',borderWidth:2}]},{
+    responsive:true,
+    plugins:{
+      legend:{position:'right',labels:{color:'#7a7a8e',font:{family:'DM Mono',size:10},boxWidth:10,padding:8}},
+      tooltip:{backgroundColor:'#18181f',titleColor:'#f0f0f5',bodyColor:'#7a7a8e',callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed}% (${fmt(views[ctx.dataIndex])} views)`}}
+    }
+  });
+}
 function renderVideos(enriched){
   document.getElementById('v-tbody').innerHTML=enriched.map((v,i)=>{
     const[views,mins,rev,ctr]=v.m;const title=v.sn?.title||v.id;
@@ -858,7 +958,7 @@ async function generateAI(){
   const ctx=`YouTube channel analytics (${S} to ${E})\nViews: ${fmt(t.views)}\nWatch time (hours): ${fmt(t.mins?Math.round(t.mins/60):null)}\nEstimated revenue: ${t.rev!=null?fmtEur(t.rev):'N/A'}\nCPM: ${t.cpm!=null?fmtEur(t.cpm):'N/A'}\nCTR: ${t.ctr!=null?(t.ctr*100).toFixed(2)+'%':'N/A'}\nSubscribers gained: ${fmt(t.subs)}\nTop videos: ${tops||'N/A'}`;
   const prompts={summary:`You are a YouTube analytics expert. Write a concise executive summary (3-4 paragraphs) covering overall performance, what's working, what needs attention, and one key takeaway.\n\n${ctx}`,anomalies:`You are a YouTube analytics expert. Identify notable anomalies or unexpected patterns. For each, explain what it might indicate and what action to consider. Format as a bulleted list.\n\n${ctx}`,ideas:`You are a YouTube content strategist. Suggest 5 specific video ideas based on this channel's performance. For each: a compelling title, the hook/angle, and why it should perform well.\n\n${ctx}`};
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompts[activeTab]}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompts[activeTab]}]})});
     const d=await r.json();if(d.error)throw new Error(d.error.message);
     out.className='ai-output fade-in';out.textContent=d.content?.[0]?.text||'No response.';
   }catch(e){out.className='ai-output';out.textContent='Error: '+(e.message||'Check your Claude API key.');}
@@ -1047,8 +1147,9 @@ function autoPopulateCampaigns(source){
       if(!stop)return;
       const stopKey=stop+'-'+year;
       if(!campaigns[stopKey])campaigns[stopKey]={stop,year,series,tournaments:{}};
-      // normaliseTournamentName handles stripping FT/Day suffixes internally
+      // normaliseTournamentName strips day markers; day extracted separately
       const tournament=normaliseTournamentName(rawT);
+      // Ensure "ME" maps to "Main Event" at the campaigns level too
       const day=normaliseDay(rawT);
       if(!campaigns[stopKey].tournaments[tournament])campaigns[stopKey].tournaments[tournament]={days:{}};
       if(!campaigns[stopKey].tournaments[tournament].days[day])campaigns[stopKey].tournaments[tournament].days[day]={ytH:[],ytV:[],tw:[]};
@@ -1520,11 +1621,14 @@ function confirmTag(){
   let id=null;
   if(tagTabMode==='search'&&selectedTagVideoId){id=selectedTagVideoId;}
   else if(tagTabMode==='paste'){
-    const l=document.getElementById('tag-paste-input').value.split('\n').map(s=>s.trim()).filter(Boolean)[0]||'';
-    const m=l.match(/[?&]v=([^&]+)/);if(m)id=m[1];
-    else{const m2=l.match(/youtu\.be\/([^?]+)/);if(m2)id=m2[1];else id=l;}
+    const raw=document.getElementById('tag-paste-input').value.split('\n').map(s=>s.trim()).filter(Boolean)[0]||'';
+    const mUrl=raw.match(/[?&]v=([\w-]{11})/);if(mUrl)id=mUrl[1];
+    else{const mShort=raw.match(/youtu\.be\/([\w-]{11})/);if(mShort)id=mShort[1];
+    else if(/^[\w-]{11}$/.test(raw))id=raw;
+    else{const mAny=raw.match(/([\w-]{11})(?:[?&]|$)/);if(mAny)id=mAny[1];else id=raw.trim().slice(0,11);}
+    }
   }
-  if(!id)return;
+  if(!id||id.length<5){alert('Could not find a video ID. Paste a YouTube URL (youtube.com/watch?v=XXX) or the 11-character video ID directly.');return;}
   // Determine H or V from imported rows, default H
   const isV=ytImportedRows.find(r=>r.id===id)?.isVertical||false;
   const arr=isV?(d.ytV||(d.ytV=[])):(d.ytH||(d.ytH=[]));
