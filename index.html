@@ -92,7 +92,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
 .kpi-card:hover{border-color:var(--border2);}
 .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-color,var(--accent));}
 .kpi-label{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;}
-.kpi-value{font-family:var(--font-head);font-size:24px;font-weight:800;letter-spacing:-1px;line-height:1;margin-bottom:4px;}
+.kpi-value{font-family:var(--font-body);font-size:18px;font-weight:500;letter-spacing:-0.3px;line-height:1.1;margin-bottom:4px;}
 .kpi-sub{font-size:11px;color:var(--muted);font-family:var(--font-mono);}
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px;}
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;}
@@ -310,8 +310,8 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
     <div class="kpi-grid">
       <div class="kpi-card" style="--kpi-color:var(--blue)"><div class="kpi-label">Views</div><div class="kpi-value" id="k-views">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--purple)"><div class="kpi-label">Watch time (hrs)</div><div class="kpi-value" id="k-watch">—</div></div>
-      <div class="kpi-card" style="--kpi-color:var(--green)"><div class="kpi-label">Est. Revenue (USD)</div><div class="kpi-value" id="k-rev">—</div></div>
-      <div class="kpi-card" style="--kpi-color:var(--accent2)"><div class="kpi-label">CPM (USD)</div><div class="kpi-value" id="k-cpm">—</div></div>
+      <div class="kpi-card" style="--kpi-color:var(--green)"><div class="kpi-label">Est. Revenue (EUR)</div><div class="kpi-value" id="k-rev">—</div></div>
+      <div class="kpi-card" style="--kpi-color:var(--accent2)"><div class="kpi-label">CPM (EUR)</div><div class="kpi-value" id="k-cpm">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--accent)"><div class="kpi-label">CTR (per video)</div><div class="kpi-value" id="k-ctr">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--blue)"><div class="kpi-label">Subscribers gained</div><div class="kpi-value" id="k-subs">—</div></div>
     </div>
@@ -615,6 +615,7 @@ function showDashboard(){
   document.getElementById('date-start').value=S;document.getElementById('date-end').value=E;
   loadCampaignsFromStorage();loadTwitchFromStorage();
   if(!localStorage.getItem('ytcmd_worker_url')) showWorkerBanner();
+  fetchEurRate();
   loadAnalyticsPage();
 }
 function disconnect(){
@@ -691,7 +692,7 @@ async function loadAnalytics(){
   const t=await yta('views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,playbackBasedCpm');
   const[views,mins,subs,rev,cpm]=t.rows?.[0]||[];
   kpi('k-views',fmt(views));kpi('k-watch',mins?fmt(Math.round(mins/60)):'—');
-  kpi('k-rev',rev!=null?'$'+parseFloat(rev).toFixed(2):'—');kpi('k-cpm',cpm!=null?'$'+parseFloat(cpm).toFixed(2):'—');
+  setRevenueKpis(rev,cpm);
   kpi('k-ctr','See chart');kpi('k-subs',fmt(subs));
   ytData.totals={views,mins,subs,rev,cpm};
   const ts=await yta('views,estimatedMinutesWatched,estimatedRevenue,annotationImpressions,impressionClickThroughRate','day');
@@ -738,7 +739,7 @@ function renderVideos(enriched){
     const[views,mins,rev,ctr]=v.m;const title=v.sn?.title||v.id;
     const thumb=v.sn?.thumbnails?.medium?.url||v.sn?.thumbnails?.default?.url||'';
     const date=v.sn?.publishedAt?new Date(v.sn.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
-    return`<tr><td class="video-rank">${i+1}</td><td><img class="video-thumb" src="${thumb}" alt="" loading="lazy"></td><td style="max-width:240px"><div class="video-title-text" title="${title.replace(/"/g,'&quot;')}">${title}</div><div class="video-date">${date}</div></td><td class="mono">${fmt(views)}</td><td class="mono">${mins?fmt(Math.round(mins/60))+'h':'—'}</td><td class="mono hi">${rev!=null?'$'+parseFloat(rev).toFixed(2):'—'}</td><td class="mono">${ctr!=null?(parseFloat(ctr)*100).toFixed(2)+'%':'—'}</td></tr>`;
+    return`<tr><td class="video-rank">${i+1}</td><td><img class="video-thumb" src="${thumb}" alt="" loading="lazy"></td><td style="max-width:240px"><div class="video-title-text" title="${title.replace(/"/g,'&quot;')}">${title}</div><div class="video-date">${date}</div></td><td class="mono">${fmt(views)}</td><td class="mono">${mins?fmt(Math.round(mins/60))+'h':'—'}</td><td class="mono hi">${rev!=null?fmtEur(rev):'—'}</td><td class="mono">${ctr!=null?(parseFloat(ctr)*100).toFixed(2)+'%':'—'}</td></tr>`;
   }).join('');
 }
 
@@ -750,7 +751,7 @@ async function generateAI(){
   const btn=document.getElementById('ai-btn'),out=document.getElementById('ai-out');
   btn.disabled=true;out.className='ai-output loading';out.innerHTML='<span class="spinner"></span> Claude is analysing your data…';
   const t=ytData.totals||{};const tops=(ytData.topEnriched||[]).slice(0,5).map(v=>v.sn?.title||v.id).join(', ');
-  const ctx=`YouTube channel analytics (${S} to ${E})\nViews: ${fmt(t.views)}\nWatch time (hours): ${fmt(t.mins?Math.round(t.mins/60):null)}\nEstimated revenue: $${t.rev!=null?t.rev.toFixed(2):'N/A'}\nCPM: $${t.cpm!=null?t.cpm.toFixed(2):'N/A'}\nCTR: ${t.ctr!=null?(t.ctr*100).toFixed(2)+'%':'N/A'}\nSubscribers gained: ${fmt(t.subs)}\nTop videos: ${tops||'N/A'}`;
+  const ctx=`YouTube channel analytics (${S} to ${E})\nViews: ${fmt(t.views)}\nWatch time (hours): ${fmt(t.mins?Math.round(t.mins/60):null)}\nEstimated revenue: ${t.rev!=null?fmtEur(t.rev):'N/A'}\nCPM: ${t.cpm!=null?fmtEur(t.cpm):'N/A'}\nCTR: ${t.ctr!=null?(t.ctr*100).toFixed(2)+'%':'N/A'}\nSubscribers gained: ${fmt(t.subs)}\nTop videos: ${tops||'N/A'}`;
   const prompts={summary:`You are a YouTube analytics expert. Write a concise executive summary (3-4 paragraphs) covering overall performance, what's working, what needs attention, and one key takeaway.\n\n${ctx}`,anomalies:`You are a YouTube analytics expert. Identify notable anomalies or unexpected patterns. For each, explain what it might indicate and what action to consider. Format as a bulleted list.\n\n${ctx}`,ideas:`You are a YouTube content strategist. Suggest 5 specific video ideas based on this channel's performance. For each: a compelling title, the hook/angle, and why it should perform well.\n\n${ctx}`};
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompts[activeTab]}]})});
@@ -1117,7 +1118,30 @@ function loadTwitchFromStorage(){try{const d=localStorage.getItem('ytcmd_twitch'
 // UTILS
 // ══════════════════════════════════════════════
 function kpi(id,v){const el=document.getElementById(id);if(el){el.textContent=v;el.classList.add('fade-in');}}
-function fmt(n){if(n==null||isNaN(n))return'—';n=parseInt(n);if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toLocaleString();}
+// ── EUR CONVERSION ──
+let EUR_RATE = parseFloat(localStorage.getItem('ytcmd_eur_rate')) || 0.92; // fallback rate
+async function fetchEurRate(){
+  try{
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
+    const d = await r.json();
+    if(d.rates && d.rates.EUR){
+      EUR_RATE = d.rates.EUR;
+      localStorage.setItem('ytcmd_eur_rate', EUR_RATE);
+    }
+  }catch(e){ console.warn('FX fetch failed, using cached rate:', EUR_RATE); }
+}
+function usdToEur(usd){ return usd * EUR_RATE; }
+function fmtEur(usd){
+  if(usd==null||isNaN(usd))return'—';
+  const eur = usdToEur(parseFloat(usd));
+  return'€'+eur.toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function setRevenueKpis(rev,cpm){
+  kpi('k-rev', rev!=null ? fmtEur(rev) : '—');
+  kpi('k-cpm', cpm!=null ? fmtEur(cpm) : '—');
+}
+
+function fmt(n,full=false){if(n==null||isNaN(n))return'—';const num=parseInt(n);if(!full){if(num>=1e6)return(num/1e6).toFixed(1)+'M';if(num>=1e3)return(num/1e3).toFixed(1)+'K';}return num.toLocaleString('en-GB');}
 function showErr(m){const e=document.getElementById('error-msg');e.textContent=m;e.style.display='block';}
 function hideErr(){document.getElementById('error-msg').style.display='none';}
 
