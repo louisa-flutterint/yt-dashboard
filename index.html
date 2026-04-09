@@ -283,8 +283,10 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
 
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('analytics',this)"><span class="tab-icon">📊</span>Analytics</button>
+    <button class="nav-tab" onclick="showPage('monthly',this)"><span class="tab-icon">📅</span>Monthly</button>
     <button class="nav-tab" onclick="showPage('live',this)"><span class="tab-icon">🏆</span>Live Events</button>
     <button class="nav-tab" onclick="showPage('vidcamps',this)"><span class="tab-icon">🎬</span>Video Campaigns</button>
+    <button class="nav-tab" onclick="showPage('report',this)"><span class="tab-icon">📑</span>Report Builder</button>
     <button class="nav-tab" onclick="showPage('settings',this)"><span class="tab-icon">⚙️</span>Settings</button>
   </div>
   <div id="worker-banner" style="display:none;background:rgba(255,136,0,0.08);border-bottom:1px solid rgba(255,136,0,0.2);padding:10px 24px;align-items:center;gap:12px;font-size:13px;">
@@ -327,14 +329,22 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       <div class="chart-card full"><div class="chart-title">Views — current vs previous year</div><canvas id="c-views" height="100"></canvas></div>
       <div class="chart-card full"><div class="chart-title">Watch time (hours) — current vs previous year</div><canvas id="c-watch" height="100"></canvas></div>
       <div class="chart-card"><div class="chart-title">Estimated Revenue (EUR/day)</div><canvas id="c-rev" height="160"></canvas></div>
-      <div class="chart-card"><div class="chart-title">CTR &amp; Impressions</div><canvas id="c-ctr" height="160"></canvas></div>
+      <div class="chart-card"><div class="chart-title">Click-Through Rate (CTR)</div><canvas id="c-ctr" height="160"></canvas></div>
+      <div class="chart-card"><div class="chart-title">Impressions</div><canvas id="c-impr" height="160"></canvas></div>
     </div>
     <div class="section-head"><div class="section-title">Audience demographics</div></div>
     <div class="demo-grid">
       <div class="chart-card"><div class="chart-title">Age &amp; Gender</div><canvas id="c-age" height="200"></canvas></div>
       <div class="chart-card"><div class="chart-title">Top countries by views</div><canvas id="c-geo" height="200"></canvas></div>
     </div>
-    <div class="section-head"><div class="section-title">Top performing videos</div><div class="section-pill">by revenue</div></div>
+    <div class="section-head">
+      <div class="section-title">Top performing</div>
+      <div style="display:flex;gap:4px;">
+        <button class="btn-sm active top-vid-toggle" onclick="setTopVideoMode('videos',this)">Videos</button>
+        <button class="btn-sm top-vid-toggle" onclick="setTopVideoMode('shorts',this)">Shorts</button>
+      </div>
+      <div class="section-pill" style="margin-left:auto;">by views</div>
+    </div>
     <div class="chart-card" style="padding:0;overflow:hidden;margin-bottom:8px;">
       <table class="video-table">
         <thead><tr><th>#</th><th>Thumb</th><th>Title</th><th>Views</th><th>Watch time</th><th>Revenue</th><th>CTR</th></tr></thead>
@@ -356,6 +366,59 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
     </div>
   </div>
 
+  <!-- ── MONTHLY PERFORMANCE PAGE ── -->
+  <div class="page" id="page-monthly">
+    <div class="section-head" style="margin-top:0;align-items:flex-start;">
+      <div>
+        <div class="section-title">Monthly Performance</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="monthly-period-label">Loading…</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+        <button class="btn-sm" onclick="loadMonthlyPage()">↻ Refresh</button>
+      </div>
+    </div>
+    <!-- Scorecard -->
+    <div id="monthly-scorecard" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px;"></div>
+    <!-- Monthly charts -->
+    <div class="chart-grid" style="margin-bottom:16px;">
+      <div class="chart-card full"><div class="chart-title">Views — monthly (current year vs previous year)</div><canvas id="c-m-views" height="100"></canvas></div>
+      <div class="chart-card full"><div class="chart-title">Watch time (hours) — monthly</div><canvas id="c-m-watch" height="100"></canvas></div>
+      <div class="chart-card"><div class="chart-title">Est. Revenue (EUR)</div><canvas id="c-m-rev" height="160"></canvas></div>
+      <div class="chart-card"><div class="chart-title">Subscribers gained</div><canvas id="c-m-subs" height="160"></canvas></div>
+      <div class="chart-card"><div class="chart-title">Impressions</div><canvas id="c-m-impr" height="160"></canvas></div>
+      <div class="chart-card"><div class="chart-title">Avg CTR %</div><canvas id="c-m-ctr" height="160"></canvas></div>
+    </div>
+    <div id="monthly-loading" style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Select the Monthly tab to load performance data.</div>
+  </div>
+
+  <!-- ── REPORT BUILDER PAGE ── -->
+  <div class="page" id="page-report">
+    <div class="section-head" style="margin-top:0;align-items:flex-start;">
+      <div><div class="section-title">Report Builder</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Build a custom slide deck from your data</div></div>
+      <div style="margin-left:auto;display:flex;gap:8px;">
+        <button class="btn-sm" onclick="addReportSlide()">+ Add slide</button>
+        <button class="btn-sm" onclick="previewReport()">👁 Preview</button>
+        <button class="btn-primary" style="width:auto;padding:8px 18px;font-size:13px;" onclick="exportReportPptx()">⬇ Download PPTX</button>
+      </div>
+    </div>
+    <div id="report-slides" style="display:flex;flex-direction:column;gap:16px;"></div>
+    <div id="report-empty" style="text-align:center;padding:60px;color:var(--muted);">
+      <div style="font-size:28px;margin-bottom:12px;">📑</div>
+      <div style="font-size:14px;">Click "+ Add slide" to start building your report.</div>
+    </div>
+    <!-- Preview modal -->
+    <div class="modal-overlay" id="report-preview-modal" style="z-index:600;">
+      <div class="modal" style="max-width:800px;max-height:90vh;overflow-y:auto;">
+        <div class="modal-title">Report Preview</div>
+        <div id="report-preview-body" style="margin-top:12px;"></div>
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeModal('report-preview-modal')">Close</button>
+          <button class="btn-confirm" onclick="exportReportPptx()">Download PPTX</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── LIVE EVENTS PAGE ── -->
   <div class="page" id="page-live">
     <div class="section-head" style="margin-top:0;align-items:flex-start;">
@@ -371,7 +434,10 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
     </div>
     <div class="campaign-layout">
       <div class="campaign-sidebar">
-        <div class="sidebar-header"><span class="sidebar-title">Stops</span></div>
+        <div class="sidebar-header">
+          <span class="sidebar-title">Stops</span>
+          <button class="btn-icon" onclick="rebuildCampaigns()" title="Re-process all Twitch data to fix tournament groupings">↺ Rebuild</button>
+        </div>
         <div class="campaign-tree" id="campaign-tree">
           <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Import a CSV or add a stop.</div>
         </div>
@@ -582,6 +648,8 @@ function showPage(name,btn){
   btn.classList.add('active');
   if(name==='live')renderCampaignTree();
   if(name==='vidcamps')renderVidCamps();
+  if(name==='monthly')loadMonthlyPage();
+  if(name==='report')renderReportBuilder();
   if(name==='settings')populateSettingsPage();
 }
 
@@ -782,8 +850,24 @@ function toggleViewsMode(mode,btn){
   viewsMode=mode;
   document.querySelectorAll('#views-toggle-btn,#engaged-toggle-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('k-views-label').textContent=mode==='engaged'?'Engaged views':'Views';
-  kpi('k-views',fmt(ytData.totals?.views));
+  const t=ytData.totals||{};
+  if(mode==='engaged'){
+    document.getElementById('k-views-label').textContent='Engaged views (est.)';
+    // Estimate: views × avgViewPct — fetch if not cached
+    if(t.avgViewPct!=null){
+      kpi('k-views',fmt(Math.round((t.views||0)*(t.avgViewPct/100))));
+    } else {
+      kpi('k-views','Loading…');
+      yta('views,averageViewPercentage').then(r=>{
+        const[v,pct]=r.rows?.[0]||[];
+        if(t)t.avgViewPct=pct||0;
+        kpi('k-views',fmt(Math.round((v||0)*((pct||0)/100))));
+      }).catch(()=>kpi('k-views','N/A'));
+    }
+  } else {
+    document.getElementById('k-views-label').textContent='Views';
+    kpi('k-views',fmt(t.views));
+  }
   if(ytData.ts)renderViewsChart(ytData.ts,ytData.prevTs||[]);
 }
 async function loadAnalytics(){
@@ -824,17 +908,35 @@ async function ytaRange(metrics,start,end,dims,extra={}){
   Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,String(v)));
   return proxyFetch(u.toString());
 }
+let topVideoMode='videos'; // 'videos' or 'shorts'
+function setTopVideoMode(mode,btn){
+  topVideoMode=mode;
+  document.querySelectorAll('.top-vid-toggle').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(mode==='videos'&&ytData.topEnriched)renderVideos(ytData.topEnriched.filter(v=>!v.isShort));
+  else if(mode==='shorts'&&ytData.topEnriched)renderVideos(ytData.topEnriched.filter(v=>v.isShort));
+}
 async function loadTopVideos(){
+  const tbody=document.getElementById('v-tbody');
   try{
-    const top=await yta('views,estimatedMinutesWatched,estimatedRevenue,impressionClickThroughRate','video',{sort:'-views',maxResults:10});
+    // Fetch top videos by views — use video dimension with views metric
+    const top=await yta('views,estimatedMinutesWatched,estimatedRevenue,impressionClickThroughRate','video',{sort:'-views',maxResults:25});
     const rows=top.rows||[];
-    if(!rows.length){document.getElementById('v-tbody').innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">No video data.</td></tr>';return;}
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">No video data for this period.</td></tr>';return;}
     const ids=rows.map(r=>r[0]).join(',');
-    const vd=await gapi('/youtube/v3/videos',{part:'snippet',id:ids});
-    const map={};(vd.items||[]).forEach(v=>map[v.id]=v.snippet);
-    const enriched=rows.map(r=>({id:r[0],sn:map[r[0]],m:r.slice(1)}));
-    ytData.topEnriched=enriched;renderVideos(enriched);
-  }catch(e){document.getElementById('v-tbody').innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">'+e.message+'</td></tr>';}
+    // Get snippet + contentDetails for duration (to detect shorts)
+    const vd=await gapi('/youtube/v3/videos',{part:'snippet,contentDetails',id:ids});
+    const map={};(vd.items||[]).forEach(v=>map[v.id]={snippet:v.snippet,duration:parseISODuration(v.contentDetails?.duration||'')});
+    const enriched=rows.map(r=>({id:r[0],sn:map[r[0]]?.snippet,m:r.slice(1),dur:map[r[0]]?.duration||0,isShort:map[r[0]]?.duration>0&&map[r[0]]?.duration<180}));
+    ytData.topEnriched=enriched;
+    renderVideos(topVideoMode==='shorts'?enriched.filter(v=>v.isShort):enriched.filter(v=>!v.isShort));
+  }catch(e){tbody.innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">'+e.message+'</td></tr>';}
+}
+function parseISODuration(iso){
+  // PT1H23M45S → seconds
+  const m=iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if(!m)return 0;
+  return(parseInt(m[1]||0)*3600)+(parseInt(m[2]||0)*60)+parseInt(m[3]||0);
 }
 
 // ══════════════════════════════════════════════
@@ -896,9 +998,11 @@ async function loadCtrChart(){
   const I=ctrRows.map(r=>r[1]||0);
   const C=ctrRows.map(r=>r[2]?parseFloat((r[2]*100).toFixed(2)):0);
   mk('ctr','line',{labels:L,datasets:[
-    {label:'CTR %',data:C,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.07)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y'},
-    {label:'Impressions',data:I,borderColor:'#ff8800',backgroundColor:'rgba(255,136,0,0.05)',tension:0.4,pointRadius:2,pointHoverRadius:4,yAxisID:'y1'}
-  ]},co('CTR %','Impressions'));
+    {label:'CTR %',data:C,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.1)',tension:0.4,pointRadius:2,pointHoverRadius:4,fill:true}
+  ]},co('CTR %'));
+  mk('impr','bar',{labels:L,datasets:[
+    {label:'Impressions',data:I,backgroundColor:'rgba(255,136,0,0.6)',borderColor:'#ff8800',borderWidth:1,borderRadius:3}
+  ]},co('Impressions'));
 }
 function renderDemo(rows){
   const EXCLUDE=['age13_17','age13-17'];
@@ -925,10 +1029,15 @@ function renderGeo(rows){
     'CH':'Switzerland','TW':'Taiwan','TH':'Thailand','TR':'Turkey','UA':'Ukraine',
     'GB':'United Kingdom','US':'United States','VE':'Venezuela','VN':'Vietnam'
   };
-  const labels=rows.map(r=>CC[r[0]]||r[0]);
-  const views=rows.map(r=>r[1]);
+  // Add Other for remaining countries beyond top 10
+  const labels=[...rows.map(r=>CC[r[0]]||r[0])];
+  const views=[...rows.map(r=>r[1])];
+  // We don't have the total, so note Other isn't calculable without total views
   const total=views.reduce((a,b)=>a+b,0);
-  const pcts=views.map(v=>total?parseFloat((v/total*100).toFixed(1)):0);
+  const channelTotal=ytData.totals?.views||total;
+  const otherViews=channelTotal>total?channelTotal-total:0;
+  if(otherViews>0){labels.push('Other');views.push(otherViews);}
+  const pcts=views.map(v=>channelTotal?parseFloat((v/channelTotal*100).toFixed(1)):0);
   const colors=['#9147ff','#4488ff','#00e5a0','#ff8800','#ff4444','#aa66ff','#00c4ff','#ffcc00','#ff6b9d','#7ee8a2'];
   mk('geo','doughnut',{labels,datasets:[{data:pcts,backgroundColor:colors.slice(0,rows.length),borderColor:'var(--bg)',borderWidth:2}]},{
     responsive:true,
@@ -1173,11 +1282,28 @@ function autoPopulateCampaigns(source){
 }
 
 function normaliseTournament(raw){return raw.replace(/\s*(FT-\d+|Day\s*\d+[A-Z]?|Final\s*Table)\s*/i,'').trim()||raw;}
+function rebuildCampaigns(){
+  if(!confirm('This will re-process all imported Twitch data and rebuild campaign groupings. Any manual stops/tags will be preserved. Continue?'))return;
+  // Only clear auto-populated Twitch links, keep manual YT tags
+  Object.values(campaigns).forEach(stop=>{
+    Object.values(stop.tournaments||{}).forEach(t=>{
+      Object.values(t.days||{}).forEach(d=>{d.tw=[];});
+    });
+  });
+  autoPopulateCampaigns('twitch');
+  renderCampaignTree();
+  alert('Rebuilt from '+twitchRows.length+' Twitch rows.');
+}
 function normaliseDay(raw){
-  const ft=raw.match(/FT-?(\d+)/i);if(ft)return'FT-'+ft[1];
-  const day=raw.match(/Day\s*(\d+[A-Z]?)/i);if(day)return'Day '+day[1];
+  // Handle compound strings like "ME FT-4", "ME Day 3", "S&G FT"
   if(/Final\s*Table/i.test(raw))return'Final Table';
-  return raw.trim();
+  const ft=raw.match(/FT-?(\d+)/i);if(ft)return'FT-'+ft[1];
+  // Standalone "FT" with no number = Final Table
+  if(/\bFT\b/i.test(raw)&&!/\d/.test(raw))return'Final Table';
+  const day=raw.match(/Day\s*(\d+[A-Za-z]?)/i);if(day)return'Day '+day[1];
+  // If nothing matched, strip known tournament prefixes and return remainder
+  const stripped=raw.replace(/^(ME|S&G|SHR|HR|MB|TURBO)\s*/i,'').trim();
+  return stripped||raw.trim();
 }
 function numericVal(v){if(v==null||v==='')return 0;return parseFloat(String(v).replace(/,/g,'').replace(/%/g,''))||0;}
 
@@ -1273,15 +1399,16 @@ function renderStopDetail(key){
     ${renderStopTotals(key)}
     <div style="margin-top:12px;display:flex;gap:8px;">
       <button class="btn-sm" onclick="addTournament('${key}')">+ Add tournament</button>
+      <button class="btn-sm" onclick="exportStop('${key}')">⬇ Export CSV</button>
       <button class="btn-sm" style="color:var(--accent);" onclick="if(confirm('Delete this stop?')){delete campaigns['${key}'];saveCampaignsToStorage();renderCampaignTree();document.getElementById('campaign-main').innerHTML='<div class=\\'campaign-empty\\'><div class=\\'campaign-empty-icon\\'>🏆</div><div class=\\'campaign-empty-text\\'>Select a stop.</div></div>';}">Delete stop</button>
     </div>`;
 }
 
 function setLiveView(mode,btn){
   liveViewMode=mode;
-  document.querySelectorAll('.ptog').forEach(b=>{b.classList.remove('active');});
+  // Only remove active from sibling buttons (the platform toggle group)
+  btn.closest('div').querySelectorAll('.ptog').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  // Re-render current stop
   const active=document.querySelector('.tree-stop.active');
   if(active){const key=active.id.replace('tree-stop-','');renderStopDetail(key);}
 }
@@ -1570,7 +1697,19 @@ function openTagModal(stopKey,tournament,day){
 }
 async function prefetchVideos(){
   const resultsEl=document.getElementById('tag-search-results');
-  if(allYTVideos.length){searchVideos('');return;}
+  // Show cached results immediately but always show a refresh option
+  if(allYTVideos.length){
+    searchVideos('');
+    const resultsEl2=document.getElementById('tag-search-results');
+    if(resultsEl2&&allYTVideos.length<50){
+      // Suspiciously few — offer refresh
+      const refreshNote=document.createElement('div');
+      refreshNote.style.cssText='padding:6px 12px;font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;';
+      refreshNote.innerHTML=`<span>${allYTVideos.length} videos loaded</span><button onclick="allYTVideos=[];prefetchVideos();" style="background:none;border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--muted);cursor:pointer;">↺ Reload</button>`;
+      resultsEl2.appendChild(refreshNote);
+    }
+    return;
+  }
   resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading videos…</div>';
   try{
     let all=[];let pageToken='';
@@ -1693,6 +1832,7 @@ function renderSubCampBlock(campName,subName,filterAds){
       <div style="font-size:13px;font-weight:500;">${subName}</div>
       <div style="display:flex;gap:6px;">
         <button class="tag-btn" onclick="openAddEpisodeModal('${esc(campName)}','${esc(subName)}')">+ Episode</button>
+        <button class="tag-btn" onclick="exportVidCamp('${esc(campName)}','${esc(subName)}')">⬇ Export</button>
         <button class="tag-btn" style="color:var(--accent);border-color:rgba(255,68,68,0.3);" onclick="if(confirm('Delete sub-campaign?')){delete vidCampaigns['${esc(campName)}'].subs['${esc(subName)}'];saveVidCampsToStorage();renderVidCamps();}">Delete</button>
       </div>
     </div>
@@ -1733,6 +1873,8 @@ function renderEpisodeRow(campName,subName,ep,idx,filterAds){
     <td class="mono">${ctr}</td>
     <td class="mono" style="color:var(--green);">${rev}</td>
     <td style="white-space:nowrap;">
+      <button class="tag-btn" style="padding:1px 4px;font-size:9px;" onclick="moveEpisode('${esc(campName)}','${esc(subName)}',${idx},-1)" ${idx===0?'disabled':''}>↑</button>
+      <button class="tag-btn" style="padding:1px 4px;font-size:9px;" onclick="moveEpisode('${esc(campName)}','${esc(subName)}',${idx},1)">↓</button>
       <button class="tag-btn" style="padding:1px 5px;font-size:9px;" onclick="renameEpisode('${esc(campName)}','${esc(subName)}',${idx})">Label</button>
       <button class="tag-btn" style="padding:1px 5px;font-size:9px;" onclick="editEpisode('${esc(campName)}','${esc(subName)}',${idx})">Video</button>
       <button class="tag-btn" style="padding:1px 5px;font-size:9px;color:var(--accent);border-color:var(--accent);" onclick="removeEpisode('${esc(campName)}','${esc(subName)}',${idx})">✕</button>
@@ -1839,6 +1981,13 @@ function removeEpisode(campName,subName,idx){
   vidCampaigns[campName].subs[subName].episodes.splice(idx,1);
   saveVidCampsToStorage();renderVidCamps();
 }
+function moveEpisode(campName,subName,idx,dir){
+  const eps=vidCampaigns[campName].subs[subName].episodes;
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=eps.length)return;
+  [eps[idx],eps[newIdx]]=[eps[newIdx],eps[idx]];
+  saveVidCampsToStorage();renderVidCamps();
+}
 function renameEpisode(campName,subName,idx){
   const ep=vidCampaigns[campName].subs[subName].episodes[idx];
   const current=ep.label||'';
@@ -1855,6 +2004,60 @@ function switchEpTab(tab,btn){
   btn.classList.add('active');
   document.getElementById('ep-search-panel').style.display=tab==='search'?'block':'none';
   document.getElementById('ep-paste-panel').style.display=tab==='paste'?'block':'none';
+}
+
+// ── STOP EXPORT ──
+function exportStop(stopKey){
+  const stop=campaigns[stopKey];
+  if(!stop)return;
+  const rows=[['Stop','Series','Year','Tournament','Day','Platform','Avg Viewers','Peak Viewers','Views/Live Views','Hours Watched','Unique Viewers','Impressions','CTR %','Revenue (EUR)','YT Videos Tagged']];
+  Object.keys(stop.tournaments).forEach(tn=>{
+    const days=stop.tournaments[tn].days;
+    Object.keys(days).sort((a,b)=>dayOrder(a)-dayOrder(b)).forEach(day=>{
+      const m=getDayMetrics(stopKey,tn,day);
+      const tagged=[...(days[day].ytH||days[day].yt||[]),...(days[day].ytV||[])];
+      const vidTitles=tagged.map(id=>{const v=allYTVideos.find(x=>x.id===id)||ytImportedRows.find(x=>x.id===id);return v?.title||id;}).join(' | ');
+      // Combined row
+      rows.push([stop.stop,stop.series||'EPT',stop.year,tn,day,'Combined',
+        m.twAvgV??'',m.twPeak??'',
+        [m.twViews,m.ythViews,m.ytvViews].filter(v=>v!=null).reduce((a,b)=>a+b,0)||'',
+        [m.twHrs,m.ythHrs,m.ytvHrs].filter(v=>v!=null).reduce((a,b)=>a+b,0)||'',
+        '(N/A)',
+        [m.ythImpr,m.ytvImpr].filter(v=>v!=null).reduce((a,b)=>a+b,0)||'',
+        m.ythCtr!=null?m.ythCtr.toFixed(2):'',
+        [m.ythRev,m.ytvRev].filter(v=>v!=null).reduce((a,b)=>a+b,0)||'',
+        vidTitles
+      ]);
+    });
+  });
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=stop.stop+'_'+stop.year+'_export.csv';
+  a.click();
+}
+
+// ── VIDEO CAMPAIGN EXPORT ──
+function exportVidCamp(campName,subName){
+  const sub=vidCampaigns[campName]?.subs[subName];
+  if(!sub)return;
+  const rows=[['Campaign','Sub-campaign','Episode','Video ID','Title','Published','Views','Watch Hrs','Impressions','CTR %','Revenue (EUR)']];
+  (sub.episodes||[]).forEach((ep,i)=>{
+    const imp=ytImportedRows.find(r=>r.id===ep.videoId);
+    const cached=allYTVideos.find(v=>v.id===ep.videoId);
+    rows.push([campName,subName,'Ep.'+(i+1),ep.videoId,
+      ep.label||imp?.title||cached?.title||ep.videoId,
+      imp?.publishDate||cached?.date||'',
+      imp?.views??'',imp?.watchHrs!=null?Math.round(imp.watchHrs):'',
+      imp?.impressions??'',imp?.ctr!=null?imp.ctr.toFixed(2):'',
+      imp?.revenue!=null?imp.revenue.toFixed(2):''
+    ]);
+  });
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=campName+'_'+subName+'_export.csv';
+  a.click();
 }
 
 function closeModal(id){document.getElementById(id).classList.remove('open');}
@@ -1902,6 +2105,296 @@ function setRevenueKpis(rev,cpm){
 function fmt(n,full=false){if(n==null||isNaN(n))return'—';const num=parseInt(n);if(!full){if(num>=1e6)return(num/1e6).toFixed(1)+'M';if(num>=1e3)return(num/1e3).toFixed(1)+'K';}return num.toLocaleString('en-GB');}
 function showErr(m){const e=document.getElementById('error-msg');e.textContent=m;e.style.display='block';}
 function hideErr(){document.getElementById('error-msg').style.display='none';}
+
+// ══════════════════════════════════════════════
+// MONTHLY PERFORMANCE
+// ══════════════════════════════════════════════
+let monthlyLoaded=false;
+async function loadMonthlyPage(){
+  document.getElementById('monthly-loading').textContent='Loading monthly data…';
+  document.getElementById('monthly-loading').style.display='block';
+  try{
+    // Last complete month — if today is before 3rd, use month before last
+    const now=new Date();
+    const targetMonth=now.getDate()<=3?new Date(now.getFullYear(),now.getMonth()-2,1):new Date(now.getFullYear(),now.getMonth()-1,1);
+    const monthEnd=new Date(targetMonth.getFullYear(),targetMonth.getMonth()+1,0);
+    const label=targetMonth.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+    document.getElementById('monthly-period-label').textContent=label;
+
+    const fmt2=d=>d.toISOString().split('T')[0];
+    const mStart=fmt2(targetMonth),mEnd=fmt2(monthEnd);
+
+    // Current month
+    const cur=await ytaRange('views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate',mStart,mEnd);
+    const[cViews,cMins,cSubs,cRev,cImpr,cCtr]=cur.rows?.[0]||[];
+
+    // Previous month
+    const prevM=new Date(targetMonth.getFullYear(),targetMonth.getMonth()-1,1);
+    const prevMEnd=new Date(targetMonth.getFullYear(),targetMonth.getMonth(),0);
+    const prev=await ytaRange('views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate',fmt2(prevM),fmt2(prevMEnd));
+    const[pViews,pMins,pSubs,pRev,pImpr,pCtr]=prev.rows?.[0]||[];
+
+    // Same month last year
+    const lyM=new Date(targetMonth.getFullYear()-1,targetMonth.getMonth(),1);
+    const lyMEnd=new Date(targetMonth.getFullYear()-1,targetMonth.getMonth()+1,0);
+    const ly=await ytaRange('views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate',fmt2(lyM),fmt2(lyMEnd));
+    const[lViews,lMins,lSubs,lRev,lImpr,lCtr]=ly.rows?.[0]||[];
+
+    const pct=(a,b)=>b&&b!==0?((a-b)/b*100).toFixed(1)+'%':'N/A';
+    const arrow=(a,b)=>(a||0)>=(b||0)?'▲':'▼';
+    const col=(a,b)=>(a||0)>=(b||0)?'var(--green)':'var(--accent)';
+
+    // Scorecard
+    const metrics=[
+      {label:'Views',cur:fmt(cViews),mom:pct(cViews,pViews),yoy:pct(cViews,lViews),momA:arrow(cViews,pViews),yoyA:arrow(cViews,lViews),momC:col(cViews,pViews),yoyC:col(cViews,lViews)},
+      {label:'Watch Time (hrs)',cur:fmt(cMins?Math.round(cMins/60):null),mom:pct(cMins,pMins),yoy:pct(cMins,lMins),momA:arrow(cMins,pMins),yoyA:arrow(cMins,lMins),momC:col(cMins,pMins),yoyC:col(cMins,lMins)},
+      {label:'Subscribers',cur:fmt(cSubs),mom:pct(cSubs,pSubs),yoy:pct(cSubs,lSubs),momA:arrow(cSubs,pSubs),yoyA:arrow(cSubs,lSubs),momC:col(cSubs,pSubs),yoyC:col(cSubs,lSubs)},
+      {label:'Revenue (EUR)',cur:cRev!=null?'€'+parseFloat(usdToEur(cRev)).toFixed(2):'—',mom:pct(cRev,pRev),yoy:pct(cRev,lRev),momA:arrow(cRev,pRev),yoyA:arrow(cRev,lRev),momC:col(cRev,pRev),yoyC:col(cRev,lRev)},
+      {label:'Impressions',cur:fmt(cImpr),mom:pct(cImpr,pImpr),yoy:pct(cImpr,lImpr),momA:arrow(cImpr,pImpr),yoyA:arrow(cImpr,lImpr),momC:col(cImpr,pImpr),yoyC:col(cImpr,lImpr)},
+      {label:'Avg CTR',cur:cCtr!=null?(cCtr*100).toFixed(2)+'%':'—',mom:pct(cCtr,pCtr),yoy:pct(cCtr,lCtr),momA:arrow(cCtr,pCtr),yoyA:arrow(cCtr,lCtr),momC:col(cCtr,pCtr),yoyC:col(cCtr,lCtr)},
+    ];
+
+    document.getElementById('monthly-scorecard').innerHTML=metrics.map(m=>`
+      <div class="kpi-card" style="--kpi-color:var(--blue);">
+        <div class="kpi-label">${m.label}</div>
+        <div class="kpi-value" style="font-size:20px;">${m.cur}</div>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:3px;">
+          <div style="font-size:11px;font-family:var(--font-mono);color:${m.momC};">${m.momA} MoM: ${m.mom}</div>
+          <div style="font-size:11px;font-family:var(--font-mono);color:${m.yoyC};">${m.yoyA} YoY: ${m.yoy}</div>
+        </div>
+      </div>`).join('');
+
+    // Full year monthly charts — fetch month by month for this year and last
+    const thisYear=targetMonth.getFullYear();
+    const lastYear=thisYear-1;
+    const monthLabels=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    async function fetchYearMonthly(year,metric){
+      const endMonth=year===thisYear?targetMonth.getMonth():11;
+      const results=[];
+      for(let m=0;m<=endMonth;m++){
+        const s=new Date(year,m,1),e=new Date(year,m+1,0);
+        try{
+          const r=await ytaRange(metric,fmt2(s),fmt2(e));
+          results.push(r.rows?.[0]?.[0]||0);
+        }catch(e){results.push(null);}
+      }
+      return results;
+    }
+
+    const [cyViews,lyViews,cyWatch,lyWatch,cyRev,lyRev,cySubs,lySubs,cyImpr,lyImpr,cyCtr,lyCtr]=await Promise.all([
+      fetchYearMonthly(thisYear,'views'),fetchYearMonthly(lastYear,'views'),
+      fetchYearMonthly(thisYear,'estimatedMinutesWatched'),fetchYearMonthly(lastYear,'estimatedMinutesWatched'),
+      fetchYearMonthly(thisYear,'estimatedRevenue'),fetchYearMonthly(lastYear,'estimatedRevenue'),
+      fetchYearMonthly(thisYear,'subscribersGained'),fetchYearMonthly(lastYear,'subscribersGained'),
+      fetchYearMonthly(thisYear,'impressions'),fetchYearMonthly(lastYear,'impressions'),
+      fetchYearMonthly(thisYear,'impressionClickThroughRate'),fetchYearMonthly(lastYear,'impressionClickThroughRate'),
+    ]);
+
+    const mLabels=monthLabels.slice(0,cyViews.length);
+    const mOpts=(y,y1)=>({responsive:true,plugins:{legend:{labels:{color:'#7a7a8e',font:{family:'DM Mono',size:11},boxWidth:12,padding:12}},tooltip:{backgroundColor:'#18181f',titleColor:'#f0f0f5',bodyColor:'#7a7a8e'}},scales:{x:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'},title:{display:!!y,text:y,color:'#7a7a8e',font:{size:10}}}}});
+
+    mk('m-views','line',{labels:mLabels,datasets:[
+      {label:thisYear+' Views',data:cyViews,borderColor:'#4488ff',backgroundColor:'rgba(68,136,255,0.1)',tension:0.4,fill:true,pointRadius:3},
+      {label:lastYear+' Views',data:lyViews,borderColor:'rgba(68,136,255,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2}
+    ]},mOpts('Views'));
+    mk('m-watch','line',{labels:mLabels,datasets:[
+      {label:thisYear+' Watch hrs',data:cyWatch.map(v=>v?Math.round(v/60):0),borderColor:'#aa66ff',backgroundColor:'rgba(170,102,255,0.1)',tension:0.4,fill:true,pointRadius:3},
+      {label:lastYear+' Watch hrs',data:lyWatch.map(v=>v?Math.round(v/60):0),borderColor:'rgba(170,102,255,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2}
+    ]},mOpts('Hours'));
+    mk('m-rev','bar',{labels:mLabels,datasets:[
+      {label:thisYear+' Revenue (EUR)',data:cyRev.map(v=>v?parseFloat(usdToEur(v).toFixed(2)):0),backgroundColor:'rgba(0,229,160,0.6)',borderColor:'#00e5a0',borderWidth:1,borderRadius:3}
+    ]},mOpts('EUR'));
+    mk('m-subs','bar',{labels:mLabels,datasets:[
+      {label:thisYear+' Subscribers',data:cySubs,backgroundColor:'rgba(68,136,255,0.6)',borderColor:'#4488ff',borderWidth:1,borderRadius:3}
+    ]},mOpts('Subscribers'));
+    mk('m-impr','bar',{labels:mLabels,datasets:[
+      {label:thisYear+' Impressions',data:cyImpr,backgroundColor:'rgba(255,136,0,0.6)',borderColor:'#ff8800',borderWidth:1,borderRadius:3}
+    ]},mOpts('Impressions'));
+    mk('m-ctr','line',{labels:mLabels,datasets:[
+      {label:thisYear+' CTR %',data:cyCtr.map(v=>v?(v*100).toFixed(2):0),borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.1)',tension:0.4,fill:true,pointRadius:3},
+      {label:lastYear+' CTR %',data:lyCtr.map(v=>v?(v*100).toFixed(2):0),borderColor:'rgba(255,68,68,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2}
+    ]},mOpts('CTR %'));
+
+    document.getElementById('monthly-loading').style.display='none';
+    monthlyLoaded=true;
+  }catch(e){
+    document.getElementById('monthly-loading').textContent='Error loading monthly data: '+e.message;
+    console.error('Monthly:',e);
+  }
+}
+
+// ══════════════════════════════════════════════
+// REPORT BUILDER
+// ══════════════════════════════════════════════
+let reportSlides=[];
+const SLIDE_TYPES=[
+  {id:'ai-overview',label:'AI Overview',desc:'Claude-generated performance summary'},
+  {id:'kpi-scorecard',label:'KPI Scorecard',desc:'Key metrics for selected period'},
+  {id:'views-chart',label:'Views Chart',desc:'Views over time with comparison'},
+  {id:'watch-chart',label:'Watch Time Chart',desc:'Watch hours over time'},
+  {id:'revenue-chart',label:'Revenue Chart',desc:'Estimated revenue over time'},
+  {id:'top-videos',label:'Top Videos',desc:'Best performing videos table'},
+  {id:'live-event',label:'Live Event Summary',desc:'Campaign stop data'},
+  {id:'custom-text',label:'Custom Text',desc:'Write your own slide content'},
+  {id:'image',label:'Image',desc:'Upload an image or chart screenshot'},
+];
+
+function renderReportBuilder(){
+  const container=document.getElementById('report-slides');
+  const empty=document.getElementById('report-empty');
+  if(!reportSlides.length){container.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  container.innerHTML=reportSlides.map((slide,i)=>`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2);">
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);min-width:24px;">Slide ${i+1}</span>
+        <span style="font-weight:500;font-size:13px;">${SLIDE_TYPES.find(t=>t.id===slide.type)?.label||slide.type}</span>
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          ${i>0?`<button class="tag-btn" style="padding:2px 8px;font-size:10px;" onclick="moveSlide(${i},-1)">↑</button>`:''}
+          ${i<reportSlides.length-1?`<button class="tag-btn" style="padding:2px 8px;font-size:10px;" onclick="moveSlide(${i},1)">↓</button>`:''}
+          <button class="tag-btn" style="padding:2px 8px;font-size:10px;" onclick="editSlide(${i})">Edit</button>
+          <button class="tag-btn" style="padding:2px 8px;font-size:10px;color:var(--accent);border-color:var(--accent);" onclick="removeSlide(${i})">✕</button>
+        </div>
+      </div>
+      <div style="padding:16px;font-size:13px;color:var(--muted);">${renderSlidePreview(slide)}</div>
+    </div>`).join('');
+}
+
+function renderSlidePreview(slide){
+  if(slide.type==='ai-overview')return slide.content?`<div style="white-space:pre-wrap;color:var(--text);font-size:12px;">${slide.content.slice(0,300)}${slide.content.length>300?'…':''}</div>`:'<em>Click Edit to generate AI content</em>';
+  if(slide.type==='custom-text')return slide.content?`<div style="white-space:pre-wrap;color:var(--text);font-size:12px;">${slide.content.slice(0,200)}…</div>`:'<em>Click Edit to add text</em>';
+  if(slide.type==='image')return slide.imageData?`<img src="${slide.imageData}" style="max-height:120px;border-radius:4px;">` : '<em>Click Edit to upload an image</em>';
+  if(slide.type==='live-event')return`Stop: <strong>${slide.stopKey||'Not selected'}</strong>`;
+  return`<em>${SLIDE_TYPES.find(t=>t.id===slide.type)?.desc||''} — will use current dashboard data</em>`;
+}
+
+function addReportSlide(){
+  // Show a quick type picker
+  const type=prompt('Slide type:\n'+SLIDE_TYPES.map((t,i)=>`${i+1}. ${t.label} — ${t.desc}`).join('\n')+'\n\nEnter number:');
+  const idx=parseInt(type)-1;
+  if(isNaN(idx)||idx<0||idx>=SLIDE_TYPES.length)return;
+  reportSlides.push({type:SLIDE_TYPES[idx].id,content:'',title:SLIDE_TYPES[idx].label});
+  renderReportBuilder();
+}
+
+function removeSlide(i){reportSlides.splice(i,1);renderReportBuilder();}
+function moveSlide(i,dir){
+  const j=i+dir;if(j<0||j>=reportSlides.length)return;
+  [reportSlides[i],reportSlides[j]]=[reportSlides[j],reportSlides[i]];
+  renderReportBuilder();
+}
+
+async function editSlide(i){
+  const slide=reportSlides[i];
+  if(slide.type==='ai-overview'){
+    const btn=document.createElement('button');
+    const existing=slide.content?`Current content saved (${slide.content.length} chars). Generate fresh? `:'';
+    if(!confirm(existing+'Generate AI overview for '+S+' to '+E+'?'))return;
+    slide.content='Generating…';renderReportBuilder();
+    const t=ytData.totals||{};
+    const ctx=`YouTube channel analytics (${S} to ${E})\nViews: ${fmt(t.views)}\nWatch hrs: ${fmt(t.mins?Math.round(t.mins/60):null)}\nRevenue: ${t.rev!=null?fmtEur(t.rev):'N/A'}\nSubscribers: ${fmt(t.subs)}`;
+    try{
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:'Write a concise executive summary (3 paragraphs) of this YouTube channel performance for a stakeholder report:\n\n'+ctx}]})});
+      const d=await r.json();
+      slide.content=d.content?.[0]?.text||'No response.';
+    }catch(e){slide.content='Error: '+e.message;}
+    renderReportBuilder();
+  } else if(slide.type==='custom-text'){
+    const text=prompt('Enter slide text:',slide.content||'');
+    if(text!==null)slide.content=text;
+    renderReportBuilder();
+  } else if(slide.type==='image'){
+    const input=document.createElement('input');input.type='file';input.accept='image/*';
+    input.onchange=e=>{
+      const file=e.target.files[0];if(!file)return;
+      const reader=new FileReader();
+      reader.onload=ev=>{slide.imageData=ev.target.result;renderReportBuilder();};
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  } else if(slide.type==='live-event'){
+    const key=prompt('Enter stop key (e.g. Paris-2024):',slide.stopKey||'');
+    if(key!==null)slide.stopKey=key;
+    renderReportBuilder();
+  } else {
+    alert('This slide type uses current dashboard data automatically — no editing needed.');
+  }
+}
+
+function previewReport(){
+  const body=document.getElementById('report-preview-body');
+  body.innerHTML=reportSlides.map((slide,i)=>`
+    <div style="margin-bottom:24px;padding:16px;background:var(--surface2);border-radius:8px;">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:8px;">SLIDE ${i+1} — ${(SLIDE_TYPES.find(t=>t.id===slide.type)?.label||'').toUpperCase()}</div>
+      ${renderSlidePreview(slide)}
+    </div>`).join('');
+  document.getElementById('report-preview-modal').classList.add('open');
+}
+
+async function exportReportPptx(){
+  // Load pptxgenjs from CDN
+  if(!window.PptxGenJS){
+    const script=document.createElement('script');
+    script.src='https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+    document.head.appendChild(script);
+    await new Promise(resolve=>script.onload=resolve);
+  }
+  const pptx=new PptxGenJS();
+  pptx.layout='LAYOUT_WIDE';
+  pptx.theme={headFontFace:'Arial',bodyFontFace:'Arial'};
+
+  for(const slide of reportSlides){
+    const s=pptx.addSlide();
+    // Dark background
+    s.background={color:'0A0A0F'};
+
+    const titleText=SLIDE_TYPES.find(t=>t.id===slide.type)?.label||'Slide';
+    s.addText(titleText,{x:0.4,y:0.25,w:12,h:0.5,fontSize:20,bold:true,color:'F0F0F5',fontFace:'Arial'});
+
+    if(slide.type==='ai-overview'||slide.type==='custom-text'){
+      const text=slide.content||'(No content)';
+      s.addText(text,{x:0.4,y:1,w:12,h:5,fontSize:13,color:'C0C0C8',fontFace:'Arial',valign:'top',wrap:true});
+    } else if(slide.type==='image'&&slide.imageData){
+      s.addImage({data:slide.imageData,x:0.5,y:1,w:12,h:5,sizing:{type:'contain',w:12,h:5}});
+    } else if(slide.type==='kpi-scorecard'){
+      const t=ytData.totals||{};
+      const kpis=[
+        ['Views',fmt(t.views)],['Watch hrs',fmt(t.mins?Math.round(t.mins/60):null)],
+        ['Revenue',t.rev!=null?fmtEur(t.rev):'—'],['Subscribers',fmt(t.subs)],
+      ];
+      kpis.forEach(([label,val],i)=>{
+        const x=0.4+(i%2)*6.4,y=1.2+Math.floor(i/2)*2;
+        s.addText(label,{x,y,w:5.8,h:0.4,fontSize:11,color:'7A7A8E',fontFace:'Arial'});
+        s.addText(val,{x,y:y+0.4,w:5.8,h:0.8,fontSize:28,bold:true,color:'F0F0F5',fontFace:'Arial'});
+      });
+    } else if(slide.type==='top-videos'){
+      const vids=(ytData.topEnriched||[]).slice(0,8);
+      const rows=[['#','Title','Views','Watch Hrs','Revenue']];
+      vids.forEach((v,i)=>rows.push([i+1,v.sn?.title?.slice(0,40)||v.id,fmt(v.m[0]),fmt(v.m[1]?Math.round(v.m[1]/60):null),v.m[2]!=null?fmtEur(v.m[2]):'—']));
+      s.addTable(rows,{x:0.4,y:0.9,w:12.6,colW:[0.5,6,1.5,1.5,1.5],color:'C0C0C8',fontSize:10,border:{type:'solid',color:'1A1A2A',pt:0.5},fill:{color:'111118'},fontFace:'Arial',autoPage:false,headerRow:{fill:{color:'18181F'},color:'F0F0F5',bold:true}});
+    } else if(slide.type==='live-event'&&slide.stopKey&&campaigns[slide.stopKey]){
+      const stop=campaigns[slide.stopKey];
+      s.addText(stop.stop+' '+stop.year,{x:0.4,y:1,w:12,h:0.5,fontSize:16,bold:true,color:'F0F0F5'});
+      let tableRows=[['Tournament','Day','Avg Viewers','Peak Viewers','Views','Hours']];
+      Object.keys(stop.tournaments).forEach(tn=>{
+        Object.keys(stop.tournaments[tn].days).sort((a,b)=>dayOrder(a)-dayOrder(b)).forEach(day=>{
+          const m=getDayMetrics(slide.stopKey,tn,day);
+          tableRows.push([tn,day,m.twAvgV!=null?fmt(m.twAvgV):'—',m.twPeak!=null?fmt(m.twPeak):'—',fmt(mergeSum([m.twViews,m.ythViews,m.ytvViews])),fmt(Math.round(mergeSum([m.twHrs,m.ythHrs,m.ytvHrs])||0))]);
+        });
+      });
+      s.addTable(tableRows,{x:0.4,y:1.7,w:12.6,colW:[3,1.5,2,2,2,2],color:'C0C0C8',fontSize:10,border:{type:'solid',color:'1A1A2A',pt:0.5},fill:{color:'111118'},fontFace:'Arial',headerRow:{fill:{color:'18181F'},color:'F0F0F5',bold:true}});
+    } else {
+      s.addText('Chart data from dashboard — '+S+' to '+E,{x:0.4,y:2,w:12,h:1,fontSize:14,color:'7A7A8E',align:'center'});
+    }
+
+    // Period footer
+    s.addText(S+' — '+E,{x:0.4,y:6.8,w:12,h:0.3,fontSize:9,color:'444455',align:'right'});
+  }
+
+  const fileName='YTCommand_Report_'+new Date().toISOString().slice(0,10)+'.pptx';
+  pptx.writeFile({fileName});
+}
 
 // ══════════════════════════════════════════════
 // SETTINGS
