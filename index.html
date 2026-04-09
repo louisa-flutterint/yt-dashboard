@@ -645,6 +645,7 @@ let ytData={},CH={},activeTab='summary';
 let ytImportedRows=[];
 let vidCampaigns={};
 let vcWindow=28;
+let ytVideoCache={}; // cache: videoId → {views, watchHrs, impressions, ctr, revenue, uniqueViewers, title}
 // Campaign state — persisted to localStorage
 let campaigns={}; // { 'Paris-2024': { stop:'Paris', year:2024, tournaments:{ 'Main Event': { days:{ 'FT-1':{ yt:[videoId,...], tw:[rowIdx,...] } } } } } }
 let twitchRows=[]; // parsed CSV rows (CEN only)
@@ -1380,7 +1381,7 @@ function renderCampaignTree(){
         <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:var(--font-mono)">${stopKeys.length} stops</span>
       </div>
       <div class="tree-stops">
-        ${stopKeys.sort().map(k=>`<div class="tree-stop" onclick="selectStop('${k}')" id="tree-stop-${k.replace(/'/g,'\\x27')}">${campaigns[k].stop} <span style="color:var(--muted)">${campaigns[k].year}</span></div>`).join('')}
+        ${stopKeys.sort().map(k=>`<div class="tree-stop" onclick="selectStop('${esc(k)}')" id="tree-stop-${sanitiseId(k)}">${campaigns[k].stop} <span style='color:var(--muted)'>${campaigns[k].year}</span></div>`).join('')}
       </div>
     </div>`).join('');
 }
@@ -1392,8 +1393,10 @@ function toggleSeries(el){
 
 function selectStop(key){
   document.querySelectorAll('.tree-stop').forEach(el=>el.classList.remove('active'));
-  const el=document.getElementById('tree-stop-'+key.replace(/'/g,'\x27'));if(el)el.classList.add('active');
+  const el=document.getElementById('tree-stop-'+sanitiseId(key));if(el)el.classList.add('active');
   renderStopDetail(key);
+  // Fetch analytics for any tagged videos not yet cached
+  fetchVideoAnalyticsForStop(key);
 }
 
 function renderStopDetail(key){
@@ -1434,6 +1437,7 @@ function renderStopDetail(key){
           <button class="ptog${liveViewMode==='yth'?' active':''}" onclick="setLiveView('yth',this)">YT Horizontal</button>
           <button class="ptog${liveViewMode==='ytv'?' active':''}" onclick="setLiveView('ytv',this)">YT Vertical</button>
           <button class="ptog${liveViewMode==='twitch'?' active':''}" onclick="setLiveView('twitch',this)">Twitch</button>
+          <button class="tag-btn" style="margin-left:8px;font-size:10px;" onclick="fetchVideoAnalyticsForStop('${key}')" title="Refresh YouTube data for tagged videos">↺ Fetch YT data</button>
         </div>
       </div>
     </div>
@@ -1485,7 +1489,8 @@ function renderTournamentBlock(stopKey,tournament){
   </div>`;
 }
 
-function esc(s){return s.replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+function esc(s){return s.replace(/'/g,"\'").replace(/"/g,'&quot;');}
+function sanitiseId(s){return s.replace(/[^a-zA-Z0-9_-]/g,'_');}
 
 function getDayMetrics(stopKey,tournament,day){
   const dayData=campaigns[stopKey].tournaments[tournament].days[day];
@@ -1500,31 +1505,33 @@ function getDayMetrics(stopKey,tournament,day){
   const manualAvgV=dayData.manualAvgV||null;
   const manualPeakV=dayData.manualPeakV||null;
 
-  // YouTube H
+  // YouTube H — check imported CSV first, then API cache
   const ythIds=dayData.ytH||dayData.yt||[];
-  const ythRows=ythIds.map(id=>ytImportedRows.find(r=>r.id===id)).filter(Boolean);
-  const ythViews=ythRows.length?ythRows.reduce((a,r)=>a+r.views,0):null;
-  const ythHrs=ythRows.length?ythRows.reduce((a,r)=>a+r.watchHrs,0):null;
-  const ythImpr=ythRows.length?ythRows.reduce((a,r)=>a+r.impressions,0):null;
-  const ythCtr=ythRows.length?ythRows.reduce((a,r)=>a+r.ctr,0)/ythRows.length:null;
-  const ythRev=ythRows.length?ythRows.reduce((a,r)=>a+r.revenue,0):null;
-  const ythUniq=ythRows.length?ythRows.reduce((a,r)=>a+r.uniqueViewers,0):null;
-  // YouTube V
+  const ythData=ythIds.map(id=>ytImportedRows.find(r=>r.id===id)||ytVideoCache[id]).filter(Boolean);
+  const ythViews=ythData.length?ythData.reduce((a,r)=>a+(r.views||0),0):null;
+  const ythHrs=ythData.length?ythData.reduce((a,r)=>a+(r.watchHrs||0),0):null;
+  const ythImpr=ythData.length?ythData.reduce((a,r)=>a+(r.impressions||0),0):null;
+  const ythCtr=ythData.length?ythData.filter(r=>r.ctr!=null).reduce((a,r,_,arr)=>a+r.ctr/arr.length,0):null;
+  const ythRev=ythData.length?ythData.reduce((a,r)=>a+(r.revenue||0),0):null;
+  const ythUniq=ythData.length?ythData.reduce((a,r)=>a+(r.uniqueViewers||0),0):null;
+  // YouTube V — check imported CSV first, then API cache
   const ytvIds=dayData.ytV||[];
-  const ytvRows=ytvIds.map(id=>ytImportedRows.find(r=>r.id===id)).filter(Boolean);
-  const ytvViews=ytvRows.length?ytvRows.reduce((a,r)=>a+r.views,0):null;
-  const ytvHrs=ytvRows.length?ytvRows.reduce((a,r)=>a+r.watchHrs,0):null;
-  const ytvImpr=ytvRows.length?ytvRows.reduce((a,r)=>a+r.impressions,0):null;
-  const ytvCtr=ytvRows.length?ytvRows.reduce((a,r)=>a+r.ctr,0)/ytvRows.length:null;
-  const ytvRev=ytvRows.length?ytvRows.reduce((a,r)=>a+r.revenue,0):null;
-  const ytvUniq=ytvRows.length?ytvRows.reduce((a,r)=>a+r.uniqueViewers,0):null;
+  const ytvData=ytvIds.map(id=>ytImportedRows.find(r=>r.id===id)||ytVideoCache[id]).filter(Boolean);
+  const ytvViews=ytvData.length?ytvData.reduce((a,r)=>a+(r.views||0),0):null;
+  const ytvHrs=ytvData.length?ytvData.reduce((a,r)=>a+(r.watchHrs||0),0):null;
+  const ytvImpr=ytvData.length?ytvData.reduce((a,r)=>a+(r.impressions||0),0):null;
+  const ytvCtr=ytvData.length?ytvData.filter(r=>r.ctr!=null).reduce((a,r,_,arr)=>a+r.ctr/arr.length,0):null;
+  const ytvRev=ytvData.length?ytvData.reduce((a,r)=>a+(r.revenue||0),0):null;
+  const ytvUniq=ytvData.length?ytvData.reduce((a,r)=>a+(r.uniqueViewers||0),0):null;
   return{twAvgV,twPeak,twViews,twHrs,twUniq,ythViews,ythHrs,ythImpr,ythCtr,ythRev,ythUniq,ytvViews,ytvHrs,ytvImpr,ytvCtr,ytvRev,ytvUniq,ythIds,ytvIds,manualAvgV,manualPeakV};
 }
 
 function renderMetricCells(m){
   if(liveViewMode==='twitch'){
-    return`<td class="mono twitch">${m.twAvgV!=null?fmt(m.twAvgV):'—'}</td>
-    <td class="mono twitch">${m.twPeak!=null?fmt(m.twPeak):'—'}</td>
+    const tAvg=m.twAvgV??m.manualAvgV;
+    const tPeak=m.twPeak??m.manualPeakV;
+    return`<td class="mono twitch">${tAvg!=null?fmt(tAvg):'—'}</td>
+    <td class="mono twitch">${tPeak!=null?fmt(tPeak):'—'}</td>
     <td class="mono">${m.twViews!=null?fmt(m.twViews):'—'}</td>
     <td class="mono">${m.twHrs!=null?fmt(Math.round(m.twHrs)):'—'}</td>
     <td class="mono">${m.twUniq!=null?fmt(m.twUniq):'—'}</td>`;
@@ -1549,17 +1556,16 @@ function renderMetricCells(m){
     <td class="mono">${m.ytvCtr!=null?m.ytvCtr.toFixed(2)+'%':'—'}</td>
     <td class="mono">${m.ytvRev!=null?'€'+m.ytvRev.toFixed(2):'—'}</td>`;
   }
-  // Combined — avg from Twitch (live viewers), peak from Twitch
-  const avgV=m.twAvgV!=null?fmt(m.twAvgV):'—';
-  const peakV=m.twPeak!=null?fmt(m.twPeak):'—';
+  // Combined — sum all three sources. Avg viewers = avg of available, Peak = max
+  const avgV=mergeAvg([m.twAvgV,m.manualAvgV].filter(v=>v!=null));
+  const peakV=mergePeak([m.twPeak,m.manualPeakV].filter(v=>v!=null));
   const views=mergeSum([m.twViews,m.ythViews,m.ytvViews]);
   const hrs=mergeSum([m.twHrs,m.ythHrs,m.ytvHrs]);
-  const uniq='—'; // unique across platforms not addable
   const impr=mergeSum([m.ythImpr,m.ytvImpr]);
-  const ctr=mergeAvg([m.ythCtr,m.ytvCtr]);
+  const ctr=mergeAvg([m.ythCtr,m.ytvCtr].filter(v=>v!=null));
   const rev=mergeSum([m.ythRev,m.ytvRev]);
-  return`<td class="mono twitch">${typeof avgV==='string'?avgV:(avgV!=null?fmt(avgV):'—')}</td><td class="mono twitch">${typeof peakV==='string'?peakV:(peakV!=null?fmt(peakV):'—')}</td>
-    <td class="mono">${views}</td><td class="mono">${hrs!=null?fmt(Math.round(hrs)):hrs}</td>
+  return`<td class="mono twitch">${avgV!=null?fmt(Math.round(avgV)):'—'}</td><td class="mono twitch">${peakV!=null?fmt(peakV):'—'}</td>
+    <td class="mono">${views!=null?fmt(views):'—'}</td><td class="mono">${hrs!=null?fmt(Math.round(hrs)):'—'}</td>
     <td class="mono" style="color:var(--muted);font-size:10px;">N/A</td>
     <td class="mono">${impr!=null?fmt(impr):'—'}</td>
     <td class="mono">${ctr!=null?ctr.toFixed(2)+'%':'—'}</td>
@@ -1728,11 +1734,67 @@ function addTournament(stopKey){
   if(!campaigns[stopKey].tournaments[n])campaigns[stopKey].tournaments[n]={days:{}};
   saveCampaignsToStorage();renderStopDetail(stopKey);
 }
+
+async function fetchVideoAnalyticsForStop(stopKey){
+  // Collect all tagged video IDs in this stop that aren't yet in cache or imported
+  const stop=campaigns[stopKey];if(!stop||!TOKEN)return;
+  const idsNeeded=new Set();
+  Object.values(stop.tournaments||{}).forEach(t=>{
+    Object.values(t.days||{}).forEach(d=>{
+      [...(d.ytH||d.yt||[]),...(d.ytV||[])].forEach(id=>{
+        if(id&&!ytImportedRows.find(r=>r.id===id)&&!ytVideoCache[id])idsNeeded.add(id);
+      });
+    });
+  });
+  if(!idsNeeded.size)return;
+  // Fetch in batches of 10 (Analytics API video filter limit)
+  const idArr=[...idsNeeded];
+  for(let i=0;i<idArr.length;i+=10){
+    const batch=idArr.slice(i,i+10);
+    const filterStr=batch.map(id=>'video=='+id).join(',');
+    try{
+      // Use the full date range — all time for these videos
+      const r=await yta('views,estimatedMinutesWatched,estimatedRevenue,impressions,impressionClickThroughRate,uniqueViews','video',{filters:filterStr,sort:'-views',maxResults:10});
+      (r.rows||[]).forEach(row=>{
+        const[id,views,mins,rev,impr,ctr,uniq]=row;
+        ytVideoCache[id]={
+          views:views||0,
+          watchHrs:mins?mins/60:0,
+          revenue:rev||0,
+          impressions:impr||0,
+          ctr:ctr||0,
+          uniqueViewers:uniq||0,
+        };
+      });
+      // For any IDs that returned no data, store empty so we don't re-fetch
+      batch.forEach(id=>{if(!ytVideoCache[id])ytVideoCache[id]={views:0,watchHrs:0,revenue:0,impressions:0,ctr:0,uniqueViewers:0};});
+    }catch(e){
+      console.warn('Video analytics batch failed:',e.message);
+      // Try simpler metrics without uniqueViews
+      try{
+        const r2=await yta('views,estimatedMinutesWatched,estimatedRevenue','video',{filters:filterStr,sort:'-views',maxResults:10});
+        (r2.rows||[]).forEach(row=>{
+          const[id,views,mins,rev]=row;
+          ytVideoCache[id]={views:views||0,watchHrs:mins?mins/60:0,revenue:rev||0,impressions:0,ctr:0,uniqueViewers:0};
+        });
+        batch.forEach(id=>{if(!ytVideoCache[id])ytVideoCache[id]={views:0,watchHrs:0,revenue:0,impressions:0,ctr:0,uniqueViewers:0};});
+      }catch(e2){console.warn('Fallback also failed:',e2.message);}
+    }
+  }
+  // Re-render stop with fresh data
+  renderStopDetail(stopKey);
+}
 function dayOrder(d){
-  const ft=d.match(/FT-?(\d+)/i);if(ft)return 1000-parseInt(ft[1]);
-  if(/Final\s*Table/i.test(d))return 999;
-  const day=d.match(/Day\s*(\d+)/i);if(day)return parseInt(day[1]);
-  return 500;
+  // Days go: Day 1, Day 2, ... Day N, FT-N, FT-N-1, ..., FT-1, Final Table
+  const dayMatch=d.match(/Day\s*(\d+[A-Za-z]?)/i);
+  if(dayMatch){
+    const num=parseInt(dayMatch[1]);
+    return num; // Day 1=1, Day 2=2, etc.
+  }
+  // FT-4 comes before FT-3 before FT-2 before FT-1 (FT-4 is earliest final day)
+  const ft=d.match(/FT-?(\d+)/i);if(ft)return 100-parseInt(ft[1])+100; // FT-4=200-4=196, FT-1=199
+  if(/Final\s*Table/i.test(d))return 200; // Final Table last
+  return 50; // unknown — put early
 }
 
 // ── New stop modal ──
@@ -1741,13 +1803,21 @@ function confirmNewStop(){
   const stop=document.getElementById('new-stop-name').value.trim();
   const year=document.getElementById('new-stop-year').value.trim();
   const tLines=document.getElementById('new-stop-tournaments').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  if(!stop||!year)return;
+  if(!stop){alert('Please enter a stop name.');return;}
+  if(!year){alert('Please enter a year.');return;}
   const key=stop+'-'+year;
   if(!campaigns[key])campaigns[key]={stop,year,series:'EPT',tournaments:{}};
+  // Always add Main Event as default tournament if none specified
+  if(!tLines.length)tLines.push('Main Event');
   tLines.forEach(t=>{if(!campaigns[key].tournaments[t])campaigns[key].tournaments[t]={days:{}};});
-  saveCampaignsToStorage();closeModal('stop-modal');
-  document.getElementById('new-stop-name').value='';document.getElementById('new-stop-year').value='';document.getElementById('new-stop-tournaments').value='';
+  saveCampaignsToStorage();
+  closeModal('stop-modal');
+  document.getElementById('new-stop-name').value='';
+  document.getElementById('new-stop-year').value='';
+  document.getElementById('new-stop-tournaments').value='';
   renderCampaignTree();
+  // Auto-select the new stop
+  setTimeout(()=>selectStop(key),100);
 }
 
 // ── Tag modal ──
@@ -2155,7 +2225,52 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 // PERSISTENCE
 // ══════════════════════════════════════════════
 function saveCampaignsToStorage(){try{localStorage.setItem('ytcmd_campaigns',JSON.stringify(campaigns));}catch(e){}}
-function loadCampaignsFromStorage(){try{const d=localStorage.getItem('ytcmd_campaigns');if(d)campaigns=JSON.parse(d);}catch(e){campaigns={};}}
+function loadCampaignsFromStorage(){
+  try{const d=localStorage.getItem('ytcmd_campaigns');if(d)campaigns=JSON.parse(d);}catch(e){campaigns={};}
+  migrateCampaigns();
+}
+function migrateCampaigns(){
+  // One-time migration: merge ME/ME FT into Main Event, fix day labels
+  let changed=false;
+  Object.keys(campaigns).forEach(stopKey=>{
+    const stop=campaigns[stopKey];
+    const toProcess=Object.keys(stop.tournaments||{});
+    toProcess.forEach(rawName=>{
+      const norm=normaliseTournamentName(rawName);
+      if(norm===rawName)return; // already normalised
+      const src=stop.tournaments[rawName];
+      if(!stop.tournaments[norm])stop.tournaments[norm]={days:{}};
+      const dst=stop.tournaments[norm];
+      // Migrate days — also normalise day labels
+      Object.keys(src.days||{}).forEach(rawDay=>{
+        const normDay=migrateDay(rawDay,rawName);
+        if(!dst.days[normDay])dst.days[normDay]={ytH:[],ytV:[],tw:[]};
+        const dSrc=src.days[rawDay];const dDst=dst.days[normDay];
+        ['ytH','ytV','yt','tw'].forEach(arr=>{
+          (dSrc[arr]||[]).forEach(v=>{
+            if(!(dDst[arr]||[])) dDst[arr]=[];
+            if(!dDst[arr])dDst[arr]=[];
+            if(!dDst[arr].includes(v))dDst[arr].push(v);
+          });
+        });
+        if(dSrc.manualAvgV!=null)dDst.manualAvgV=dSrc.manualAvgV;
+        if(dSrc.manualPeakV!=null)dDst.manualPeakV=dSrc.manualPeakV;
+        if(dSrc.ytMetricsCache)dDst.ytMetricsCache={...dSrc.ytMetricsCache,...(dDst.ytMetricsCache||{})};
+      });
+      delete stop.tournaments[rawName];
+      changed=true;
+    });
+  });
+  if(changed){saveCampaignsToStorage();console.log('Campaign migration complete.');}
+}
+function migrateDay(rawDay,rawTournament){
+  // If the tournament was "ME FT-4", the day stored might be the whole thing
+  // Extract proper day label
+  const norm=normaliseDay(rawTournament+' '+rawDay);
+  // But if rawDay is already a proper day label, use it
+  if(/^Day\s*\d/i.test(rawDay)||/^FT-?\d/i.test(rawDay)||/Final\s*Table/i.test(rawDay))return normaliseDay(rawDay);
+  return norm||rawDay;
+}
 function saveTwitchToStorage(){try{localStorage.setItem('ytcmd_twitch',JSON.stringify(twitchRows));}catch(e){console.warn('Twitch storage full — data not persisted.');}}
 function loadTwitchFromStorage(){try{const d=localStorage.getItem('ytcmd_twitch');if(d)twitchRows=JSON.parse(d);}catch(e){twitchRows=[];}}
 function saveYtImportedToStorage(){try{localStorage.setItem('ytcmd_ytimported',JSON.stringify(ytImportedRows));}catch(e){}}
