@@ -2314,117 +2314,145 @@ function hideErr(){document.getElementById('error-msg').style.display='none';}
 // ══════════════════════════════════════════════
 let monthlyLoaded=false;
 async function loadMonthlyPage(){
-  document.getElementById('monthly-loading').textContent='Loading monthly data…';
-  document.getElementById('monthly-loading').style.display='block';
-  try{
-    // Last complete month — if today is before 3rd, use month before last
-    const now=new Date();
-    const targetMonth=now.getDate()<=3?new Date(now.getFullYear(),now.getMonth()-2,1):new Date(now.getFullYear(),now.getMonth()-1,1);
-    const monthEnd=new Date(targetMonth.getFullYear(),targetMonth.getMonth()+1,0);
-    const label=targetMonth.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
-    document.getElementById('monthly-period-label').textContent=label;
+  const loadingEl=document.getElementById('monthly-loading');
+  loadingEl.textContent='Loading monthly data…';
+  loadingEl.style.display='block';
+  document.getElementById('monthly-scorecard').innerHTML='';
 
-    const fmt2=d=>d.toISOString().split('T')[0];
-    const mStart=fmt2(targetMonth),mEnd=fmt2(monthEnd);
+  const fmt2=d=>d.toISOString().split('T')[0];
+  const now=new Date();
+  // Target: last complete month (or 2 months ago if before 3rd)
+  const targetMonth=now.getDate()<=3
+    ?new Date(now.getFullYear(),now.getMonth()-2,1)
+    :new Date(now.getFullYear(),now.getMonth()-1,1);
+  const thisYear=targetMonth.getFullYear();
+  const lastYear=thisYear-1;
+  const monthLabels=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    // Current month
-    const cur=await ytaRange('views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate',mStart,mEnd);
-    const[cViews,cMins,cSubs,cRev,cImpr,cCtr]=cur.rows?.[0]||[];
+  document.getElementById('monthly-period-label').textContent=
+    targetMonth.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
 
-    // Previous month
-    const prevM=new Date(targetMonth.getFullYear(),targetMonth.getMonth()-1,1);
-    const prevMEnd=new Date(targetMonth.getFullYear(),targetMonth.getMonth(),0);
-    const prev=await ytaRange('views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate',fmt2(prevM),fmt2(prevMEnd));
-    const[pViews,pMins,pSubs,pRev,pImpr,pCtr]=prev.rows?.[0]||[];
-
-    // Same month last year
-    const lyM=new Date(targetMonth.getFullYear()-1,targetMonth.getMonth(),1);
-    const lyMEnd=new Date(targetMonth.getFullYear()-1,targetMonth.getMonth()+1,0);
-    const ly=await ytaRange('views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate',fmt2(lyM),fmt2(lyMEnd));
-    const[lViews,lMins,lSubs,lRev,lImpr,lCtr]=ly.rows?.[0]||[];
-
-    const pct=(a,b)=>b&&b!==0?((a-b)/b*100).toFixed(1)+'%':'N/A';
-    const arrow=(a,b)=>(a||0)>=(b||0)?'▲':'▼';
-    const col=(a,b)=>(a||0)>=(b||0)?'var(--green)':'var(--accent)';
-
-    // Scorecard
-    const metrics=[
-      {label:'Views',cur:fmt(cViews),mom:pct(cViews,pViews),yoy:pct(cViews,lViews),momA:arrow(cViews,pViews),yoyA:arrow(cViews,lViews),momC:col(cViews,pViews),yoyC:col(cViews,lViews)},
-      {label:'Watch Time (hrs)',cur:fmt(cMins?Math.round(cMins/60):null),mom:pct(cMins,pMins),yoy:pct(cMins,lMins),momA:arrow(cMins,pMins),yoyA:arrow(cMins,lMins),momC:col(cMins,pMins),yoyC:col(cMins,lMins)},
-      {label:'Subscribers',cur:fmt(cSubs),mom:pct(cSubs,pSubs),yoy:pct(cSubs,lSubs),momA:arrow(cSubs,pSubs),yoyA:arrow(cSubs,lSubs),momC:col(cSubs,pSubs),yoyC:col(cSubs,lSubs)},
-      {label:'Revenue (EUR)',cur:cRev!=null?'€'+parseFloat(usdToEur(cRev)).toFixed(2):'—',mom:pct(cRev,pRev),yoy:pct(cRev,lRev),momA:arrow(cRev,pRev),yoyA:arrow(cRev,lRev),momC:col(cRev,pRev),yoyC:col(cRev,lRev)},
-      {label:'Impressions',cur:fmt(cImpr),mom:pct(cImpr,pImpr),yoy:pct(cImpr,lImpr),momA:arrow(cImpr,pImpr),yoyA:arrow(cImpr,lImpr),momC:col(cImpr,pImpr),yoyC:col(cImpr,lImpr)},
-      {label:'Avg CTR',cur:cCtr!=null?(cCtr*100).toFixed(2)+'%':'—',mom:pct(cCtr,pCtr),yoy:pct(cCtr,lCtr),momA:arrow(cCtr,pCtr),yoyA:arrow(cCtr,lCtr),momC:col(cCtr,pCtr),yoyC:col(cCtr,lCtr)},
-    ];
-
-    document.getElementById('monthly-scorecard').innerHTML=metrics.map(m=>`
-      <div class="kpi-card" style="--kpi-color:var(--blue);">
-        <div class="kpi-label">${m.label}</div>
-        <div class="kpi-value" style="font-size:20px;">${m.cur}</div>
-        <div style="margin-top:8px;display:flex;flex-direction:column;gap:3px;">
-          <div style="font-size:11px;font-family:var(--font-mono);color:${m.momC};">${m.momA} MoM: ${m.mom}</div>
-          <div style="font-size:11px;font-family:var(--font-mono);color:${m.yoyC};">${m.yoyA} YoY: ${m.yoy}</div>
-        </div>
-      </div>`).join('');
-
-    // Full year monthly charts — fetch month by month for this year and last
-    const thisYear=targetMonth.getFullYear();
-    const lastYear=thisYear-1;
-    const monthLabels=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-    async function fetchYearMonthly(year,metric){
-      const endMonth=year===thisYear?targetMonth.getMonth():11;
-      const results=[];
-      for(let m=0;m<=endMonth;m++){
-        const s=new Date(year,m,1),e=new Date(year,m+1,0);
-        try{
-          const r=await ytaRange(metric,fmt2(s),fmt2(e),'none');
-          results.push(r.rows?.[0]?.[0]||0);
-        }catch(err){results.push(null);}
-      }
-      return results;
+  // Helper — fetch a full year of monthly data in ONE API call using month dimension
+  async function fetchYearData(year,metrics){
+    const start=fmt2(new Date(year,0,1));
+    const end=year===thisYear?fmt2(new Date(year,targetMonth.getMonth()+1,0)):fmt2(new Date(year,11,31));
+    try{
+      const r=await ytaRange(metrics,start,end,'month');
+      // r.rows = [[YYYYMM, m1, m2, ...], ...]
+      return r.rows||[];
+    }catch(e){
+      console.warn('fetchYearData',year,metrics,e.message);
+      return[];
     }
-
-    const [cyViews,lyViews,cyWatch,lyWatch,cyRev,lyRev,cySubs,lySubs,cyImpr,lyImpr,cyCtr,lyCtr]=await Promise.all([
-      fetchYearMonthly(thisYear,'views'),fetchYearMonthly(lastYear,'views'),
-      fetchYearMonthly(thisYear,'estimatedMinutesWatched'),fetchYearMonthly(lastYear,'estimatedMinutesWatched'),
-      fetchYearMonthly(thisYear,'estimatedRevenue'),fetchYearMonthly(lastYear,'estimatedRevenue'),
-      fetchYearMonthly(thisYear,'subscribersGained'),fetchYearMonthly(lastYear,'subscribersGained'),
-      fetchYearMonthly(thisYear,'impressions'),fetchYearMonthly(lastYear,'impressions'),
-      fetchYearMonthly(thisYear,'impressionClickThroughRate'),fetchYearMonthly(lastYear,'impressionClickThroughRate'),
-    ]);
-
-    const mLabels=monthLabels.slice(0,cyViews.length);
-    const mOpts=(y,y1)=>({responsive:true,plugins:{legend:{labels:{color:'#7a7a8e',font:{family:'DM Mono',size:11},boxWidth:12,padding:12}},tooltip:{backgroundColor:'#18181f',titleColor:'#f0f0f5',bodyColor:'#7a7a8e'}},scales:{x:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'},title:{display:!!y,text:y,color:'#7a7a8e',font:{size:10}}}}});
-
-    mk('m-views','line',{labels:mLabels,datasets:[
-      {label:thisYear+' Views',data:cyViews,borderColor:'#4488ff',backgroundColor:'rgba(68,136,255,0.1)',tension:0.4,fill:true,pointRadius:3},
-      {label:lastYear+' Views',data:lyViews,borderColor:'rgba(68,136,255,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2}
-    ]},mOpts('Views'));
-    mk('m-watch','line',{labels:mLabels,datasets:[
-      {label:thisYear+' Watch hrs',data:cyWatch.map(v=>v?Math.round(v/60):0),borderColor:'#aa66ff',backgroundColor:'rgba(170,102,255,0.1)',tension:0.4,fill:true,pointRadius:3},
-      {label:lastYear+' Watch hrs',data:lyWatch.map(v=>v?Math.round(v/60):0),borderColor:'rgba(170,102,255,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2}
-    ]},mOpts('Hours'));
-    mk('m-rev','bar',{labels:mLabels,datasets:[
-      {label:thisYear+' Revenue (EUR)',data:cyRev.map(v=>v?parseFloat(usdToEur(v).toFixed(2)):0),backgroundColor:'rgba(0,229,160,0.6)',borderColor:'#00e5a0',borderWidth:1,borderRadius:3}
-    ]},mOpts('EUR'));
-    mk('m-subs','bar',{labels:mLabels,datasets:[
-      {label:thisYear+' Subscribers',data:cySubs,backgroundColor:'rgba(68,136,255,0.6)',borderColor:'#4488ff',borderWidth:1,borderRadius:3}
-    ]},mOpts('Subscribers'));
-    mk('m-impr','bar',{labels:mLabels,datasets:[
-      {label:thisYear+' Impressions',data:cyImpr,backgroundColor:'rgba(255,136,0,0.6)',borderColor:'#ff8800',borderWidth:1,borderRadius:3}
-    ]},mOpts('Impressions'));
-    mk('m-ctr','line',{labels:mLabels,datasets:[
-      {label:thisYear+' CTR %',data:cyCtr.map(v=>v?(v*100).toFixed(2):0),borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.1)',tension:0.4,fill:true,pointRadius:3},
-      {label:lastYear+' CTR %',data:lyCtr.map(v=>v?(v*100).toFixed(2):0),borderColor:'rgba(255,68,68,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2}
-    ]},mOpts('CTR %'));
-
-    document.getElementById('monthly-loading').style.display='none';
-    monthlyLoaded=true;
-  }catch(e){
-    document.getElementById('monthly-loading').textContent='Error loading monthly data: '+e.message;
-    console.error('Monthly:',e);
   }
+
+  // Helper — extract column from rows by month index (0=Jan … 11=Dec)
+  function extractCol(rows,colIdx){
+    const out=new Array(12).fill(null);
+    rows.forEach(r=>{
+      const ym=String(r[0]); // YYYYMM
+      const m=parseInt(ym.slice(4,6))-1; // 0-based month
+      if(m>=0&&m<12)out[m]=r[colIdx]??null;
+    });
+    return out;
+  }
+
+  // Fetch scorecard totals for current month, prev month, same month last year
+  const mStart=fmt2(targetMonth);
+  const mEnd=fmt2(new Date(targetMonth.getFullYear(),targetMonth.getMonth()+1,0));
+  const prevM=new Date(targetMonth.getFullYear(),targetMonth.getMonth()-1,1);
+  const prevMEnd=new Date(targetMonth.getFullYear(),targetMonth.getMonth(),0);
+  const lyM=new Date(lastYear,targetMonth.getMonth(),1);
+  const lyMEnd=new Date(lastYear,targetMonth.getMonth()+1,0);
+
+  const SCORE_METRICS='views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate';
+
+  const [curR,prevR,lyR]=await Promise.all([
+    ytaRange(SCORE_METRICS,mStart,mEnd).catch(()=>({rows:[]})),
+    ytaRange(SCORE_METRICS,fmt2(prevM),fmt2(prevMEnd)).catch(()=>({rows:[]})),
+    ytaRange(SCORE_METRICS,fmt2(lyM),fmt2(lyMEnd)).catch(()=>({rows:[]})),
+  ]);
+
+  const [cViews,cMins,cSubs,cRev,cImpr,cCtr]=curR.rows?.[0]||[];
+  const [pViews,pMins,pSubs,pRev,pImpr,pCtr]=prevR.rows?.[0]||[];
+  const [lViews,lMins,lSubs,lRev,lImpr,lCtr]=lyR.rows?.[0]||[];
+
+  const pct=(a,b)=>(a!=null&&b!=null&&b!==0)?((a-b)/b*100).toFixed(1)+'%':'N/A';
+  const arrow=(a,b)=>(a||0)>=(b||0)?'▲':'▼';
+  const col=(a,b)=>(a||0)>=(b||0)?'var(--green)':'var(--accent)';
+
+  const scorecardMetrics=[
+    {label:'Views',cur:fmt(cViews),mom:pct(cViews,pViews),yoy:pct(cViews,lViews),momA:arrow(cViews,pViews),yoyA:arrow(cViews,lViews),momC:col(cViews,pViews),yoyC:col(cViews,lViews)},
+    {label:'Watch Time (hrs)',cur:fmt(cMins?Math.round(cMins/60):null),mom:pct(cMins,pMins),yoy:pct(cMins,lMins),momA:arrow(cMins,pMins),yoyA:arrow(cMins,lMins),momC:col(cMins,pMins),yoyC:col(cMins,lMins)},
+    {label:'Subscribers',cur:fmt(cSubs),mom:pct(cSubs,pSubs),yoy:pct(cSubs,lSubs),momA:arrow(cSubs,pSubs),yoyA:arrow(cSubs,lSubs),momC:col(cSubs,pSubs),yoyC:col(cSubs,lSubs)},
+    {label:'Revenue (EUR)',cur:cRev!=null?'€'+usdToEur(cRev).toFixed(2):'—',mom:pct(cRev,pRev),yoy:pct(cRev,lRev),momA:arrow(cRev,pRev),yoyA:arrow(cRev,lRev),momC:col(cRev,pRev),yoyC:col(cRev,lRev)},
+    {label:'Impressions',cur:fmt(cImpr),mom:pct(cImpr,pImpr),yoy:pct(cImpr,lImpr),momA:arrow(cImpr,pImpr),yoyA:arrow(cImpr,lImpr),momC:col(cImpr,pImpr),yoyC:col(cImpr,lImpr)},
+    {label:'Avg CTR',cur:cCtr!=null?((cCtr>1?cCtr:cCtr*100).toFixed(2))+'%':'—',mom:pct(cCtr,pCtr),yoy:pct(cCtr,lCtr),momA:arrow(cCtr,pCtr),yoyA:arrow(cCtr,lCtr),momC:col(cCtr,pCtr),yoyC:col(cCtr,lCtr)},
+  ];
+
+  document.getElementById('monthly-scorecard').innerHTML=scorecardMetrics.map(m=>`
+    <div class="kpi-card" style="--kpi-color:var(--blue);">
+      <div class="kpi-label">${m.label}</div>
+      <div class="kpi-value" style="font-size:20px;">${m.cur}</div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:3px;">
+        <div style="font-size:11px;font-family:var(--font-mono);color:${m.momC};">${m.momA} MoM: ${m.mom}</div>
+        <div style="font-size:11px;font-family:var(--font-mono);color:${m.yoyC};">${m.yoyA} YoY: ${m.yoy}</div>
+      </div>
+    </div>`).join('');
+
+  loadingEl.textContent='Loading charts…';
+
+  // Fetch full-year monthly breakdowns — 2 API calls total (this year + last year)
+  const [cyRows,lyRows]=await Promise.all([
+    fetchYearData(thisYear,'views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate'),
+    fetchYearData(lastYear,'views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate'),
+  ]);
+
+  // Build month-indexed arrays (null = no data yet)
+  const endM=targetMonth.getMonth(); // last complete month index
+  const mLabels2=monthLabels.slice(0,endM+1);
+
+  const cyV=extractCol(cyRows,1).slice(0,endM+1);
+  const lyV=extractCol(lyRows,1).slice(0,endM+1);
+  const cyW=extractCol(cyRows,2).map(v=>v?Math.round(v/60):null).slice(0,endM+1);
+  const lyW=extractCol(lyRows,2).map(v=>v?Math.round(v/60):null).slice(0,endM+1);
+  const cyRv=extractCol(cyRows,4).map(v=>v?parseFloat(usdToEur(v).toFixed(2)):null).slice(0,endM+1);
+  const cySb=extractCol(cyRows,3).slice(0,endM+1);
+  const cyIm=extractCol(cyRows,5).slice(0,endM+1);
+  const cyCt=extractCol(cyRows,6).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null).slice(0,endM+1);
+  const lyCt=extractCol(lyRows,6).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null).slice(0,endM+1);
+
+  const mOpts=y=>({responsive:true,plugins:{legend:{labels:{color:'#7a7a8e',font:{family:'DM Mono',size:11},boxWidth:12,padding:12}},tooltip:{backgroundColor:'#18181f',titleColor:'#f0f0f5',bodyColor:'#7a7a8e',borderColor:'rgba(255,255,255,0.07)',borderWidth:1}},scales:{x:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'},title:{display:!!y,text:y||'',color:'#7a7a8e',font:{size:10}}}}});
+
+  mk('m-views','line',{labels:mLabels2,datasets:[
+    {label:thisYear+' Views',data:cyV,borderColor:'#4488ff',backgroundColor:'rgba(68,136,255,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:true},
+    {label:lastYear+' Views',data:lyV,borderColor:'rgba(68,136,255,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2,spanGaps:true}
+  ]},mOpts('Views'));
+
+  mk('m-watch','line',{labels:mLabels2,datasets:[
+    {label:thisYear+' Watch hrs',data:cyW,borderColor:'#aa66ff',backgroundColor:'rgba(170,102,255,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:true},
+    {label:lastYear+' Watch hrs',data:lyW,borderColor:'rgba(170,102,255,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2,spanGaps:true}
+  ]},mOpts('Hours'));
+
+  mk('m-rev','bar',{labels:mLabels2,datasets:[
+    {label:thisYear+' Revenue (EUR)',data:cyRv,backgroundColor:'rgba(0,229,160,0.6)',borderColor:'#00e5a0',borderWidth:1,borderRadius:3}
+  ]},mOpts('EUR'));
+
+  mk('m-subs','bar',{labels:mLabels2,datasets:[
+    {label:thisYear+' Subscribers',data:cySb,backgroundColor:'rgba(68,136,255,0.6)',borderColor:'#4488ff',borderWidth:1,borderRadius:3}
+  ]},mOpts('Subscribers'));
+
+  mk('m-impr','bar',{labels:mLabels2,datasets:[
+    {label:thisYear+' Impressions',data:cyIm,backgroundColor:'rgba(255,136,0,0.6)',borderColor:'#ff8800',borderWidth:1,borderRadius:3}
+  ]},mOpts('Impressions'));
+
+  mk('m-ctr','line',{labels:mLabels2,datasets:[
+    {label:thisYear+' CTR %',data:cyCt,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:true},
+    {label:lastYear+' CTR %',data:lyCt,borderColor:'rgba(255,68,68,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2,spanGaps:true}
+  ]},mOpts('CTR %'));
+
+  loadingEl.style.display='none';
+  monthlyLoaded=true;
 }
 
 // ══════════════════════════════════════════════
