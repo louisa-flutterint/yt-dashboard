@@ -896,13 +896,13 @@ async function loadAnalytics(){
   kpi('k-watch',mins?fmt(Math.round(mins/60)):'—');
   setRevenueKpis(rev,cpm);
   kpi('k-subs',fmt(subs));
-  // Impressions + CTR
+  // Card impressions/CTR — impressions not available at channel summary level
   try{
-    const ic=await yta('impressions,impressionClickThroughRate');
+    const ic=await yta('cardImpressions,cardClickRate');
     const[impr,ctrAvg]=ic.rows?.[0]||[];
     kpi('k-impr',impr!=null?fmt(impr):'—');
     kpi('k-ctr',ctrAvg!=null?((ctrAvg>1?ctrAvg:ctrAvg*100).toFixed(2))+'%':'—');
-  }catch(e){console.warn('Impressions/CTR totals:',e.message);}
+  }catch(e){kpi('k-impr','—');kpi('k-ctr','—');}
   // Current period time series
   const ts=await yta('views,estimatedMinutesWatched,estimatedRevenue','day');
   ytData.ts=ts.rows||[];
@@ -1000,29 +1000,21 @@ function renderWatchChart(rows,prevRows){
   mk('watch','line',{labels:L,datasets},co('Hours'));
 }
 async function loadCtrChart(){
-  // Try impressions first, fall back to cardImpressions
-  let ctrRows=[];
+  // Use card metrics — impressions not available at channel+day summary level
   try{
-    const d=await yta('impressions,impressionClickThroughRate','day');
-    ctrRows=d.rows||[];
-  }catch(e){
-    try{
-      const d2=await yta('cardImpressions,cardClickRate','day');
-      ctrRows=(d2.rows||[]).map(r=>[r[0],r[2],r[1]]); // reorder to match expected
-    }catch(e2){console.warn('CTR/Impressions unavailable:',e2.message);return;}
-  }
-  if(!ctrRows.length){console.warn('CTR rows empty');return;}
-  const L=ctrRows.map(r=>r[0]);
-  const I=ctrRows.map(r=>r[1]||0);
-  // impressionClickThroughRate from API is a decimal (0.032 = 3.2%) — multiply by 100
-  // If somehow > 1 it's already a percentage — guard against double-multiplication
-  const C=ctrRows.map(r=>r[2]?parseFloat((r[2]>1?r[2]:r[2]*100).toFixed(2)):0);
-  mk('ctr','line',{labels:L,datasets:[
-    {label:'CTR %',data:C,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.1)',tension:0.4,pointRadius:2,pointHoverRadius:4,fill:true}
-  ]},co('CTR %'));
-  mk('impr','bar',{labels:L,datasets:[
-    {label:'Impressions',data:I,backgroundColor:'rgba(255,136,0,0.6)',borderColor:'#ff8800',borderWidth:1,borderRadius:3}
-  ]},co('Impressions'));
+    const d=await yta('cardClickRate,cardImpressions','day');
+    const rows=d.rows||[];
+    if(!rows.length)return;
+    const L=rows.map(r=>r[0]);
+    const C=rows.map(r=>r[1]!=null?parseFloat((r[1]>1?r[1]:r[1]*100).toFixed(2)):0);
+    const I=rows.map(r=>r[2]||0);
+    mk('ctr','line',{labels:L,datasets:[
+      {label:'Card CTR %',data:C,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.1)',tension:0.4,pointRadius:2,fill:true}
+    ]},co('CTR %'));
+    mk('impr','bar',{labels:L,datasets:[
+      {label:'Card Impressions',data:I,backgroundColor:'rgba(255,136,0,0.6)',borderColor:'#ff8800',borderWidth:1,borderRadius:3}
+    ]},co('Impressions'));
+  }catch(e){console.warn('Card CTR unavailable:',e.message);}
 }
 function renderDemo(rows){
   const EXCLUDE=['age13_17','age13-17'];
@@ -1754,16 +1746,16 @@ async function fetchVideoAnalyticsForStop(stopKey){
     const filterStr=batch.map(id=>'video=='+id).join(',');
     try{
       // Use the full date range — all time for these videos
-      const r=await yta('views,estimatedMinutesWatched,estimatedRevenue,impressions,impressionClickThroughRate,uniqueViews','video',{filters:filterStr,sort:'-views',maxResults:10});
+      const r=await yta('views,estimatedMinutesWatched,estimatedRevenue','video',{filters:filterStr,sort:'-views',maxResults:10});
       (r.rows||[]).forEach(row=>{
-        const[id,views,mins,rev,impr,ctr,uniq]=row;
+        const[id,views,mins,rev]=row;
         ytVideoCache[id]={
           views:views||0,
           watchHrs:mins?mins/60:0,
           revenue:rev||0,
-          impressions:impr||0,
-          ctr:ctr||0,
-          uniqueViewers:uniq||0,
+          impressions:0,
+          ctr:0,
+          uniqueViewers:0,
         };
       });
       // For any IDs that returned no data, store empty so we don't re-fetch
@@ -2333,15 +2325,17 @@ async function loadMonthlyPage(){
     targetMonth.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
 
   // Helper — fetch a full year of monthly data in ONE API call using month dimension
+  // IMPORTANT: when using month dimension, start/end must both be first day of a month
   async function fetchYearData(year,metrics){
-    const start=fmt2(new Date(year,0,1));
-    const end=year===thisYear?fmt2(new Date(year,targetMonth.getMonth()+1,0)):fmt2(new Date(year,11,31));
+    const start=fmt2(new Date(year,0,1)); // Jan 1
+    const lastMonth=year===thisYear?targetMonth.getMonth():11;
+    // end must be first day of a month per API spec
+    const end=fmt2(new Date(year,lastMonth,1));
     try{
       const r=await ytaRange(metrics,start,end,'month');
-      // r.rows = [[YYYYMM, m1, m2, ...], ...]
       return r.rows||[];
     }catch(e){
-      console.warn('fetchYearData',year,metrics,e.message);
+      console.error('fetchYearData ERROR',year,metrics,e.message);
       return[];
     }
   }
@@ -2365,17 +2359,30 @@ async function loadMonthlyPage(){
   const lyM=new Date(lastYear,targetMonth.getMonth(),1);
   const lyMEnd=new Date(lastYear,targetMonth.getMonth()+1,0);
 
-  const SCORE_METRICS='views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate';
+  const SCORE_METRICS='views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,playbackBasedCpm';
+  const SCORE_METRICS_IMPR='cardImpressions,cardClickRate'; // impressions not available at channel summary level
 
-  const [curR,prevR,lyR]=await Promise.all([
-    ytaRange(SCORE_METRICS,mStart,mEnd).catch(()=>({rows:[]})),
-    ytaRange(SCORE_METRICS,fmt2(prevM),fmt2(prevMEnd)).catch(()=>({rows:[]})),
-    ytaRange(SCORE_METRICS,fmt2(lyM),fmt2(lyMEnd)).catch(()=>({rows:[]})),
-  ]);
+  // Scorecard: fetch sequentially so errors surface properly
+  let curR={rows:[]},prevR={rows:[]},lyR={rows:[]};
+  try{curR=await ytaRange(SCORE_METRICS,mStart,mEnd);}catch(e){console.error('Monthly current month:',e.message);}
+  try{prevR=await ytaRange(SCORE_METRICS,fmt2(prevM),fmt2(prevMEnd));}catch(e){console.error('Monthly prev month:',e.message);}
+  try{lyR=await ytaRange(SCORE_METRICS,fmt2(lyM),fmt2(lyMEnd));}catch(e){console.error('Monthly last year:',e.message);}
 
-  const [cViews,cMins,cSubs,cRev,cImpr,cCtr]=curR.rows?.[0]||[];
-  const [pViews,pMins,pSubs,pRev,pImpr,pCtr]=prevR.rows?.[0]||[];
-  const [lViews,lMins,lSubs,lRev,lImpr,lCtr]=lyR.rows?.[0]||[];
+  const [cViews,cMins,cSubs,cRev]=curR.rows?.[0]||[];
+  const [pViews,pMins,pSubs,pRev]=prevR.rows?.[0]||[];
+  const [lViews,lMins,lSubs,lRev]=lyR.rows?.[0]||[];
+  // Impressions+CTR must be separate API call
+  let cImpr=null,cCtr=null,pImpr=null,pCtr=null,lImpr=null,lCtr=null;
+  try{
+    const [iCur,iPrev,iLy]=await Promise.all([
+      ytaRange(SCORE_METRICS_IMPR,mStart,mEnd),
+      ytaRange(SCORE_METRICS_IMPR,fmt2(prevM),fmt2(prevMEnd)),
+      ytaRange(SCORE_METRICS_IMPR,fmt2(lyM),fmt2(lyMEnd)),
+    ]);
+    [cImpr,cCtr]=iCur.rows?.[0]||[];
+    [pImpr,pCtr]=iPrev.rows?.[0]||[];
+    [lImpr,lCtr]=iLy.rows?.[0]||[];
+  }catch(e){console.warn('Monthly impressions scorecard:',e.message);}
 
   const pct=(a,b)=>(a!=null&&b!=null&&b!==0)?((a-b)/b*100).toFixed(1)+'%':'N/A';
   const arrow=(a,b)=>(a||0)>=(b||0)?'▲':'▼';
@@ -2404,23 +2411,31 @@ async function loadMonthlyPage(){
 
   // Fetch full-year monthly breakdowns — 2 API calls total (this year + last year)
   const [cyRows,lyRows]=await Promise.all([
-    fetchYearData(thisYear,'views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate'),
-    fetchYearData(lastYear,'views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,impressions,impressionClickThroughRate'),
+    fetchYearData(thisYear,'views,estimatedMinutesWatched,subscribersGained,estimatedRevenue'),
+    fetchYearData(lastYear,'views,estimatedMinutesWatched,subscribersGained,estimatedRevenue'),
   ]);
+  // impressions/CTR must be a separate API call
+  let cyImprRows=[],lyImprRows=[];
+  try{[cyImprRows,lyImprRows]=await Promise.all([
+    fetchYearData(thisYear,'cardImpressions,cardClickRate'),
+    fetchYearData(lastYear,'cardImpressions,cardClickRate'),
+  ]);}catch(e){console.warn('Monthly impr/CTR year fetch:',e.message);}
 
   // Build month-indexed arrays (null = no data yet)
   const endM=targetMonth.getMonth(); // last complete month index
   const mLabels2=monthLabels.slice(0,endM+1);
 
+  // Columns: 0=YYYYMM, 1=views, 2=estimatedMinutesWatched, 3=subscribersGained, 4=estimatedRevenue
   const cyV=extractCol(cyRows,1).slice(0,endM+1);
   const lyV=extractCol(lyRows,1).slice(0,endM+1);
   const cyW=extractCol(cyRows,2).map(v=>v?Math.round(v/60):null).slice(0,endM+1);
   const lyW=extractCol(lyRows,2).map(v=>v?Math.round(v/60):null).slice(0,endM+1);
   const cyRv=extractCol(cyRows,4).map(v=>v?parseFloat(usdToEur(v).toFixed(2)):null).slice(0,endM+1);
   const cySb=extractCol(cyRows,3).slice(0,endM+1);
-  const cyIm=extractCol(cyRows,5).slice(0,endM+1);
-  const cyCt=extractCol(cyRows,6).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null).slice(0,endM+1);
-  const lyCt=extractCol(lyRows,6).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null).slice(0,endM+1);
+  // Impressions and CTR from separately fetched rows above
+  const cyIm=extractCol(cyImprRows,1).slice(0,endM+1);
+  const cyCt=extractCol(cyImprRows,2).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null).slice(0,endM+1);
+  const lyCt=extractCol(lyImprRows,2).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null).slice(0,endM+1);
 
   const mOpts=y=>({responsive:true,plugins:{legend:{labels:{color:'#7a7a8e',font:{family:'DM Mono',size:11},boxWidth:12,padding:12}},tooltip:{backgroundColor:'#18181f',titleColor:'#f0f0f5',bodyColor:'#7a7a8e',borderColor:'rgba(255,255,255,0.07)',borderWidth:1}},scales:{x:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'},title:{display:!!y,text:y||'',color:'#7a7a8e',font:{size:10}}}}});
 
