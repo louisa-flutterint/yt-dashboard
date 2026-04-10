@@ -2324,15 +2324,17 @@ async function loadMonthlyPage(){
   document.getElementById('monthly-period-label').textContent=
     targetMonth.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
 
-  // Helper — fetch a full year of monthly data in ONE API call using month dimension
-  // IMPORTANT: when using month dimension, start/end must both be first day of a month
+  // Helper — fetch a full year of monthly data using month dimension
+  // API rule: start AND end must both be the first day of a month
   async function fetchYearData(year,metrics){
-    const start=fmt2(new Date(year,0,1)); // Jan 1
+    const start=fmt2(new Date(year,0,1)); // 1 Jan
+    // For current year: include up to and including targetMonth
+    // end = first day of month AFTER the last desired month
     const lastMonth=year===thisYear?targetMonth.getMonth():11;
-    // end must be first day of a month per API spec
-    const end=fmt2(new Date(year,lastMonth,1));
+    const end=fmt2(new Date(year,lastMonth+1,1)); // first day of month after last
     try{
       const r=await ytaRange(metrics,start,end,'month');
+      console.log('fetchYearData',year,metrics,'rows:',r.rows?.length,'sample:',r.rows?.[0]);
       return r.rows||[];
     }catch(e){
       console.error('fetchYearData ERROR',year,metrics,e.message);
@@ -2341,11 +2343,12 @@ async function loadMonthlyPage(){
   }
 
   // Helper — extract column from rows by month index (0=Jan … 11=Dec)
+  // Handles both "2026-01" (ISO with dash) and 202601 (integer) formats
   function extractCol(rows,colIdx){
     const out=new Array(12).fill(null);
     rows.forEach(r=>{
-      const ym=String(r[0]); // YYYYMM
-      const m=parseInt(ym.slice(4,6))-1; // 0-based month
+      const ym=String(r[0]).replace('-',''); // normalise: "2026-01" → "202601"
+      const m=parseInt(ym.slice(4,6))-1; // 0-based month index
       if(m>=0&&m<12)out[m]=r[colIdx]??null;
     });
     return out;
@@ -2422,48 +2425,62 @@ async function loadMonthlyPage(){
   ]);}catch(e){console.warn('Monthly impr/CTR year fetch:',e.message);}
 
   // Build month-indexed arrays (null = no data yet)
-  const endM=targetMonth.getMonth(); // last complete month index
-  const mLabels2=monthLabels.slice(0,endM+1);
+  const endM=targetMonth.getMonth(); // 0-based index of last complete month
+
+  // Full 12-month labels — current year terminates at endM, prev year runs all 12
+  const mLabels2=monthLabels; // Jan–Dec always shown
 
   // Columns: 0=YYYYMM, 1=views, 2=estimatedMinutesWatched, 3=subscribersGained, 4=estimatedRevenue
-  const cyV=extractCol(cyRows,1).slice(0,endM+1);
-  const lyV=extractCol(lyRows,1).slice(0,endM+1);
-  const cyW=extractCol(cyRows,2).map(v=>v?Math.round(v/60):null).slice(0,endM+1);
-  const lyW=extractCol(lyRows,2).map(v=>v?Math.round(v/60):null).slice(0,endM+1);
-  const cyRv=extractCol(cyRows,4).map(v=>v?parseFloat(usdToEur(v).toFixed(2)):null).slice(0,endM+1);
-  const cySb=extractCol(cyRows,3).slice(0,endM+1);
-  // Impressions and CTR from separately fetched rows above
-  const cyIm=extractCol(cyImprRows,1).slice(0,endM+1);
-  const cyCt=extractCol(cyImprRows,2).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null).slice(0,endM+1);
-  const lyCt=extractCol(lyImprRows,2).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null).slice(0,endM+1);
+  const cyV=extractCol(cyRows,1);   // nulls after endM for current year
+  const lyV=extractCol(lyRows,1);   // full 12 months
+  const cyW=extractCol(cyRows,2).map(v=>v!=null?Math.round(v/60):null);
+  const lyW=extractCol(lyRows,2).map(v=>v!=null?Math.round(v/60):null);
+  const cyRv=extractCol(cyRows,4).map(v=>v!=null?parseFloat(usdToEur(v).toFixed(2)):null);
+  const lyRv=extractCol(lyRows,4).map(v=>v!=null?parseFloat(usdToEur(v).toFixed(2)):null);
+  const cySb=extractCol(cyRows,3);
+  const lySb=extractCol(lyRows,3);
+  // Card impressions/CTR from separate fetch
+  const cyIm=extractCol(cyImprRows,1);
+  const lyIm=extractCol(lyImprRows,1);
+  const cyCt=extractCol(cyImprRows,2).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null);
+  const lyCt=extractCol(lyImprRows,2).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null);
+
+  console.log('Monthly chart check — cyV:',cyV.slice(0,4),'lyV:',lyV.slice(0,4));
 
   const mOpts=y=>({responsive:true,plugins:{legend:{labels:{color:'#7a7a8e',font:{family:'DM Mono',size:11},boxWidth:12,padding:12}},tooltip:{backgroundColor:'#18181f',titleColor:'#f0f0f5',bodyColor:'#7a7a8e',borderColor:'rgba(255,255,255,0.07)',borderWidth:1}},scales:{x:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'},title:{display:!!y,text:y||'',color:'#7a7a8e',font:{size:10}}}}});
 
+  // Point style: filled circle for current year, open for prev year
+  // Current year line terminates at endM; prev year runs full 12 months
+  const ptRadius=(data)=>data.map((_,i)=>i<=endM?3:0); // only show points up to current month
+
   mk('m-views','line',{labels:mLabels2,datasets:[
-    {label:thisYear+' Views',data:cyV,borderColor:'#4488ff',backgroundColor:'rgba(68,136,255,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:true},
-    {label:lastYear+' Views',data:lyV,borderColor:'rgba(68,136,255,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2,spanGaps:true}
+    {label:lastYear+' Views',data:lyV,borderColor:'rgba(68,136,255,0.35)',backgroundColor:'transparent',borderDash:[5,4],tension:0.4,pointRadius:2,spanGaps:true,order:2},
+    {label:thisYear+' Views',data:cyV,borderColor:'#4488ff',backgroundColor:'rgba(68,136,255,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:false,order:1}
   ]},mOpts('Views'));
 
   mk('m-watch','line',{labels:mLabels2,datasets:[
-    {label:thisYear+' Watch hrs',data:cyW,borderColor:'#aa66ff',backgroundColor:'rgba(170,102,255,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:true},
-    {label:lastYear+' Watch hrs',data:lyW,borderColor:'rgba(170,102,255,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2,spanGaps:true}
+    {label:lastYear+' Watch hrs',data:lyW,borderColor:'rgba(170,102,255,0.35)',backgroundColor:'transparent',borderDash:[5,4],tension:0.4,pointRadius:2,spanGaps:true,order:2},
+    {label:thisYear+' Watch hrs',data:cyW,borderColor:'#aa66ff',backgroundColor:'rgba(170,102,255,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:false,order:1}
   ]},mOpts('Hours'));
 
   mk('m-rev','bar',{labels:mLabels2,datasets:[
-    {label:thisYear+' Revenue (EUR)',data:cyRv,backgroundColor:'rgba(0,229,160,0.6)',borderColor:'#00e5a0',borderWidth:1,borderRadius:3}
+    {label:lastYear+' Revenue',data:lyRv,backgroundColor:'rgba(0,229,160,0.2)',borderColor:'rgba(0,229,160,0.5)',borderWidth:1,borderRadius:3},
+    {label:thisYear+' Revenue (EUR)',data:cyRv,backgroundColor:'rgba(0,229,160,0.65)',borderColor:'#00e5a0',borderWidth:1,borderRadius:3}
   ]},mOpts('EUR'));
 
   mk('m-subs','bar',{labels:mLabels2,datasets:[
-    {label:thisYear+' Subscribers',data:cySb,backgroundColor:'rgba(68,136,255,0.6)',borderColor:'#4488ff',borderWidth:1,borderRadius:3}
+    {label:lastYear+' Subscribers',data:lySb,backgroundColor:'rgba(68,136,255,0.2)',borderColor:'rgba(68,136,255,0.4)',borderWidth:1,borderRadius:3},
+    {label:thisYear+' Subscribers',data:cySb,backgroundColor:'rgba(68,136,255,0.65)',borderColor:'#4488ff',borderWidth:1,borderRadius:3}
   ]},mOpts('Subscribers'));
 
   mk('m-impr','bar',{labels:mLabels2,datasets:[
-    {label:thisYear+' Impressions',data:cyIm,backgroundColor:'rgba(255,136,0,0.6)',borderColor:'#ff8800',borderWidth:1,borderRadius:3}
+    {label:lastYear+' Card Impressions',data:lyIm,backgroundColor:'rgba(255,136,0,0.2)',borderColor:'rgba(255,136,0,0.4)',borderWidth:1,borderRadius:3},
+    {label:thisYear+' Card Impressions',data:cyIm,backgroundColor:'rgba(255,136,0,0.65)',borderColor:'#ff8800',borderWidth:1,borderRadius:3}
   ]},mOpts('Impressions'));
 
   mk('m-ctr','line',{labels:mLabels2,datasets:[
-    {label:thisYear+' CTR %',data:cyCt,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:true},
-    {label:lastYear+' CTR %',data:lyCt,borderColor:'rgba(255,68,68,0.4)',backgroundColor:'transparent',borderDash:[4,4],tension:0.4,pointRadius:2,spanGaps:true}
+    {label:lastYear+' CTR %',data:lyCt,borderColor:'rgba(255,68,68,0.35)',backgroundColor:'transparent',borderDash:[5,4],tension:0.4,pointRadius:2,spanGaps:true,order:2},
+    {label:thisYear+' CTR %',data:cyCt,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:false,order:1}
   ]},mOpts('CTR %'));
 
   loadingEl.style.display='none';
