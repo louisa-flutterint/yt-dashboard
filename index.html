@@ -724,7 +724,27 @@ async function startOAuth(){
 }
 async function exchangeCode(code){
   const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:sessionStorage.getItem('client_id'),client_secret:sessionStorage.getItem('client_secret')||'',redirect_uri:location.origin+location.pathname,grant_type:'authorization_code',code,code_verifier:sessionStorage.getItem('pkce_v')})});
-  const d=await r.json();if(d.error)throw new Error(d.error_description||d.error);return d.access_token;
+  const d=await r.json();if(d.error)throw new Error(d.error_description||d.error);
+  // Store refresh token persistently so we can silently refresh when access token expires
+  if(d.refresh_token){
+    localStorage.setItem('ytcmd_refresh_token',d.refresh_token);
+    sessionStorage.setItem('refresh_token',d.refresh_token);
+  }
+  return d.access_token;
+}
+
+async function refreshAccessToken(){
+  const secret=localStorage.getItem('ytcmd_client_secret')||sessionStorage.getItem('client_secret')||'';
+  const clientId=localStorage.getItem('ytcmd_client_id')||sessionStorage.getItem('client_id')||'';
+  const refreshToken=localStorage.getItem('ytcmd_refresh_token')||sessionStorage.getItem('refresh_token')||'';
+  if(!refreshToken||!clientId||!secret)throw new Error('No refresh token available — please sign in again.');
+  const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:clientId,client_secret:secret,grant_type:'refresh_token',refresh_token:refreshToken})});
+  const d=await r.json();
+  if(d.error)throw new Error(d.error_description||d.error);
+  TOKEN=d.access_token;
+  sessionStorage.setItem('oauth_token',TOKEN);
+  console.log('Access token refreshed silently.');
+  return TOKEN;
 }
 async function handleCallback(){
   const p=new URLSearchParams(location.search);const code=p.get('code'),st=p.get('state'),err=p.get('error');
@@ -818,7 +838,7 @@ function disconnect(){
 // const WORKER_URL = 'https://yt-command.YOUR-SUBDOMAIN.workers.dev';
 const WORKER_URL = localStorage.getItem('ytcmd_worker_url') || '';
 
-async function proxyFetch(url, method='GET', extraHeaders={}, reqBody=null){
+async function proxyFetch(url, method='GET', extraHeaders={}, reqBody=null, _retry=false){
   if(!WORKER_URL){
     showWorkerBanner();
     throw new Error('Cloudflare Worker URL not configured. See the banner above.');
@@ -830,11 +850,44 @@ async function proxyFetch(url, method='GET', extraHeaders={}, reqBody=null){
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
+  // Handle HTTP-level 401 (worker passes through the status)
+  if(r.status===401 && !_retry){
+    try{
+      await refreshAccessToken();
+      return proxyFetch(url, method, extraHeaders, reqBody, true); // retry once with new token
+    }catch(refreshErr){
+      showTokenExpiredBanner();
+      throw new Error('Session expired. Please sign in again.');
+    }
+  }
   const text = await r.text();
   let d;
   try { d = JSON.parse(text); } catch(e) { throw new Error('Worker returned non-JSON: '+text.slice(0,200)); }
-  if(d.error) throw new Error(typeof d.error==='string' ? d.error : (d.error.message || JSON.stringify(d.error)));
+  // Handle API-level auth errors in the JSON response
+  if(d.error){
+    const msg = typeof d.error==='string' ? d.error : (d.error.message || JSON.stringify(d.error));
+    if((msg.includes('invalid authentication') || msg.includes('Invalid Credentials') || r.status===401) && !_retry){
+      try{
+        await refreshAccessToken();
+        return proxyFetch(url, method, extraHeaders, reqBody, true);
+      }catch(refreshErr){
+        showTokenExpiredBanner();
+        throw new Error('Session expired. Please sign in again.');
+      }
+    }
+    throw new Error(msg);
+  }
   return d;
+}
+
+function showTokenExpiredBanner(){
+  // Only show once
+  if(document.getElementById('token-expired-banner'))return;
+  const banner=document.createElement('div');
+  banner.id='token-expired-banner';
+  banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(255,68,68,0.95);color:white;padding:12px 24px;display:flex;align-items:center;gap:16px;font-size:13px;font-family:var(--font-body);';
+  banner.innerHTML=`<span>⚠ Your session has expired.</span><button onclick="window.location.reload()" style="background:white;color:#ff4444;border:none;border-radius:6px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:var(--font-body);font-weight:500;">Sign in again</button><button onclick="this.parentElement.remove()" style="margin-left:auto;background:none;border:none;color:white;cursor:pointer;font-size:18px;line-height:1;">✕</button>`;
+  document.body.prepend(banner);
 }
 
 async function gapi(path, params={}){
@@ -2724,6 +2777,10 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 
   // Try session storage first (tab still open), then localStorage fallback for credentials
   TOKEN=sessionStorage.getItem('oauth_token')||'';
+  // Restore refresh token to sessionStorage if it was only persisted in localStorage
+  if(!sessionStorage.getItem('refresh_token')&&localStorage.getItem('ytcmd_refresh_token')){
+    sessionStorage.setItem('refresh_token',localStorage.getItem('ytcmd_refresh_token'));
+  }
   CLAUDE=sessionStorage.getItem('claude_key')||localStorage.getItem('ytcmd_claude_key')||'';
   CHANNEL=sessionStorage.getItem('channel_id')||localStorage.getItem('ytcmd_channel_id')||'';
   CLIENT=sessionStorage.getItem('client_id')||localStorage.getItem('ytcmd_client_id')||'';
