@@ -311,22 +311,26 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
     <div class="section-head">
       <div class="section-title">Key metrics</div>
       <div class="section-pill" id="period-label">Last 28 days</div>
-      <div style="margin-left:auto;display:flex;gap:4px;">
-        <button class="btn-sm active" id="views-toggle-btn" onclick="toggleViewsMode('views',this)" title="Total views">Views</button>
-        <button class="btn-sm" id="engaged-toggle-btn" onclick="toggleViewsMode('engaged',this)" title="Views minus ad-only views">Engaged views</button>
-      </div>
     </div>
     <div class="kpi-grid">
       <div class="kpi-card" style="--kpi-color:var(--blue)"><div class="kpi-label" id="k-views-label">Views</div><div class="kpi-value" id="k-views">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--purple)"><div class="kpi-label">Watch time (hrs)</div><div class="kpi-value" id="k-watch">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--blue)"><div class="kpi-label">Subscribers gained</div><div class="kpi-value" id="k-subs">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--green)"><div class="kpi-label">Est. Revenue (EUR)</div><div class="kpi-value" id="k-rev">—</div></div>
-      <div class="kpi-card" style="--kpi-color:var(--accent2)"><div class="kpi-label">Impressions</div><div class="kpi-value" id="k-impr">—</div></div>
-      <div class="kpi-card" style="--kpi-color:var(--accent)"><div class="kpi-label">Avg CTR</div><div class="kpi-value" id="k-ctr">—</div></div>
+      <div class="kpi-card" style="--kpi-color:var(--accent2)"><div class="kpi-label">Card Impressions</div><div class="kpi-value" id="k-impr">—</div></div>
     </div>
     <div class="section-head"><div class="section-title">Performance over time</div></div>
     <div class="chart-grid">
-      <div class="chart-card full"><div class="chart-title">Views — current vs previous year</div><canvas id="c-views" height="100"></canvas></div>
+      <div class="chart-card full">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="chart-title" id="views-chart-title">Views — current vs previous year</div>
+          <div style="display:flex;gap:4px;">
+            <button class="btn-sm active" id="views-toggle-btn" onclick="toggleViewsMode('views',this)">Views</button>
+            <button class="btn-sm" id="engaged-toggle-btn" onclick="toggleViewsMode('engaged',this)">Engaged</button>
+          </div>
+        </div>
+        <canvas id="c-views" height="100"></canvas>
+      </div>
       <div class="chart-card full"><div class="chart-title">Watch time (hours) — current vs previous year</div><canvas id="c-watch" height="100"></canvas></div>
       <div class="chart-card"><div class="chart-title">Estimated Revenue (EUR/day)</div><canvas id="c-rev" height="160"></canvas></div>
       <div class="chart-card"><div class="chart-title">Click-Through Rate (CTR)</div><canvas id="c-ctr" height="160"></canvas></div>
@@ -381,7 +385,16 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
     <div id="monthly-scorecard" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px;"></div>
     <!-- Monthly charts -->
     <div class="chart-grid" style="margin-bottom:16px;">
-      <div class="chart-card full"><div class="chart-title">Views — monthly (current year vs previous year)</div><canvas id="c-m-views" height="100"></canvas></div>
+      <div class="chart-card full">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="chart-title" id="m-views-chart-title">Views — monthly (current year vs previous year)</div>
+          <div style="display:flex;gap:4px;">
+            <button class="btn-sm active" id="m-views-toggle-btn" onclick="toggleMonthlyViewsMode('views',this)">Views</button>
+            <button class="btn-sm" id="m-engaged-toggle-btn" onclick="toggleMonthlyViewsMode('engaged',this)">Engaged</button>
+          </div>
+        </div>
+        <canvas id="c-m-views" height="100"></canvas>
+      </div>
       <div class="chart-card full"><div class="chart-title">Watch time (hours) — monthly</div><canvas id="c-m-watch" height="100"></canvas></div>
       <div class="chart-card"><div class="chart-title">Est. Revenue (EUR)</div><canvas id="c-m-rev" height="160"></canvas></div>
       <div class="chart-card"><div class="chart-title">Subscribers gained</div><canvas id="c-m-subs" height="160"></canvas></div>
@@ -921,10 +934,15 @@ function toggleViewsMode(mode,btn){
   viewsMode=mode;
   document.querySelectorAll('#views-toggle-btn,#engaged-toggle-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  const label=mode==='engaged'?'Engaged views':'Views';
+  const chartTitle=mode==='engaged'
+    ?'Engaged views (est.) — current vs previous year'
+    :'Views — current vs previous year';
+  document.getElementById('k-views-label').textContent=label;
+  const titleEl=document.getElementById('views-chart-title');
+  if(titleEl)titleEl.textContent=chartTitle;
   const t=ytData.totals||{};
   if(mode==='engaged'){
-    document.getElementById('k-views-label').textContent='Engaged views (est.)';
-    // Estimate: views × avgViewPct — fetch if not cached
     if(t.avgViewPct!=null){
       kpi('k-views',fmt(Math.round((t.views||0)*(t.avgViewPct/100))));
     } else {
@@ -936,10 +954,40 @@ function toggleViewsMode(mode,btn){
       }).catch(()=>kpi('k-views','N/A'));
     }
   } else {
-    document.getElementById('k-views-label').textContent='Views';
     kpi('k-views',fmt(t.views));
   }
   if(ytData.ts)renderViewsChart(ytData.ts,ytData.prevTs||[]);
+}
+
+// Monthly views toggle — switches between total views and engaged views estimate
+let monthlyViewsMode='views';
+function toggleMonthlyViewsMode(mode,btn){
+  monthlyViewsMode=mode;
+  document.querySelectorAll('#m-views-toggle-btn,#m-engaged-toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const titleEl=document.getElementById('m-views-chart-title');
+  if(mode==='engaged'){
+    if(titleEl)titleEl.textContent='Engaged views (est.) — monthly';
+    // Re-render monthly views chart scaled by avgViewPct if available
+    const t=ytData.totals||{};
+    const pct=(t.avgViewPct||0)/100||0.6; // fallback ~60% engagement rate
+    if(window._cyV&&window._lyV){
+      const cyVe=window._cyV.map(v=>v!=null?Math.round(v*pct):null);
+      const lyVe=window._lyV.map(v=>v!=null?Math.round(v*pct):null);
+      mk('m-views','line',{labels:window._mLabels,datasets:[
+        {label:(window._lastYear||2025)+' Engaged views',data:lyVe,borderColor:'rgba(68,136,255,0.35)',backgroundColor:'transparent',borderDash:[5,4],tension:0.4,pointRadius:2,spanGaps:true,order:2},
+        {label:(window._thisYear||2026)+' Engaged views',data:cyVe,borderColor:'#4488ff',backgroundColor:'rgba(68,136,255,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:false,order:1}
+      ]},window._mOpts('Engaged views'));
+    }
+  } else {
+    if(titleEl)titleEl.textContent='Views — monthly (current year vs previous year)';
+    if(window._cyV&&window._lyV){
+      mk('m-views','line',{labels:window._mLabels,datasets:[
+        {label:(window._lastYear||2025)+' Views',data:window._lyV,borderColor:'rgba(68,136,255,0.35)',backgroundColor:'transparent',borderDash:[5,4],tension:0.4,pointRadius:2,spanGaps:true,order:2},
+        {label:(window._thisYear||2026)+' Views',data:window._cyV,borderColor:'#4488ff',backgroundColor:'rgba(68,136,255,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:false,order:1}
+      ]},window._mOpts('Views'));
+    }
+  }
 }
 async function loadAnalytics(){
   const t=await yta('views,estimatedMinutesWatched,subscribersGained,estimatedRevenue,playbackBasedCpm');
@@ -2517,6 +2565,14 @@ async function loadMonthlyPage(){
   // Point style: filled circle for current year, open for prev year
   // Current year line terminates at endM; prev year runs full 12 months
   const ptRadius=(data)=>data.map((_,i)=>i<=endM?3:0); // only show points up to current month
+
+  // Store for toggle re-render
+  window._cyV=cyV;window._lyV=lyV;window._mLabels=mLabels2;
+  window._thisYear=thisYear;window._lastYear=lastYear;window._mOpts=mOpts;
+  // Reset toggle to Views mode
+  monthlyViewsMode='views';
+  document.querySelectorAll('#m-views-toggle-btn,#m-engaged-toggle-btn').forEach(b=>b.classList.remove('active'));
+  const mvBtn=document.getElementById('m-views-toggle-btn');if(mvBtn)mvBtn.classList.add('active');
 
   mk('m-views','line',{labels:mLabels2,datasets:[
     {label:lastYear+' Views',data:lyV,borderColor:'rgba(68,136,255,0.35)',backgroundColor:'transparent',borderDash:[5,4],tension:0.4,pointRadius:2,spanGaps:true,order:2},
