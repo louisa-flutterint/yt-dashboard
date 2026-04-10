@@ -1566,7 +1566,11 @@ function renderTournamentBlock(stopKey,tournament){
   return`<div class="tournament-block">
     <div class="tournament-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
       <div><div class="tournament-name">${tournament}</div><div class="tournament-meta">${dayKeys.length} day${dayKeys.length!==1?'s':''}</div></div>
-      <button class="tag-btn" style="color:var(--accent);border-color:rgba(255,68,68,0.3);" onclick="event.stopPropagation();deleteTournament('${sk}','${tn}')">Delete</button>
+      <div style="display:flex;gap:6px;" onclick="event.stopPropagation()">
+        <button class="tag-btn" onclick="renameTournament('${sk}','${tn}')">Rename</button>
+        <button class="tag-btn" onclick="mergeTournament('${sk}','${tn}')">Merge into…</button>
+        <button class="tag-btn" style="color:var(--accent);border-color:rgba(255,68,68,0.3);" onclick="deleteTournament('${sk}','${tn}')">Delete</button>
+      </div>
     </div>
     <div>
       <table class="days-table">
@@ -1787,9 +1791,60 @@ function deleteDay(stopKey,tournament,day){
   saveCampaignsToStorage();renderStopDetail(stopKey);
 }
 function deleteTournament(stopKey,tournament){
-  if(!confirm(`Delete "${tournament}"?`))return;
+  if(!confirm(`Delete "${tournament}" and all its days?`))return;
   delete campaigns[stopKey].tournaments[tournament];
   saveCampaignsToStorage();renderStopDetail(stopKey);
+}
+
+function renameTournament(stopKey,tournament){
+  const newName=prompt('Rename tournament to:',tournament);
+  if(!newName||newName===tournament)return;
+  const stop=campaigns[stopKey];
+  if(stop.tournaments[newName]){
+    if(!confirm(`"${newName}" already exists. Merge ${tournament} into it?`))return;
+    mergeTournamentsData(stopKey,tournament,newName);
+  } else {
+    stop.tournaments[newName]=stop.tournaments[tournament];
+    delete stop.tournaments[tournament];
+  }
+  saveCampaignsToStorage();
+  renderStopDetail(stopKey);
+}
+
+function mergeTournament(stopKey,fromTournament){
+  const stop=campaigns[stopKey];
+  const others=Object.keys(stop.tournaments).filter(t=>t!==fromTournament);
+  if(!others.length){alert('No other tournaments to merge into.');return;}
+  const choice=prompt(
+    'Merge "'+fromTournament+'" into which tournament?\n\n'+
+    others.map((t,i)=>(i+1)+'. '+t).join('\n')+
+    '\n\nEnter name exactly or number:'
+  );
+  if(!choice)return;
+  const byNum=parseInt(choice);
+  const target=(!isNaN(byNum)&&byNum>=1&&byNum<=others.length)?others[byNum-1]:choice.trim();
+  if(!stop.tournaments[target]){alert('"'+target+'" not found.');return;}
+  if(!confirm('Merge "'+fromTournament+'" → "'+target+'"? All days and tags will be combined.'))return;
+  mergeTournamentsData(stopKey,fromTournament,target);
+  saveCampaignsToStorage();
+  renderStopDetail(stopKey);
+}
+
+function mergeTournamentsData(stopKey,fromName,intoName){
+  const stop=campaigns[stopKey];
+  const src=stop.tournaments[fromName];
+  if(!stop.tournaments[intoName])stop.tournaments[intoName]={days:{}};
+  const dst=stop.tournaments[intoName];
+  Object.keys(src.days||{}).forEach(day=>{
+    if(!dst.days[day])dst.days[day]={ytH:[],ytV:[],tw:[]};
+    const s=src.days[day],d=dst.days[day];
+    ['ytH','ytV','yt','tw'].forEach(arr=>{
+      (s[arr]||[]).forEach(v=>{if(!d[arr])d[arr]=[];if(!d[arr].includes(v))d[arr].push(v);});
+    });
+    if(s.manualAvgV!=null&&d.manualAvgV==null)d.manualAvgV=s.manualAvgV;
+    if(s.manualPeakV!=null&&d.manualPeakV==null)d.manualPeakV=s.manualPeakV;
+  });
+  delete stop.tournaments[fromName];
 }
 function removeYtTag(stopKey,tournament,day,idx){
   if(!confirm('Remove this tag?'))return;
