@@ -333,8 +333,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       </div>
       <div class="chart-card full"><div class="chart-title">Watch time (hours) — current vs previous year</div><canvas id="c-watch" height="100"></canvas></div>
       <div class="chart-card"><div class="chart-title">Estimated Revenue (EUR/day)</div><canvas id="c-rev" height="160"></canvas></div>
-      <div class="chart-card"><div class="chart-title">Click-Through Rate (CTR)</div><canvas id="c-ctr" height="160"></canvas></div>
-      <div class="chart-card"><div class="chart-title">Impressions</div><canvas id="c-impr" height="160"></canvas></div>
+      <div class="chart-card"><div class="chart-title">Card Impressions</div><canvas id="c-impr" height="160"></canvas></div>
     </div>
     <div class="section-head"><div class="section-title">Audience demographics</div></div>
     <div class="demo-grid">
@@ -399,7 +398,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       <div class="chart-card"><div class="chart-title">Est. Revenue (EUR)</div><canvas id="c-m-rev" height="160"></canvas></div>
       <div class="chart-card"><div class="chart-title">Subscribers gained</div><canvas id="c-m-subs" height="160"></canvas></div>
       <div class="chart-card"><div class="chart-title">Impressions</div><canvas id="c-m-impr" height="160"></canvas></div>
-      <div class="chart-card"><div class="chart-title">Avg CTR %</div><canvas id="c-m-ctr" height="160"></canvas></div>
+
     </div>
     <div id="monthly-loading" style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Select the Monthly tab to load performance data.</div>
   </div>
@@ -634,12 +633,25 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
 <div class="modal-overlay" id="stop-modal">
   <div class="modal">
     <div class="modal-title">Add a new stop</div>
-    <div class="modal-sub">Manually create a stop within the EPT campaign</div>
+    <div class="modal-sub">Create a stop and assign it to a series</div>
+    <div class="field-label">Series</div>
+    <select id="new-stop-series" onchange="document.getElementById('new-stop-series-other-wrap').style.display=this.value==='Other'?'block':'none'" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--font-body);font-size:14px;margin-bottom:12px;cursor:pointer;">
+      <option value="EPT">EPT — European Poker Tour</option>
+      <option value="APPT">APPT — Asia Pacific Poker Tour</option>
+      <option value="LAPT">LAPT — Latin America Poker Tour</option>
+      <option value="NAPT">NAPT — North America Poker Tour</option>
+      <option value="CPT">CPT — Canadian Poker Tour</option>
+      <option value="Other">Other</option>
+    </select>
+    <div id="new-stop-series-other-wrap" style="display:none;margin-bottom:12px;">
+      <div class="field-label">Custom series name</div>
+      <input type="text" id="new-stop-series-custom" placeholder="e.g. WPT" style="margin-bottom:0;">
+    </div>
     <div class="field-label">Stop name (city)</div>
     <input type="text" id="new-stop-name" placeholder="e.g. Barcelona" style="margin-bottom:12px;">
     <div class="field-label">Year</div>
-    <input type="text" id="new-stop-year" placeholder="e.g. 2024" style="margin-bottom:12px;">
-    <div class="field-label">Tournaments (one per line)</div>
+    <input type="text" id="new-stop-year" placeholder="e.g. 2025" style="margin-bottom:12px;">
+    <div class="field-label">Tournaments (one per line, optional)</div>
     <textarea class="paste-area" id="new-stop-tournaments" placeholder="Main Event&#10;Spin &amp; Go Championship Live&#10;Super High Roller"></textarea>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('stop-modal')">Cancel</button>
@@ -1075,7 +1087,6 @@ function renderTime(rows,prevRows){
   mk('rev','bar',{labels:rows.map(r=>r[0]),datasets:[
     {label:'Revenue (EUR)',data:R,backgroundColor:'rgba(0,229,160,0.6)',borderColor:'#00e5a0',borderWidth:1,borderRadius:3}
   ]},co('EUR'));
-  loadCtrChart();
 }
 function renderViewsChart(rows,prevRows){
   const L=rows.map(r=>r[0]);
@@ -1100,23 +1111,7 @@ function renderWatchChart(rows,prevRows){
   }
   mk('watch','line',{labels:L,datasets},co('Hours'));
 }
-async function loadCtrChart(){
-  // Use card metrics — impressions not available at channel+day summary level
-  try{
-    const d=await yta('cardClickRate,cardImpressions','day');
-    const rows=d.rows||[];
-    if(!rows.length)return;
-    const L=rows.map(r=>r[0]);
-    const C=rows.map(r=>r[1]!=null?parseFloat((r[1]>1?r[1]:r[1]*100).toFixed(2)):0);
-    const I=rows.map(r=>r[2]||0);
-    mk('ctr','line',{labels:L,datasets:[
-      {label:'Card CTR %',data:C,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.1)',tension:0.4,pointRadius:2,fill:true}
-    ]},co('CTR %'));
-    mk('impr','bar',{labels:L,datasets:[
-      {label:'Card Impressions',data:I,backgroundColor:'rgba(255,136,0,0.6)',borderColor:'#ff8800',borderWidth:1,borderRadius:3}
-    ]},co('Impressions'));
-  }catch(e){console.warn('Card CTR unavailable:',e.message);}
-}
+
 function renderDemo(rows){
   const EXCLUDE=['age13_17','age13-17'];
   const g={};rows.forEach(([age,gender,pct])=>{
@@ -1328,10 +1323,14 @@ function parseTitleMeta(title,publishDate){
 }
 
 function normaliseTournamentName(raw){
-  // Strip day/FT markers first, then match tournament name
-  const stripped=raw.replace(/\s*(FT-?\d+|Day\s*\d+[A-Za-z]?|Final\s*Table)\s*/gi,'').trim();
+  // Strip ALL day/FT/Final Table markers (with or without numbers)
+  const stripped=raw
+    .replace(/\s*\bFinal\s*Table\b\s*/gi,'')
+    .replace(/\s*\bFT-?\d*\b\s*/gi,'')   // FT, FT-1, FT-4 etc.
+    .replace(/\s*\bDay\s*\d+[A-Za-z]?\b\s*/gi,'')
+    .trim();
   const t=stripped.toUpperCase();
-  if(!t)return'Main Event'; // if nothing left after stripping, it was a standalone FT row
+  if(!t)return'Main Event'; // nothing left = it was a FT/day-only row
   if(t==='ME'||t.includes('MAIN EVENT'))return'Main Event';
   if(t.includes('SPIN')&&t.includes('GO'))return'Spin & Go Championship Live';
   if(t.includes('SUPER HIGH ROLLER')||t==='SHR')return'Super High Roller';
@@ -1895,12 +1894,18 @@ function openNewStopModal(){document.getElementById('stop-modal').classList.add(
 function confirmNewStop(){
   const stop=document.getElementById('new-stop-name').value.trim();
   const year=document.getElementById('new-stop-year').value.trim();
+  const seriesEl=document.getElementById('new-stop-series');
+  let series=seriesEl?seriesEl.value:'EPT';
+  if(series==='Other'){
+    const custom=document.getElementById('new-stop-series-custom')?.value.trim();
+    series=custom||'Other';
+  }
   const tLines=document.getElementById('new-stop-tournaments').value.split('\n').map(s=>s.trim()).filter(Boolean);
   if(!stop){alert('Please enter a stop name.');return;}
   if(!year){alert('Please enter a year.');return;}
   const key=stop+'-'+year;
-  if(!campaigns[key])campaigns[key]={stop,year,series:'EPT',tournaments:{}};
-  // Always add Main Event as default tournament if none specified
+  if(!campaigns[key])campaigns[key]={stop,year,series,tournaments:{}};
+  else campaigns[key].series=series; // update series if stop already exists
   if(!tLines.length)tLines.push('Main Event');
   tLines.forEach(t=>{if(!campaigns[key].tournaments[t])campaigns[key].tournaments[t]={days:{}};});
   saveCampaignsToStorage();
@@ -1908,8 +1913,8 @@ function confirmNewStop(){
   document.getElementById('new-stop-name').value='';
   document.getElementById('new-stop-year').value='';
   document.getElementById('new-stop-tournaments').value='';
+  if(seriesEl)seriesEl.value='EPT';
   renderCampaignTree();
-  // Auto-select the new stop
   setTimeout(()=>selectStop(key),100);
 }
 
@@ -1927,6 +1932,8 @@ function openTagModal(stopKey,tournament,day){
   if(isNew)document.getElementById('new-day-input').value='';
   switchTagTab('search',document.querySelector('.tab-switch .ai-tab'));
   document.getElementById('tag-modal').classList.add('open');
+  // Always reload video list when opening (clear stale cache)
+  allYTVideos=[];
   prefetchVideos();
 }
 async function prefetchVideos(){
@@ -2599,10 +2606,6 @@ async function loadMonthlyPage(){
     {label:thisYear+' Card Impressions',data:cyIm,backgroundColor:'rgba(255,136,0,0.65)',borderColor:'#ff8800',borderWidth:1,borderRadius:3}
   ]},mOpts('Impressions'));
 
-  mk('m-ctr','line',{labels:mLabels2,datasets:[
-    {label:lastYear+' CTR %',data:lyCt,borderColor:'rgba(255,68,68,0.35)',backgroundColor:'transparent',borderDash:[5,4],tension:0.4,pointRadius:2,spanGaps:true,order:2},
-    {label:thisYear+' CTR %',data:cyCt,borderColor:'#ff4444',backgroundColor:'rgba(255,68,68,0.1)',tension:0.4,fill:true,pointRadius:3,spanGaps:false,order:1}
-  ]},mOpts('CTR %'));
 
   loadingEl.style.display='none';
   monthlyLoaded=true;
