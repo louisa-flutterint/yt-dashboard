@@ -2381,13 +2381,17 @@ async function loadMonthlyPage(){
   // API rule: start AND end must both be the first day of a month
   async function fetchYearData(year,metrics){
     const start=fmt2(new Date(year,0,1)); // 1 Jan
-    // For current year: include up to and including targetMonth
-    // end = first day of month AFTER the last desired month
-    const lastMonth=year===thisYear?targetMonth.getMonth():11;
-    const end=fmt2(new Date(year,lastMonth+1,1)); // first day of month after last
+    let end;
+    if(year===thisYear){
+      // End = first day of targetMonth (the API month dimension is inclusive of this month)
+      // Using first day of targetMonth includes that month in the response
+      end=fmt2(new Date(year,targetMonth.getMonth(),1));
+    } else {
+      // Last year: Dec 1st (includes December)
+      end=fmt2(new Date(year,11,1));
+    }
     try{
       const r=await ytaRange(metrics,start,end,'month');
-      console.log('fetchYearData',year,metrics,'rows:',r.rows?.length,'sample:',r.rows?.[0]);
       return r.rows||[];
     }catch(e){
       console.error('fetchYearData ERROR',year,metrics,e.message);
@@ -2498,7 +2502,15 @@ async function loadMonthlyPage(){
   const cyCt=extractCol(cyImprRows,2).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null);
   const lyCt=extractCol(lyImprRows,2).map(v=>v!=null?(v>1?parseFloat(v.toFixed(2)):parseFloat((v*100).toFixed(2))):null);
 
-  console.log('Monthly chart check — cyV:',cyV.slice(0,4),'lyV:',lyV.slice(0,4));
+  // Ensure current year arrays have nulls beyond endM (Chart.js needs consistent array length)
+  for(let i=endM+1;i<12;i++){
+    if(cyV[i]!==null)cyV[i]=null;
+    if(cyW[i]!==null)cyW[i]=null;
+    if(cyRv[i]!==null)cyRv[i]=null;
+    if(cySb[i]!==null)cySb[i]=null;
+    if(cyIm[i]!==null)cyIm[i]=null;
+    if(cyCt[i]!==null)cyCt[i]=null;
+  }
 
   const mOpts=y=>({responsive:true,plugins:{legend:{labels:{color:'#7a7a8e',font:{family:'DM Mono',size:11},boxWidth:12,padding:12}},tooltip:{backgroundColor:'#18181f',titleColor:'#f0f0f5',bodyColor:'#7a7a8e',borderColor:'rgba(255,255,255,0.07)',borderWidth:1}},scales:{x:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7a7a8e',font:{family:'DM Mono',size:10}},grid:{color:'rgba(255,255,255,0.04)'},title:{display:!!y,text:y||'',color:'#7a7a8e',font:{size:10}}}}});
 
