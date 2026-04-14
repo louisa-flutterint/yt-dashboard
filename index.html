@@ -317,7 +317,19 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       <div class="kpi-card" style="--kpi-color:var(--purple)"><div class="kpi-label">Watch time (hrs)</div><div class="kpi-value" id="k-watch">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--blue)"><div class="kpi-label">Subscribers gained</div><div class="kpi-value" id="k-subs">—</div></div>
       <div class="kpi-card" style="--kpi-color:var(--green)"><div class="kpi-label">Est. Revenue (EUR)</div><div class="kpi-value" id="k-rev">—</div></div>
-      <div class="kpi-card" style="--kpi-color:var(--accent2)"><div class="kpi-label">Card Impressions</div><div class="kpi-value" id="k-impr">—</div></div>
+    </div>
+    <div class="section-head"><div class="section-title">AI analysis</div><div class="section-pill">Claude</div></div>
+    <div class="ai-panel">
+      <div class="ai-panel-header"><div class="ai-dot"></div><div class="ai-panel-title">Claude is ready</div><div class="ai-panel-sub">claude-sonnet-4-20250514</div></div>
+      <div class="ai-body">
+        <div class="ai-tabs">
+          <button class="ai-tab active" onclick="selTab('summary',this)">Performance summary</button>
+          <button class="ai-tab" onclick="selTab('anomalies',this)">Anomaly detection</button>
+          <button class="ai-tab" onclick="selTab('ideas',this)">Content ideas</button>
+        </div>
+        <div class="ai-output" id="ai-out">Select a tab and click Generate to get Claude's analysis of your channel data.</div>
+        <button class="btn-generate" id="ai-btn" onclick="generateAI()">⚡ Generate analysis</button>
+      </div>
     </div>
     <div class="section-head"><div class="section-title">Performance over time</div></div>
     <div class="chart-grid">
@@ -333,7 +345,6 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       </div>
       <div class="chart-card full"><div class="chart-title">Watch time (hours) — current vs previous year</div><canvas id="c-watch" height="100"></canvas></div>
       <div class="chart-card"><div class="chart-title">Estimated Revenue (EUR/day)</div><canvas id="c-rev" height="160"></canvas></div>
-      <div class="chart-card"><div class="chart-title">Card Impressions</div><canvas id="c-impr" height="160"></canvas></div>
     </div>
     <div class="section-head"><div class="section-title">Audience demographics</div></div>
     <div class="demo-grid">
@@ -345,6 +356,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       <div style="display:flex;gap:4px;">
         <button class="btn-sm active top-vid-toggle" onclick="setTopVideoMode('videos',this)">Videos</button>
         <button class="btn-sm top-vid-toggle" onclick="setTopVideoMode('shorts',this)">Shorts</button>
+        <button class="btn-sm top-vid-toggle" onclick="setTopVideoMode('streams',this)">Live Streams</button>
       </div>
       <div class="section-pill" style="margin-left:auto;">by views</div>
     </div>
@@ -354,19 +366,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
         <tbody id="v-tbody"></tbody>
       </table>
     </div>
-    <div class="section-head"><div class="section-title">AI analysis</div><div class="section-pill">Claude</div></div>
-    <div class="ai-panel">
-      <div class="ai-panel-header"><div class="ai-dot"></div><div class="ai-panel-title">Claude is ready</div><div class="ai-panel-sub">claude-sonnet-4-20250514</div></div>
-      <div class="ai-body">
-        <div class="ai-tabs">
-          <button class="ai-tab active" onclick="selTab('summary',this)">Performance summary</button>
-          <button class="ai-tab" onclick="selTab('anomalies',this)">Anomaly detection</button>
-          <button class="ai-tab" onclick="selTab('ideas',this)">Content ideas</button>
-        </div>
-        <div class="ai-output" id="ai-out">Select a tab and click Generate to get Claude's analysis of your channel data.</div>
-        <button class="btn-generate" id="ai-btn" onclick="generateAI()">⚡ Generate analysis</button>
-      </div>
-    </div>
+
   </div>
 
   <!-- ── MONTHLY PERFORMANCE PAGE ── -->
@@ -397,7 +397,6 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       <div class="chart-card full"><div class="chart-title">Watch time (hours) — monthly</div><canvas id="c-m-watch" height="100"></canvas></div>
       <div class="chart-card"><div class="chart-title">Est. Revenue (EUR)</div><canvas id="c-m-rev" height="160"></canvas></div>
       <div class="chart-card"><div class="chart-title">Subscribers gained</div><canvas id="c-m-subs" height="160"></canvas></div>
-      <div class="chart-card"><div class="chart-title">Impressions</div><canvas id="c-m-impr" height="160"></canvas></div>
 
     </div>
     <div id="monthly-loading" style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Select the Monthly tab to load performance data.</div>
@@ -418,10 +417,32 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       <div style="font-size:28px;margin-bottom:12px;">📑</div>
       <div style="font-size:14px;">Click "+ Add slide" to start building your report.</div>
     </div>
+    <!-- Slide picker modal -->
+    <div class="modal-overlay" id="slide-picker-modal">
+      <div class="modal" style="max-width:580px;">
+        <div class="modal-title">Add slide</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;">
+          <!-- Will be populated by renderSlidePicker() -->
+        </div>
+        <div id="slide-picker-options" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;"></div>
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeModal('slide-picker-modal')">Cancel</button>
+        </div>
+      </div>
+    </div>
     <!-- Slide text editor modal -->
     <div class="modal-overlay" id="slide-text-modal" style="z-index:700;">
       <div class="modal" style="max-width:640px;">
         <div class="modal-title" id="slide-text-modal-title">Edit slide</div>
+        <div style="margin-bottom:10px;font-size:13px;color:var(--muted);">Attach a chart to this slide (optional):</div>
+        <select id="slide-chart-select" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;margin-bottom:12px;" onchange="if(reportSlides[parseInt(document.getElementById('slide-edit-idx').value)])reportSlides[parseInt(document.getElementById('slide-edit-idx').value)].attachedChart=this.value;">
+          <option value="">No chart</option>
+          <option value="views">Views over time</option>
+          <option value="watch">Watch time</option>
+          <option value="revenue">Revenue</option>
+          <option value="subscribers">Subscribers</option>
+          <option value="top-videos">Top videos table</option>
+        </select>
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
           <button class="btn-sm" id="slide-gen-btn" onclick="generateSlideAI()" style="background:var(--accent);border-color:var(--accent);color:white;">⚡ Generate with AI</button>
           <span style="font-size:12px;color:var(--muted);align-self:center;">or edit manually below</span>
@@ -1039,13 +1060,15 @@ async function ytaRange(metrics,start,end,dims,extra={}){
   Object.entries(params).forEach(([k,v])=>v!=null&&u.searchParams.set(k,String(v)));
   return proxyFetch(u.toString());
 }
-let topVideoMode='videos'; // 'videos' or 'shorts'
+let topVideoMode='videos'; // 'videos' | 'shorts' | 'streams'
 function setTopVideoMode(mode,btn){
   topVideoMode=mode;
   document.querySelectorAll('.top-vid-toggle').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(mode==='videos'&&ytData.topEnriched)renderVideos(ytData.topEnriched.filter(v=>!v.isShort));
-  else if(mode==='shorts'&&ytData.topEnriched)renderVideos(ytData.topEnriched.filter(v=>v.isShort));
+  if(!ytData.topEnriched)return;
+  if(mode==='videos')renderVideos(ytData.topEnriched.filter(v=>!v.isShort&&!v.isStream));
+  else if(mode==='shorts')renderVideos(ytData.topEnriched.filter(v=>v.isShort));
+  else if(mode==='streams')renderVideos(ytData.topEnriched.filter(v=>v.isStream));
 }
 async function loadTopVideos(){
   const tbody=document.getElementById('v-tbody');
@@ -1056,11 +1079,13 @@ async function loadTopVideos(){
     if(!rows.length){tbody.innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">No video data for this period.</td></tr>';return;}
     const ids=rows.map(r=>r[0]).join(',');
     // Get snippet + contentDetails for duration (to detect shorts)
-    const vd=await gapi('/youtube/v3/videos',{part:'snippet,contentDetails',id:ids});
-    const map={};(vd.items||[]).forEach(v=>map[v.id]={snippet:v.snippet,duration:parseISODuration(v.contentDetails?.duration||'')});
-    const enriched=rows.map(r=>({id:r[0],sn:map[r[0]]?.snippet,m:r.slice(1),dur:map[r[0]]?.duration||0,isShort:map[r[0]]?.duration>0&&map[r[0]]?.duration<180}));
+    const vd=await gapi('/youtube/v3/videos',{part:'snippet,contentDetails,liveStreamingDetails',id:ids});
+    const map={};(vd.items||[]).forEach(v=>map[v.id]={snippet:v.snippet,duration:parseISODuration(v.contentDetails?.duration||''),liveStreamingDetails:v.liveStreamingDetails});
+    const enriched=rows.map(r=>({id:r[0],sn:map[r[0]]?.snippet,m:r.slice(1),dur:map[r[0]]?.duration||0,isShort:map[r[0]]?.duration>0&&map[r[0]]?.duration<180,isStream:!!(map[r[0]]?.liveStreamingDetails)}));
     ytData.topEnriched=enriched;
-    renderVideos(topVideoMode==='shorts'?enriched.filter(v=>v.isShort):enriched.filter(v=>!v.isShort));
+    if(topVideoMode==='shorts')renderVideos(enriched.filter(v=>v.isShort));
+    else if(topVideoMode==='streams')renderVideos(enriched.filter(v=>v.isStream));
+    else renderVideos(enriched.filter(v=>!v.isShort&&!v.isStream));
   }catch(e){tbody.innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">'+e.message+'</td></tr>';}
 }
 function parseISODuration(iso){
@@ -1147,7 +1172,8 @@ function renderGeo(rows){
   if(otherViews>0){labels.push('Other');views.push(otherViews);}
   const pcts=views.map(v=>channelTotal?parseFloat((v/channelTotal*100).toFixed(1)):0);
   const colors=['#9147ff','#4488ff','#00e5a0','#ff8800','#ff4444','#aa66ff','#00c4ff','#ffcc00','#ff6b9d','#7ee8a2'];
-  mk('geo','doughnut',{labels,datasets:[{data:pcts,backgroundColor:colors.slice(0,rows.length),borderColor:'var(--bg)',borderWidth:2}]},{
+  const bgColors=labels.map((l,i)=>l==='Other'?'#555566':colors[i%colors.length]);
+  mk('geo','doughnut',{labels,datasets:[{data:pcts,backgroundColor:bgColors,borderColor:'var(--bg)',borderWidth:2}]},{
     responsive:true,
     plugins:{
       legend:{position:'right',labels:{color:'#7a7a8e',font:{family:'DM Mono',size:10},boxWidth:10,padding:8}},
@@ -1323,21 +1349,35 @@ function parseTitleMeta(title,publishDate){
 }
 
 function normaliseTournamentName(raw){
-  // Strip ALL day/FT/Final Table markers (with or without numbers)
+  if(!raw)return'Main Event';
+  // Strip ALL day/FT markers first
   const stripped=raw
-    .replace(/\s*\bFinal\s*Table\b\s*/gi,'')
-    .replace(/\s*\bFT-?\d*\b\s*/gi,'')   // FT, FT-1, FT-4 etc.
-    .replace(/\s*\bDay\s*\d+[A-Za-z]?\b\s*/gi,'')
+    .replace(/\bFinal\s*Table\b/gi,'')
+    .replace(/\bFT-?\d*\b/gi,'')
+    .replace(/\bDay\s*\d+[A-Za-z]?\b/gi,'')
+    .replace(/\s+/g,' ')
     .trim();
   const t=stripped.toUpperCase();
-  if(!t)return'Main Event'; // nothing left = it was a FT/day-only row
-  if(t==='ME'||t.includes('MAIN EVENT'))return'Main Event';
+  if(!t)return'Main Event'; // nothing left after stripping = was a FT/day row
+  if(t==='ME'||t==='M.E.'||t.includes('MAIN EVENT'))return'Main Event';
   if(t.includes('SPIN')&&t.includes('GO'))return'Spin & Go Championship Live';
   if(t.includes('SUPER HIGH ROLLER')||t==='SHR')return'Super High Roller';
   if(t.includes('HIGH ROLLER'))return'High Roller';
   if(t.includes('MYSTERY BOUNTY'))return'Mystery Bounty';
   if(t.includes('TURBO'))return'Turbo Series';
+  if(t.includes('BOUNTY'))return'Bounty';
   return stripped.replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+function normaliseDay(raw){
+  if(!raw)return'';
+  if(/Final\s*Table/i.test(raw))return'Final Table';
+  const ft=raw.match(/FT-?(\d+)/i);if(ft)return'FT-'+ft[1];
+  // Bare "FT" with no number = Final Table
+  if(/\bFT\b/i.test(raw)&&!/\d/.test(raw))return'Final Table';
+  const day=raw.match(/Day\s*(\d+[A-Za-z]?)/i);if(day)return'Day '+day[1];
+  const stripped=raw.replace(/^(ME|S&G|SHR|HR|MB)\s*/i,'').trim();
+  return stripped||raw.trim();
 }
 
 function normaliseDayFromTitle(raw){
@@ -1993,39 +2033,49 @@ function openTagModal(stopKey,tournament,day){
 }
 async function prefetchVideos(){
   const resultsEl=document.getElementById('tag-search-results');
-  // Show cached results immediately but always show a refresh option
-  if(allYTVideos.length){
-    searchVideos('');
-    const resultsEl2=document.getElementById('tag-search-results');
-    if(resultsEl2&&allYTVideos.length<50){
-      // Suspiciously few — offer refresh
-      const refreshNote=document.createElement('div');
-      refreshNote.style.cssText='padding:6px 12px;font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;';
-      refreshNote.innerHTML=`<span>${allYTVideos.length} videos loaded</span><button onclick="allYTVideos=[];prefetchVideos();" style="background:none;border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--muted);cursor:pointer;">↺ Reload</button>`;
-      resultsEl2.appendChild(refreshNote);
-    }
+  if(!resultsEl)return;
+  if(!TOKEN){
+    resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Sign in to search videos</div>';
+    return;
+  }
+  if(!CHANNEL){
+    resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Connect your channel first</div>';
     return;
   }
   resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading videos…</div>';
   try{
     let all=[];let pageToken='';
-    for(let page=0;page<10;page++){ // up to 500 videos
+    for(let page=0;page<10;page++){
       const params={part:'snippet',channelId:CHANNEL,type:'video',maxResults:50,order:'date'};
       if(pageToken)params.pageToken=pageToken;
       const r=await gapi('/youtube/v3/search',params);
-      all=all.concat((r.items||[]).map(i=>({id:i.id?.videoId,title:i.snippet.title,date:i.snippet.publishedAt,thumb:i.snippet.thumbnails?.default?.url})).filter(v=>v.id));
+      const items=(r.items||[]).map(i=>({id:i.id?.videoId,title:i.snippet?.title||'',date:i.snippet?.publishedAt,thumb:i.snippet?.thumbnails?.default?.url})).filter(v=>v.id&&v.title);
+      all=all.concat(items);
       if(!r.nextPageToken)break;
       pageToken=r.nextPageToken;
-      if(resultsEl)resultsEl.innerHTML=`<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading… ${all.length} videos</div>`;
+      resultsEl.innerHTML=`<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading… ${all.length} videos</div>`;
     }
-    allYTVideos=all;searchVideos('');
-  }catch(e){if(resultsEl)resultsEl.innerHTML=`<div style="padding:12px;text-align:center;color:var(--accent);font-size:12px;">Could not load videos: ${e.message}</div>`;}
+    allYTVideos=all;
+    if(!all.length){
+      resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">No videos found. Use the Paste tab to add by URL.</div>';
+      return;
+    }
+    searchVideos('');
+  }catch(e){
+    resultsEl.innerHTML=`<div style="padding:12px;color:var(--accent);font-size:12px;">Error: ${e.message}<br><br>Use the Paste tab to add a video by URL or ID instead.</div>`;
+  }
 }
 function searchVideos(q){
+  const resultsEl=document.getElementById('tag-search-results');
+  if(!resultsEl)return;
   const filtered=q?allYTVideos.filter(v=>v.title.toLowerCase().includes(q.toLowerCase())):allYTVideos;
-  document.getElementById('tag-search-results').innerHTML=filtered.slice(0,50).map(v=>`
+  if(!filtered.length){
+    resultsEl.innerHTML=`<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">No videos match "${q}"</div>`;
+    return;
+  }
+  resultsEl.innerHTML=filtered.slice(0,50).map(v=>`
     <div class="search-result-item${selectedTagVideoId===v.id?' selected':''}" onclick="selectTagVideo('${v.id}',this)">
-      <img class="result-thumb" src="${v.thumb||''}" alt="" loading="lazy">
+      <img class="result-thumb" src="${v.thumb||''}" alt="" loading="lazy" onerror="this.style.display='none'">
       <div><div class="result-title">${v.title}</div><div class="result-date">${v.date?new Date(v.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):''}</div></div>
     </div>`).join('');
 }
@@ -2251,21 +2301,28 @@ function confirmAddEpisode(){
 
 async function prefetchEpisodeVideos(){
   const resultsEl=document.getElementById('ep-search-results');
-  if(allYTVideos.length){searchEpisodeVideos('');return;}
-  if(resultsEl)resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading videos…</div>';
+  if(!resultsEl)return;
+  if(!TOKEN||!CHANNEL){
+    resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Sign in and connect your channel first</div>';
+    return;
+  }
+  resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading videos…</div>';
   try{
     let all=[];let pageToken='';
     for(let page=0;page<10;page++){
       const params={part:'snippet',channelId:CHANNEL,type:'video',maxResults:50,order:'date'};
       if(pageToken)params.pageToken=pageToken;
       const r=await gapi('/youtube/v3/search',params);
-      all=all.concat((r.items||[]).map(i=>({id:i.id?.videoId,title:i.snippet.title,date:i.snippet.publishedAt,thumb:i.snippet.thumbnails?.default?.url})).filter(v=>v.id));
+      const items=(r.items||[]).map(i=>({id:i.id?.videoId,title:i.snippet?.title||'',date:i.snippet?.publishedAt,thumb:i.snippet?.thumbnails?.default?.url})).filter(v=>v.id&&v.title);
+      all=all.concat(items);
       if(!r.nextPageToken)break;
       pageToken=r.nextPageToken;
-      if(resultsEl)resultsEl.innerHTML=`<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading… ${all.length} videos</div>`;
+      resultsEl.innerHTML=`<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">Loading… ${all.length} videos</div>`;
     }
-    allYTVideos=all;searchEpisodeVideos('');
-  }catch(e){if(resultsEl)resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--accent);font-size:12px;">Could not load: '+e.message+'</div>';}
+    allYTVideos=all;
+    if(!all.length){resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">No videos found.</div>';return;}
+    searchEpisodeVideos('');
+  }catch(e){if(resultsEl)resultsEl.innerHTML=`<div style="padding:12px;color:var(--accent);font-size:12px;">Error: ${e.message}</div>`;}
 }
 function searchEpisodeVideos(q){
   const filtered=q?allYTVideos.filter(v=>v.title.toLowerCase().includes(q.toLowerCase())):allYTVideos;
@@ -2419,12 +2476,12 @@ function migrateCampaigns(){
   if(changed){saveCampaignsToStorage();console.log('Campaign migration complete.');}
 }
 function migrateDay(rawDay,rawTournament){
-  // If the tournament was "ME FT-4", the day stored might be the whole thing
-  // Extract proper day label
-  const norm=normaliseDay(rawTournament+' '+rawDay);
-  // But if rawDay is already a proper day label, use it
-  if(/^Day\s*\d/i.test(rawDay)||/^FT-?\d/i.test(rawDay)||/Final\s*Table/i.test(rawDay))return normaliseDay(rawDay);
-  return norm||rawDay;
+  // If rawDay already looks like a proper day label, normalise it directly
+  if(/^Day\s*\d/i.test(rawDay)||/^FT-?\d/i.test(rawDay)||/Final\s*Table/i.test(rawDay)||/^\bFT\b/i.test(rawDay))
+    return normaliseDay(rawDay);
+  // Otherwise try to extract day from combined tournament+day string
+  const combined=rawTournament+' '+rawDay;
+  return normaliseDay(combined)||rawDay;
 }
 function saveTwitchToStorage(){try{localStorage.setItem('ytcmd_twitch',JSON.stringify(twitchRows));}catch(e){console.warn('Twitch storage full — data not persisted.');}}
 function loadTwitchFromStorage(){try{const d=localStorage.getItem('ytcmd_twitch');if(d)twitchRows=JSON.parse(d);}catch(e){twitchRows=[];}}
@@ -2541,18 +2598,7 @@ async function loadMonthlyPage(){
   const [cViews,cMins,cSubs,cRev]=curR.rows?.[0]||[];
   const [pViews,pMins,pSubs,pRev]=prevR.rows?.[0]||[];
   const [lViews,lMins,lSubs,lRev]=lyR.rows?.[0]||[];
-  // Impressions+CTR must be separate API call
-  let cImpr=null,cCtr=null,pImpr=null,pCtr=null,lImpr=null,lCtr=null;
-  try{
-    const [iCur,iPrev,iLy]=await Promise.all([
-      ytaRange(SCORE_METRICS_IMPR,mStart,mEnd),
-      ytaRange(SCORE_METRICS_IMPR,fmt2(prevM),fmt2(prevMEnd)),
-      ytaRange(SCORE_METRICS_IMPR,fmt2(lyM),fmt2(lyMEnd)),
-    ]);
-    [cImpr,cCtr]=iCur.rows?.[0]||[];
-    [pImpr,pCtr]=iPrev.rows?.[0]||[];
-    [lImpr,lCtr]=iLy.rows?.[0]||[];
-  }catch(e){console.warn('Monthly impressions scorecard:',e.message);}
+  // Impressions/CTR removed from scorecard
 
   const pct=(a,b)=>(a!=null&&b!=null&&b!==0)?((a-b)/b*100).toFixed(1)+'%':'N/A';
   const arrow=(a,b)=>(a||0)>=(b||0)?'▲':'▼';
@@ -2563,9 +2609,7 @@ async function loadMonthlyPage(){
     {label:'Watch Time (hrs)',cur:fmt(cMins?Math.round(cMins/60):null),mom:pct(cMins,pMins),yoy:pct(cMins,lMins),momA:arrow(cMins,pMins),yoyA:arrow(cMins,lMins),momC:col(cMins,pMins),yoyC:col(cMins,lMins)},
     {label:'Subscribers',cur:fmt(cSubs),mom:pct(cSubs,pSubs),yoy:pct(cSubs,lSubs),momA:arrow(cSubs,pSubs),yoyA:arrow(cSubs,lSubs),momC:col(cSubs,pSubs),yoyC:col(cSubs,lSubs)},
     {label:'Revenue (EUR)',cur:cRev!=null?'€'+usdToEur(cRev).toFixed(2):'—',mom:pct(cRev,pRev),yoy:pct(cRev,lRev),momA:arrow(cRev,pRev),yoyA:arrow(cRev,lRev),momC:col(cRev,pRev),yoyC:col(cRev,lRev)},
-    {label:'Impressions',cur:fmt(cImpr),mom:pct(cImpr,pImpr),yoy:pct(cImpr,lImpr),momA:arrow(cImpr,pImpr),yoyA:arrow(cImpr,lImpr),momC:col(cImpr,pImpr),yoyC:col(cImpr,lImpr)},
-    {label:'Avg CTR',cur:cCtr!=null?((cCtr>1?cCtr:cCtr*100).toFixed(2))+'%':'—',mom:pct(cCtr,pCtr),yoy:pct(cCtr,lCtr),momA:arrow(cCtr,pCtr),yoyA:arrow(cCtr,lCtr),momC:col(cCtr,pCtr),yoyC:col(cCtr,lCtr)},
-  ];
+          ];
 
   document.getElementById('monthly-scorecard').innerHTML=scorecardMetrics.map(m=>`
     <div class="kpi-card" style="--kpi-color:var(--blue);">
@@ -2671,15 +2715,14 @@ async function loadMonthlyPage(){
 // ══════════════════════════════════════════════
 let reportSlides=[];
 const SLIDE_TYPES=[
-  {id:'ai-overview',label:'AI Overview',desc:'Claude-generated performance summary'},
+  {id:'ai-overview',label:'AI Overview + Chart',desc:'AI summary with optional chart'},
   {id:'kpi-scorecard',label:'KPI Scorecard',desc:'Key metrics for selected period'},
   {id:'views-chart',label:'Views Chart',desc:'Views over time with comparison'},
   {id:'watch-chart',label:'Watch Time Chart',desc:'Watch hours over time'},
   {id:'revenue-chart',label:'Revenue Chart',desc:'Estimated revenue over time'},
   {id:'top-videos',label:'Top Videos',desc:'Best performing videos table'},
-  {id:'live-event',label:'Live Event Summary',desc:'Campaign stop data'},
-  {id:'custom-text',label:'Custom Text',desc:'Write your own slide content'},
-  {id:'image',label:'Image',desc:'Upload an image or chart screenshot'},
+  {id:'live-event',label:'Live Event Stop',desc:'Pick a campaign stop'},
+  {id:'video-campaign',label:'Video Campaign',desc:'Pick a campaign and sub-campaign'},
 ];
 
 function renderReportBuilder(){
@@ -2704,20 +2747,47 @@ function renderReportBuilder(){
 }
 
 function renderSlidePreview(slide){
-  if(slide.type==='ai-overview')return slide.content?`<div style="white-space:pre-wrap;color:var(--text);font-size:12px;">${slide.content.slice(0,300)}${slide.content.length>300?'…':''}</div>`:'<em>Click Edit to generate AI content</em>';
-  if(slide.type==='custom-text')return slide.content?`<div style="white-space:pre-wrap;color:var(--text);font-size:12px;">${slide.content.slice(0,200)}…</div>`:'<em>Click Edit to add text</em>';
-  if(slide.type==='image')return slide.imageData?`<img src="${slide.imageData}" style="max-height:120px;border-radius:4px;">` : '<em>Click Edit to upload an image</em>';
-  if(slide.type==='live-event')return`Stop: <strong>${slide.stopKey||'Not selected'}</strong>`;
+  if(slide.type==='ai-overview'){
+    const chartLabel=slide.attachedChart?` + ${slide.attachedChart} chart`:'';
+    return(slide.content?`<div style="white-space:pre-wrap;color:var(--text);font-size:12px;">${slide.content.slice(0,300)}${slide.content.length>300?'…':''}</div>`:'<em>Click Edit to generate AI content</em>')+
+      (chartLabel?`<div style="margin-top:6px;font-size:11px;color:var(--blue);">📊 ${chartLabel}</div>`:'');
+  }
+  if(slide.type==='live-event'){
+    const s=slide.stopKey&&campaigns[slide.stopKey];
+    return s?`Stop: <strong>${s.stop} ${s.year}</strong>`:'<em>Click Edit to select a stop</em>';
+  }
+  if(slide.type==='video-campaign'){
+    return slide.campName?`Campaign: <strong>${slide.campName}</strong> / ${slide.subName||'all sub-campaigns'}`:'<em>Click Edit to select a campaign</em>';
+  }
   return`<em>${SLIDE_TYPES.find(t=>t.id===slide.type)?.desc||''} — will use current dashboard data</em>`;
 }
 
 function addReportSlide(){
-  // Show a quick type picker
-  const type=prompt('Slide type:\n'+SLIDE_TYPES.map((t,i)=>`${i+1}. ${t.label} — ${t.desc}`).join('\n')+'\n\nEnter number:');
-  const idx=parseInt(type)-1;
-  if(isNaN(idx)||idx<0||idx>=SLIDE_TYPES.length)return;
-  reportSlides.push({type:SLIDE_TYPES[idx].id,content:'',title:SLIDE_TYPES[idx].label});
+  // Populate and show picker modal
+  const opts=document.getElementById('slide-picker-options');
+  if(opts){
+    opts.innerHTML=SLIDE_TYPES.map((t,i)=>`
+      <button onclick="pickSlideType('${t.id}');closeModal('slide-picker-modal');"
+        style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;text-align:left;cursor:pointer;transition:border-color 0.15s;"
+        onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border2)'">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">${t.label}</div>
+        <div style="font-size:11px;color:var(--muted);">${t.desc}</div>
+      </button>`).join('');
+  }
+  document.getElementById('slide-picker-modal').classList.add('open');
+}
+
+function pickSlideType(typeId){
+  const t=SLIDE_TYPES.find(x=>x.id===typeId);
+  if(!t)return;
+  const slide={type:t.id,content:'',title:t.label};
+  reportSlides.push(slide);
   renderReportBuilder();
+  // Immediately open editor for types that need configuration
+  const newIdx=reportSlides.length-1;
+  if(typeId==='ai-overview'||typeId==='live-event'||typeId==='video-campaign'){
+    setTimeout(()=>editSlide(newIdx),100);
+  }
 }
 
 function removeSlide(i){reportSlides.splice(i,1);renderReportBuilder();}
@@ -2743,8 +2813,29 @@ async function editSlide(i){
     };
     input.click();
   } else if(slide.type==='live-event'){
-    const key=prompt('Enter stop key (e.g. Paris-2024):',slide.stopKey||'');
-    if(key!==null)slide.stopKey=key;
+    const stops=Object.keys(campaigns);
+    if(!stops.length){alert('No stops found. Add stops in Live Events first.');return;}
+    const choice=prompt('Choose a stop:\n'+stops.map((k,i)=>`${i+1}. ${campaigns[k].stop} ${campaigns[k].year}`).join('\n')+'\n\nEnter number:');
+    if(!choice)return;
+    const byNum=parseInt(choice);
+    const key=(!isNaN(byNum)&&byNum>=1&&byNum<=stops.length)?stops[byNum-1]:choice.trim();
+    if(!campaigns[key]){alert('Stop not found.');return;}
+    slide.stopKey=key;
+    renderReportBuilder();
+  } else if(slide.type==='video-campaign'){
+    const camps=Object.keys(vidCampaigns);
+    if(!camps.length){alert('No video campaigns found.');return;}
+    const campChoice=prompt('Choose a campaign:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n')+'\n\nEnter number:');
+    if(!campChoice)return;
+    const campIdx=parseInt(campChoice)-1;
+    const campName=(!isNaN(campIdx)&&camps[campIdx])?camps[campIdx]:campChoice.trim();
+    if(!vidCampaigns[campName]){alert('Campaign not found.');return;}
+    const subs=Object.keys(vidCampaigns[campName].subs||{});
+    const subChoice=subs.length>1?prompt('Choose a sub-campaign:\n'+subs.map((s,i)=>`${i+1}. ${s}`).join('\n')+'\n\nEnter number:'):'1';
+    if(!subChoice)return;
+    const subIdx=parseInt(subChoice)-1;
+    const subName=(!isNaN(subIdx)&&subs[subIdx])?subs[subIdx]:subChoice.trim();
+    slide.campName=campName;slide.subName=subName;
     renderReportBuilder();
   } else {
     alert('This slide type uses current dashboard data automatically — no editing needed.');
@@ -2755,8 +2846,11 @@ function openSlideTextEditor(idx,slide){
   document.getElementById('slide-edit-idx').value=idx;
   document.getElementById('slide-text-editor').value=slide.content||'';
   const isAI=slide.type==='ai-overview';
-  document.getElementById('slide-text-modal-title').textContent=isAI?'AI Overview — Edit':'Custom Text — Edit';
-  document.getElementById('slide-gen-btn').style.display=isAI?'block':'none';
+  document.getElementById('slide-text-modal-title').textContent='AI Overview — Edit';
+  document.getElementById('slide-gen-btn').style.display='block';
+  // Chart selector
+  const chartSel=document.getElementById('slide-chart-select');
+  if(chartSel)chartSel.value=slide.attachedChart||'';
   document.getElementById('slide-text-modal').classList.add('open');
 }
 function saveSlideText(){
