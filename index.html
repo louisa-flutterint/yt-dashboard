@@ -538,10 +538,11 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
         <input type="checkbox" id="vc-filter-ads" onchange="renderVidCamps()" style="accent-color:var(--accent)">
         <span>Exclude YouTube Advertising traffic</span>
       </label>
-      <div style="margin-left:auto;display:flex;gap:4px;">
+      <div style="margin-left:auto;display:flex;gap:4px;align-items:center;">
         <button class="btn-sm active" id="vc-window-7" onclick="setVcWindow(7,this)">First 7 days</button>
         <button class="btn-sm" id="vc-window-28" onclick="setVcWindow(28,this)">First 28 days</button>
         <button class="btn-sm" id="vc-window-all" onclick="setVcWindow(0,this)">All-time</button>
+        <button class="btn-sm" onclick="clearVidCampCache()" title="Clear cached analytics and re-fetch all windows" style="margin-left:8px;">↺ Refresh data</button>
       </div>
     </div>
     <div id="vc-main">
@@ -2139,6 +2140,15 @@ function setVcWindow(w,btn){
   renderVidCamps();
 }
 
+function clearVidCampCache(){
+  Object.keys(ytVideoCache).forEach(id=>{
+    delete ytVideoCache[id].w7;
+    delete ytVideoCache[id].w28;
+    delete ytVideoCache[id].wall;
+  });
+  renderVidCamps();
+}
+
 function renderVidCamps(){
   const main=document.getElementById('vc-main');
   const camps=Object.keys(vidCampaigns);
@@ -2216,7 +2226,7 @@ async function fetchVideoAnalyticsForCampaigns(){
     try{
       const extra={filters:'video=='+id};
       if(filterAds)extra.filters+=';trafficSourceType!=ADVERTISING';
-      const r=await ytaRange('views,estimatedMinutesWatched,estimatedRevenue',startDate,endDate,'none',extra);
+      const r=await ytaRange('views,estimatedMinutesWatched,estimatedRevenue',startDate,endDate,null,extra);
       const[views,mins,rev]=r.rows?.[0]||[0,0,0];
       if(!ytVideoCache[id])ytVideoCache[id]={};
       ytVideoCache[id][windowKey]={views:views||0,watchHrs:mins?mins/60:0,revenue:rev||0};
