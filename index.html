@@ -496,8 +496,8 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
         <span>Exclude YouTube Advertising traffic</span>
       </label>
       <div style="margin-left:auto;display:flex;gap:4px;">
-        <button class="btn-sm active" id="vc-window-7" onclick="setVcWindow(7,this)">7 days</button>
-        <button class="btn-sm" id="vc-window-28" onclick="setVcWindow(28,this)">28 days</button>
+        <button class="btn-sm active" id="vc-window-7" onclick="setVcWindow(7,this)">First 7 days</button>
+        <button class="btn-sm" id="vc-window-28" onclick="setVcWindow(28,this)">First 28 days</button>
         <button class="btn-sm" id="vc-window-all" onclick="setVcWindow(0,this)">All-time</button>
       </div>
     </div>
@@ -2105,61 +2105,79 @@ function renderVidCamps(){
   }
   const filterAds=document.getElementById('vc-filter-ads')?.checked;
   main.innerHTML=camps.sort((a,b)=>a.localeCompare(b)).map(cname=>renderVidCampBlock(cname,filterAds)).join('');
-  // Background: fetch titles + analytics for any episodes not yet cached
   fetchVideoAnalyticsForCampaigns();
 }
 
 async function fetchVideoAnalyticsForCampaigns(){
   if(!TOKEN||!CHANNEL)return;
-  // Collect IDs needing data
-  const idsNeeded=new Set();
+  // Collect all episode IDs we need data for
+  const allIds=new Set();
   Object.values(vidCampaigns).forEach(camp=>{
     Object.values(camp.subs||{}).forEach(sub=>{
-      (sub.episodes||[]).forEach(ep=>{
-        if(ep.videoId&&!ytImportedRows.find(r=>r.id===ep.videoId)&&!ytVideoCache[ep.videoId])
-          idsNeeded.add(ep.videoId);
-      });
+      (sub.episodes||[]).forEach(ep=>{if(ep.videoId)allIds.add(ep.videoId);});
     });
   });
-  if(!idsNeeded.size)return;
-  const idArr=[...idsNeeded];
-  let changed=false;
-  for(let i=0;i<idArr.length;i+=50){
-    const batch=idArr.slice(i,i+50);
-    // Step 1: fetch video titles + publish dates via Data API
+  if(!allIds.size)return;
+
+  const fmt2=d=>d instanceof Date?d.toISOString().split('T')[0]:d;
+  const today=fmt2(new Date());
+  let titlesChanged=false,dataChanged=false;
+
+  // Step 1: fetch titles for any not yet cached
+  const needTitles=[...allIds].filter(id=>!ytVideoCache[id]?.title&&!ytImportedRows.find(r=>r.id===id));
+  for(let i=0;i<needTitles.length;i+=50){
+    const batch=needTitles.slice(i,i+50);
     try{
       const vd=await gapi('/youtube/v3/videos',{part:'snippet',id:batch.join(',')});
       (vd.items||[]).forEach(v=>{
-        if(!ytVideoCache[v.id])ytVideoCache[v.id]={views:0,watchHrs:0,revenue:0,impressions:0,ctr:0,uniqueViewers:0};
+        if(!ytVideoCache[v.id])ytVideoCache[v.id]={};
         ytVideoCache[v.id].title=v.snippet?.title||v.id;
         ytVideoCache[v.id].publishDate=v.snippet?.publishedAt||'';
-        changed=true;
+        titlesChanged=true;
       });
     }catch(e){console.warn('Title fetch:',e.message);}
   }
-  // Re-render immediately with titles even before analytics load
-  if(changed){renderVidCamps();changed=false;}
-  // Step 2: fetch analytics in batches of 10 (API filter limit)
-  for(let i=0;i<idArr.length;i+=10){
-    const batch=idArr.slice(i,i+10);
-    const filterStr=batch.map(id=>'video=='+id).join(',');
+  if(titlesChanged){renderVidCamps();return;} // re-render with titles, analytics will follow
+
+  // Step 2: fetch window-specific analytics for IDs missing the current window
+  const windowKey=vcWindow===7?'w7':vcWindow===28?'w28':'all';
+  const needData=[...allIds].filter(id=>{
+    if(ytImportedRows.find(r=>r.id===id))return false; // have CSV data
+    if(ytVideoCache[id]?.[windowKey])return false; // already fetched for this window
+    if(!ytVideoCache[id]?.publishDate)return false; // no publish date yet — wait for title fetch
+    return true;
+  });
+
+  for(let i=0;i<needData.length;i+=1){
+    // Must fetch ONE video at a time because each has a different date range
+    const id=needData[i];
+    const pub=ytVideoCache[id]?.publishDate;
+    if(!pub)continue;
+    const pubDate=new Date(pub);
+    let startDate,endDate;
+    if(vcWindow===0){
+      startDate=fmt2(pubDate);
+      endDate=today;
+    } else {
+      startDate=fmt2(pubDate);
+      const end=new Date(pubDate);
+      end.setDate(end.getDate()+vcWindow);
+      endDate=fmt2(end>new Date()?new Date():end); // cap at today
+    }
     try{
-      const r=await yta('views,estimatedMinutesWatched,estimatedRevenue','video',{filters:filterStr,sort:'-views',maxResults:10});
-      (r.rows||[]).forEach(row=>{
-        const[id,views,mins,rev]=row;
-        if(!ytVideoCache[id])ytVideoCache[id]={views:0,watchHrs:0,revenue:0,impressions:0,ctr:0,uniqueViewers:0};
-        ytVideoCache[id].views=views||0;
-        ytVideoCache[id].watchHrs=mins?mins/60:0;
-        ytVideoCache[id].revenue=rev||0;
-        changed=true;
-      });
-      // Mark any IDs that returned no rows as fetched so we don't retry
-      batch.forEach(id=>{
-        if(!ytVideoCache[id])ytVideoCache[id]={views:0,watchHrs:0,revenue:0,impressions:0,ctr:0,uniqueViewers:0};
-      });
-    }catch(e){console.warn('Campaign analytics fetch:',e.message);}
+      const r=await ytaRange('views,estimatedMinutesWatched,estimatedRevenue',startDate,endDate,'none',{filters:'video=='+id});
+      const[views,mins,rev]=r.rows?.[0]||[0,0,0];
+      if(!ytVideoCache[id])ytVideoCache[id]={};
+      ytVideoCache[id][windowKey]={views:views||0,watchHrs:mins?mins/60:0,revenue:rev||0};
+      dataChanged=true;
+    }catch(e){
+      // Mark as fetched with zeros to avoid retrying
+      if(!ytVideoCache[id])ytVideoCache[id]={};
+      ytVideoCache[id][windowKey]={views:0,watchHrs:0,revenue:0};
+      console.warn('Analytics for',id,':',e.message);
+    }
   }
-  if(changed)renderVidCamps();
+  if(dataChanged)renderVidCamps();
 }
 
 function renderVidCampBlock(campName,filterAds){
@@ -2182,7 +2200,7 @@ function renderVidCampBlock(campName,filterAds){
 function renderSubCampBlock(campName,subName,filterAds){
   const sub=vidCampaigns[campName].subs[subName];
   const eps=sub.episodes||[];
-  const windowLabel=vcWindow===0?'All-time':vcWindow+'-day';
+  const windowLabel=vcWindow===0?'All-time':'First '+vcWindow+' days';
   return`<div style="margin:8px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);">
       <div style="font-size:13px;font-weight:500;">${subName}</div>
@@ -2211,14 +2229,15 @@ function renderEpisodeRow(campName,subName,ep,idx,filterAds){
   const imp=ytImportedRows.find(r=>r.id===ep.videoId);
   const apiCache=ytVideoCache[ep.videoId];
   const searchCache=allYTVideos.find(v=>v.id===ep.videoId);
-  // Merge data sources: CSV import > Analytics API cache > fallback dashes
-  const data=imp||apiCache;
-  const views=data?.views!=null?fmt(data.views):'—';
-  const hrs=data?.watchHrs!=null?fmt(Math.round(data.watchHrs)):'—';
-  const impr=data?.impressions!=null?fmt(data.impressions):'—';
-  const ctr=data?.ctr!=null?data.ctr.toFixed(2)+'%':'—';
-  const rev=data?.revenue!=null?'€'+data.revenue.toFixed(2):'—';
-  // Title priority: manual label > CSV title > API cache title > YT search cache title > video ID
+  // Pick window-specific data slot
+  const windowKey=vcWindow===7?'w7':vcWindow===28?'w28':'all';
+  const windowData=apiCache?.[windowKey]||imp||null;
+  const views=windowData?.views!=null?fmt(windowData.views):'—';
+  const hrs=windowData?.watchHrs!=null?fmt(Math.round(windowData.watchHrs)):'—';
+  const impr='—'; // not available per-video without video dimension filter
+  const ctr='—';
+  const rev=windowData?.revenue!=null?'€'+windowData.revenue.toFixed(2):'—';
+  // Title: label > CSV > API cache title > search cache title > video ID
   const title=ep.label||imp?.title||apiCache?.title||searchCache?.title||ep.videoId;
   const pubDate=imp?.publishDate||apiCache?.publishDate||searchCache?.date;
   const date=pubDate?new Date(pubDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
