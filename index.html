@@ -2105,12 +2105,13 @@ function renderVidCamps(){
   }
   const filterAds=document.getElementById('vc-filter-ads')?.checked;
   main.innerHTML=camps.sort((a,b)=>a.localeCompare(b)).map(cname=>renderVidCampBlock(cname,filterAds)).join('');
-  // Fetch analytics for any episodes not yet in cache
+  // Background: fetch titles + analytics for any episodes not yet cached
   fetchVideoAnalyticsForCampaigns();
 }
 
 async function fetchVideoAnalyticsForCampaigns(){
-  if(!TOKEN)return;
+  if(!TOKEN||!CHANNEL)return;
+  // Collect IDs needing data
   const idsNeeded=new Set();
   Object.values(vidCampaigns).forEach(camp=>{
     Object.values(camp.subs||{}).forEach(sub=>{
@@ -2123,18 +2124,26 @@ async function fetchVideoAnalyticsForCampaigns(){
   if(!idsNeeded.size)return;
   const idArr=[...idsNeeded];
   let changed=false;
-  for(let i=0;i<idArr.length;i+=10){
-    const batch=idArr.slice(i,i+10);
-    const filterStr=batch.map(id=>'video=='+id).join(',');
+  for(let i=0;i<idArr.length;i+=50){
+    const batch=idArr.slice(i,i+50);
+    // Step 1: fetch video titles + publish dates via Data API
     try{
-      // First fetch titles via Data API
       const vd=await gapi('/youtube/v3/videos',{part:'snippet',id:batch.join(',')});
       (vd.items||[]).forEach(v=>{
         if(!ytVideoCache[v.id])ytVideoCache[v.id]={views:0,watchHrs:0,revenue:0,impressions:0,ctr:0,uniqueViewers:0};
         ytVideoCache[v.id].title=v.snippet?.title||v.id;
         ytVideoCache[v.id].publishDate=v.snippet?.publishedAt||'';
+        changed=true;
       });
-      // Then fetch analytics
+    }catch(e){console.warn('Title fetch:',e.message);}
+  }
+  // Re-render immediately with titles even before analytics load
+  if(changed){renderVidCamps();changed=false;}
+  // Step 2: fetch analytics in batches of 10 (API filter limit)
+  for(let i=0;i<idArr.length;i+=10){
+    const batch=idArr.slice(i,i+10);
+    const filterStr=batch.map(id=>'video=='+id).join(',');
+    try{
       const r=await yta('views,estimatedMinutesWatched,estimatedRevenue','video',{filters:filterStr,sort:'-views',maxResults:10});
       (r.rows||[]).forEach(row=>{
         const[id,views,mins,rev]=row;
@@ -2144,7 +2153,10 @@ async function fetchVideoAnalyticsForCampaigns(){
         ytVideoCache[id].revenue=rev||0;
         changed=true;
       });
-      batch.forEach(id=>{if(!ytVideoCache[id])ytVideoCache[id]={views:0,watchHrs:0,revenue:0,impressions:0,ctr:0,uniqueViewers:0};});
+      // Mark any IDs that returned no rows as fetched so we don't retry
+      batch.forEach(id=>{
+        if(!ytVideoCache[id])ytVideoCache[id]={views:0,watchHrs:0,revenue:0,impressions:0,ctr:0,uniqueViewers:0};
+      });
     }catch(e){console.warn('Campaign analytics fetch:',e.message);}
   }
   if(changed)renderVidCamps();
@@ -2197,16 +2209,16 @@ function renderSubCampBlock(campName,subName,filterAds){
 
 function renderEpisodeRow(campName,subName,ep,idx,filterAds){
   const imp=ytImportedRows.find(r=>r.id===ep.videoId);
-  const apiCache=ytVideoCache[ep.videoId];   // fetched via Analytics API
-  const searchCache=allYTVideos.find(v=>v.id===ep.videoId); // fetched via Data API search
-  // Merge: prefer CSV import, then API cache, then search cache
+  const apiCache=ytVideoCache[ep.videoId];
+  const searchCache=allYTVideos.find(v=>v.id===ep.videoId);
+  // Merge data sources: CSV import > Analytics API cache > fallback dashes
   const data=imp||apiCache;
   const views=data?.views!=null?fmt(data.views):'—';
   const hrs=data?.watchHrs!=null?fmt(Math.round(data.watchHrs)):'—';
   const impr=data?.impressions!=null?fmt(data.impressions):'—';
   const ctr=data?.ctr!=null?data.ctr.toFixed(2)+'%':'—';
   const rev=data?.revenue!=null?'€'+data.revenue.toFixed(2):'—';
-  // Title: label > imported title > API cache title > search cache title > video ID
+  // Title priority: manual label > CSV title > API cache title > YT search cache title > video ID
   const title=ep.label||imp?.title||apiCache?.title||searchCache?.title||ep.videoId;
   const pubDate=imp?.publishDate||apiCache?.publishDate||searchCache?.date;
   const date=pubDate?new Date(pubDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
