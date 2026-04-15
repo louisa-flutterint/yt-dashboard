@@ -345,6 +345,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       <div style="display:flex;gap:4px;">
         <button class="btn-sm active top-vid-toggle" onclick="setTopVideoMode('videos',this)">Videos</button>
         <button class="btn-sm top-vid-toggle" onclick="setTopVideoMode('shorts',this)">Shorts</button>
+        <button class="btn-sm top-vid-toggle" onclick="setTopVideoMode('streams',this)">Live Streams</button>
       </div>
       <div class="section-pill" style="margin-left:auto;">by views</div>
     </div>
@@ -1039,13 +1040,15 @@ async function ytaRange(metrics,start,end,dims,extra={}){
   Object.entries(params).forEach(([k,v])=>v!=null&&u.searchParams.set(k,String(v)));
   return proxyFetch(u.toString());
 }
-let topVideoMode='videos'; // 'videos' or 'shorts'
+let topVideoMode='videos'; // 'videos' | 'shorts' | 'streams'
 function setTopVideoMode(mode,btn){
   topVideoMode=mode;
   document.querySelectorAll('.top-vid-toggle').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(mode==='videos'&&ytData.topEnriched)renderVideos(ytData.topEnriched.filter(v=>!v.isShort));
-  else if(mode==='shorts'&&ytData.topEnriched)renderVideos(ytData.topEnriched.filter(v=>v.isShort));
+  if(!ytData.topEnriched)return;
+  if(mode==='videos')renderVideos(ytData.topEnriched.filter(v=>!v.isShort&&!v.isStream));
+  else if(mode==='shorts')renderVideos(ytData.topEnriched.filter(v=>v.isShort));
+  else if(mode==='streams')renderVideos(ytData.topEnriched.filter(v=>v.isStream));
 }
 async function loadTopVideos(){
   const tbody=document.getElementById('v-tbody');
@@ -1056,11 +1059,13 @@ async function loadTopVideos(){
     if(!rows.length){tbody.innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">No video data for this period.</td></tr>';return;}
     const ids=rows.map(r=>r[0]).join(',');
     // Get snippet + contentDetails for duration (to detect shorts)
-    const vd=await gapi('/youtube/v3/videos',{part:'snippet,contentDetails',id:ids});
-    const map={};(vd.items||[]).forEach(v=>map[v.id]={snippet:v.snippet,duration:parseISODuration(v.contentDetails?.duration||'')});
-    const enriched=rows.map(r=>({id:r[0],sn:map[r[0]]?.snippet,m:r.slice(1),dur:map[r[0]]?.duration||0,isShort:map[r[0]]?.duration>0&&map[r[0]]?.duration<180}));
+    const vd=await gapi('/youtube/v3/videos',{part:'snippet,contentDetails,liveStreamingDetails',id:ids});
+    const map={};(vd.items||[]).forEach(v=>map[v.id]={snippet:v.snippet,duration:parseISODuration(v.contentDetails?.duration||''),liveStreamingDetails:v.liveStreamingDetails});
+    const enriched=rows.map(r=>({id:r[0],sn:map[r[0]]?.snippet,m:r.slice(1),dur:map[r[0]]?.duration||0,isShort:map[r[0]]?.duration>0&&map[r[0]]?.duration<180,isStream:!!(map[r[0]]?.liveStreamingDetails)}));
     ytData.topEnriched=enriched;
-    renderVideos(topVideoMode==='shorts'?enriched.filter(v=>v.isShort):enriched.filter(v=>!v.isShort));
+    if(topVideoMode==='shorts')renderVideos(enriched.filter(v=>v.isShort));
+    else if(topVideoMode==='streams')renderVideos(enriched.filter(v=>v.isStream));
+    else renderVideos(enriched.filter(v=>!v.isShort&&!v.isStream));
   }catch(e){tbody.innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">'+e.message+'</td></tr>';}
 }
 function parseISODuration(iso){
