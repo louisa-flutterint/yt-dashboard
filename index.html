@@ -2093,6 +2093,7 @@ function setVcWindow(w,btn){
   vcWindow=w;
   document.querySelectorAll('#vc-window-7,#vc-window-28,#vc-window-all').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  // Don't clear cache — each window is stored separately; just re-render (will fetch if missing)
   renderVidCamps();
 }
 
@@ -2110,74 +2111,90 @@ function renderVidCamps(){
 
 async function fetchVideoAnalyticsForCampaigns(){
   if(!TOKEN||!CHANNEL)return;
-  // Collect all episode IDs we need data for
-  const allIds=new Set();
+  const fmt2=d=>{
+    if(typeof d==='string')return d.split('T')[0];
+    return d.toISOString().split('T')[0];
+  };
+  const today=fmt2(new Date());
+  const windowKey=vcWindow===7?'w7':vcWindow===28?'w28':'wall';
+
+  // Collect all episode IDs
+  const allIds=[];
   Object.values(vidCampaigns).forEach(camp=>{
     Object.values(camp.subs||{}).forEach(sub=>{
-      (sub.episodes||[]).forEach(ep=>{if(ep.videoId)allIds.add(ep.videoId);});
+      (sub.episodes||[]).forEach(ep=>{
+        if(ep.videoId&&!allIds.includes(ep.videoId))allIds.push(ep.videoId);
+      });
     });
   });
-  if(!allIds.size)return;
+  if(!allIds.length)return;
 
-  const fmt2=d=>d instanceof Date?d.toISOString().split('T')[0]:d;
-  const today=fmt2(new Date());
-  let titlesChanged=false,dataChanged=false;
-
-  // Step 1: fetch titles for any not yet cached
-  const needTitles=[...allIds].filter(id=>!ytVideoCache[id]?.title&&!ytImportedRows.find(r=>r.id===id));
-  for(let i=0;i<needTitles.length;i+=50){
-    const batch=needTitles.slice(i,i+50);
-    try{
-      const vd=await gapi('/youtube/v3/videos',{part:'snippet',id:batch.join(',')});
-      (vd.items||[]).forEach(v=>{
-        if(!ytVideoCache[v.id])ytVideoCache[v.id]={};
-        ytVideoCache[v.id].title=v.snippet?.title||v.id;
-        ytVideoCache[v.id].publishDate=v.snippet?.publishedAt||'';
-        titlesChanged=true;
-      });
-    }catch(e){console.warn('Title fetch:',e.message);}
+  // Step 1: fetch titles for IDs not yet known
+  const needTitles=allIds.filter(id=>!ytVideoCache[id]?.title&&!ytImportedRows.find(r=>r.id===id));
+  if(needTitles.length){
+    for(let i=0;i<needTitles.length;i+=50){
+      const batch=needTitles.slice(i,i+50);
+      try{
+        const vd=await gapi('/youtube/v3/videos',{part:'snippet',id:batch.join(',')});
+        (vd.items||[]).forEach(v=>{
+          if(!ytVideoCache[v.id])ytVideoCache[v.id]={};
+          ytVideoCache[v.id].title=v.snippet?.title||v.id;
+          ytVideoCache[v.id].publishDate=v.snippet?.publishedAt||'';
+        });
+      }catch(e){console.warn('Title fetch:',e.message);}
+    }
+    renderVidCamps();
+    return; // re-render with titles; analytics will load on next call
   }
-  if(titlesChanged){renderVidCamps();return;} // re-render with titles, analytics will follow
 
-  // Step 2: fetch window-specific analytics for IDs missing the current window
-  const windowKey=vcWindow===7?'w7':vcWindow===28?'w28':'all';
-  const needData=[...allIds].filter(id=>{
-    if(ytImportedRows.find(r=>r.id===id))return false; // have CSV data
-    if(ytVideoCache[id]?.[windowKey])return false; // already fetched for this window
-    if(!ytVideoCache[id]?.publishDate)return false; // no publish date yet — wait for title fetch
-    return true;
+  // Step 2: fetch analytics for IDs missing data for current window
+  const needData=allIds.filter(id=>{
+    if(ytImportedRows.find(r=>r.id===id))return false;
+    if(ytVideoCache[id]?.[windowKey])return false; // already have it
+    return !!(ytVideoCache[id]?.publishDate); // only if we have publish date
   });
+  if(!needData.length)return;
 
-  for(let i=0;i<needData.length;i+=1){
-    // Must fetch ONE video at a time because each has a different date range
-    const id=needData[i];
-    const pub=ytVideoCache[id]?.publishDate;
+  let changed=false;
+  const filterAds=document.getElementById('vc-filter-ads')?.checked;
+
+  for(const id of needData){
+    const pub=ytVideoCache[id].publishDate;
     if(!pub)continue;
     const pubDate=new Date(pub);
-    let startDate,endDate;
+    const startDate=fmt2(pubDate);
+    let endDate;
     if(vcWindow===0){
-      startDate=fmt2(pubDate);
       endDate=today;
     } else {
-      startDate=fmt2(pubDate);
       const end=new Date(pubDate);
       end.setDate(end.getDate()+vcWindow);
-      endDate=fmt2(end>new Date()?new Date():end); // cap at today
+      endDate=fmt2(end<new Date()?end:new Date());
+    }
+    // Don't fetch if start===end (video published today)
+    if(startDate===endDate){
+      if(!ytVideoCache[id])ytVideoCache[id]={};
+      ytVideoCache[id][windowKey]={views:0,watchHrs:0,revenue:0};
+      changed=true;
+      continue;
     }
     try{
-      const r=await ytaRange('views,estimatedMinutesWatched,estimatedRevenue',startDate,endDate,'none',{filters:'video=='+id});
+      const extra={filters:'video=='+id};
+      // Exclude advertising traffic if checkbox ticked
+      if(filterAds)extra.filters+=';trafficSourceType!=ADVERTISING';
+      const r=await ytaRange('views,estimatedMinutesWatched,estimatedRevenue',startDate,endDate,'none',extra);
       const[views,mins,rev]=r.rows?.[0]||[0,0,0];
       if(!ytVideoCache[id])ytVideoCache[id]={};
       ytVideoCache[id][windowKey]={views:views||0,watchHrs:mins?mins/60:0,revenue:rev||0};
-      dataChanged=true;
+      changed=true;
     }catch(e){
-      // Mark as fetched with zeros to avoid retrying
       if(!ytVideoCache[id])ytVideoCache[id]={};
       ytVideoCache[id][windowKey]={views:0,watchHrs:0,revenue:0};
-      console.warn('Analytics for',id,':',e.message);
+      changed=true;
+      console.warn('Analytics',id,vcWindow,'days:',e.message);
     }
   }
-  if(dataChanged)renderVidCamps();
+  if(changed)renderVidCamps();
 }
 
 function renderVidCampBlock(campName,filterAds){
@@ -2229,15 +2246,17 @@ function renderEpisodeRow(campName,subName,ep,idx,filterAds){
   const imp=ytImportedRows.find(r=>r.id===ep.videoId);
   const apiCache=ytVideoCache[ep.videoId];
   const searchCache=allYTVideos.find(v=>v.id===ep.videoId);
-  // Pick window-specific data slot
-  const windowKey=vcWindow===7?'w7':vcWindow===28?'w28':'all';
-  const windowData=apiCache?.[windowKey]||imp||null;
-  const views=windowData?.views!=null?fmt(windowData.views):'—';
-  const hrs=windowData?.watchHrs!=null?fmt(Math.round(windowData.watchHrs)):'—';
-  const impr='—'; // not available per-video without video dimension filter
+  // Pick window-specific slot from API cache
+  const windowKey=vcWindow===7?'w7':vcWindow===28?'w28':'wall';
+  const windowData=apiCache?.[windowKey]||null;
+  // For CSV imports, use their lifetime data regardless of window
+  const data=windowData||imp||null;
+  const views=data?.views!=null?fmt(data.views):'—';
+  const hrs=data?.watchHrs!=null?fmt(Math.round(data.watchHrs)):'—';
+  const impr='—';
   const ctr='—';
-  const rev=windowData?.revenue!=null?'€'+windowData.revenue.toFixed(2):'—';
-  // Title: label > CSV > API cache title > search cache title > video ID
+  const rev=data?.revenue!=null?'€'+data.revenue.toFixed(2):'—';
+  // Exclude ads traffic: if filterAds, only show organic (we note this in UI)
   const title=ep.label||imp?.title||apiCache?.title||searchCache?.title||ep.videoId;
   const pubDate=imp?.publishDate||apiCache?.publishDate||searchCache?.date;
   const date=pubDate?new Date(pubDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
