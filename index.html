@@ -406,56 +406,79 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
 
   <!-- ── REPORT BUILDER PAGE ── -->
   <div class="page" id="page-report">
-    <div class="section-head" style="margin-top:0;align-items:flex-start;">
-      <div>
-        <div class="section-title">Report Builder</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Build a professional slide deck from your data</div>
+
+    <!-- Report Settings Bar -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:12px;align-items:end;">
+        <div>
+          <div class="field-label" style="margin-bottom:4px;">Report name</div>
+          <input type="text" id="rpt-name" value="PokerStars YouTube Report" style="width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font-body);" oninput="rptSettings.name=this.value;renderReportBuilder();">
+        </div>
+        <div>
+          <div class="field-label" style="margin-bottom:4px;">Campaign / series</div>
+          <input type="text" id="rpt-campaign" value="" placeholder="e.g. EPT Barcelona 2025" style="width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font-body);" oninput="rptSettings.campaign=this.value;">
+        </div>
+        <div>
+          <div class="field-label" style="margin-bottom:4px;">Primary colour</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="color" id="rpt-primary" value="#003087" oninput="rptSettings.primary=this.value;" style="width:36px;height:36px;border:none;background:none;cursor:pointer;padding:0;">
+            <span id="rpt-primary-label" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">#003087</span>
+          </div>
+        </div>
+        <div>
+          <div class="field-label" style="margin-bottom:4px;">Accent colour</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="color" id="rpt-accent" value="#E8112D" oninput="rptSettings.accent=this.value;" style="width:36px;height:36px;border:none;background:none;cursor:pointer;padding:0;">
+            <span id="rpt-accent-label" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">#E8112D</span>
+          </div>
+        </div>
       </div>
-      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn-sm" onclick="addReportSlide()">+ Add slide</button>
-        <button class="btn-sm" onclick="previewReport()">👁 Preview</button>
-        <button class="btn-primary" style="width:auto;padding:8px 18px;font-size:13px;" onclick="exportReportPptx()">⬇ Download PPTX</button>
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);">
+          Saved templates:
+          <select id="rpt-template-select" onchange="loadRptTemplate(this.value)" style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;font-family:var(--font-body);">
+            <option value="">— select —</option>
+            <option value="ept">EPT</option>
+            <option value="bgot">Big Game On Tour</option>
+            <option value="irish">Irish Open</option>
+          </select>
+        </div>
+        <button class="btn-sm" onclick="saveRptTemplate()">💾 Save template</button>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="btn-sm" onclick="addReportSlide()">+ Add slide</button>
+          <button class="btn-sm" onclick="previewReport()">👁 Preview</button>
+          <button class="btn-primary" style="width:auto;padding:8px 18px;font-size:13px;" onclick="exportReportPptx()">⬇ Download PPTX</button>
+        </div>
       </div>
     </div>
 
     <!-- Slide list -->
-    <div id="report-slides" style="display:flex;flex-direction:column;gap:12px;"></div>
+    <div id="report-slides" style="display:flex;flex-direction:column;gap:10px;"></div>
     <div id="report-empty" style="text-align:center;padding:60px;color:var(--muted);">
       <div style="font-size:36px;margin-bottom:16px;">📑</div>
       <div style="font-size:15px;font-weight:500;margin-bottom:8px;">No slides yet</div>
-      <div style="font-size:13px;margin-bottom:24px;">Click "+ Add slide" to start building your report</div>
+      <div style="font-size:13px;margin-bottom:24px;">Configure your report settings above then add slides</div>
       <button class="btn-primary" style="width:auto;padding:10px 24px;" onclick="addReportSlide()">+ Add first slide</button>
     </div>
 
     <!-- Slide picker modal -->
     <div class="modal-overlay" id="slide-picker-modal" style="z-index:800;">
-      <div class="modal" style="max-width:640px;">
+      <div class="modal" style="max-width:660px;">
         <div class="modal-title">Add a slide</div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Choose a slide type to add to your deck</div>
-        <div id="slide-picker-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;"></div>
+        <div id="slide-picker-grid" style="margin-bottom:16px;"></div>
         <div class="modal-actions">
           <button class="btn-cancel" onclick="closeModal('slide-picker-modal')">Cancel</button>
         </div>
       </div>
     </div>
 
-    <!-- Slide editor modal (text/AI) -->
+    <!-- Generic text/AI editor modal -->
     <div class="modal-overlay" id="slide-text-modal" style="z-index:700;">
       <div class="modal" style="max-width:680px;">
         <div class="modal-title" id="slide-text-modal-title">Edit slide</div>
-        <div id="slide-editor-ai-bar" style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
+        <div id="slide-editor-ai-bar" style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
           <button class="btn-sm" id="slide-gen-btn" onclick="generateSlideAI()" style="background:var(--accent);border-color:var(--accent);color:white;">⚡ Generate with AI</button>
-          <span style="font-size:12px;color:var(--muted);">or write/edit below</span>
-        </div>
-        <div id="slide-editor-chart-bar" style="display:none;margin-bottom:12px;">
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Attach a chart to this slide (optional)</label>
-          <select id="slide-chart-select" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;">
-            <option value="">No chart</option>
-            <option value="views">Views over time</option>
-            <option value="watch">Watch time</option>
-            <option value="revenue">Revenue</option>
-            <option value="subscribers">Subscribers (monthly)</option>
-          </select>
+          <span style="font-size:12px;color:var(--muted);">or write below</span>
         </div>
         <textarea id="slide-text-editor" style="width:100%;min-height:260px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.7;outline:none;resize:vertical;"></textarea>
         <input type="hidden" id="slide-edit-idx">
@@ -466,9 +489,9 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       </div>
     </div>
 
-    <!-- Slide editor modal (cover/divider) -->
+    <!-- Meta fields editor (cover, divider, look-ahead etc) -->
     <div class="modal-overlay" id="slide-meta-modal" style="z-index:700;">
-      <div class="modal" style="max-width:520px;">
+      <div class="modal" style="max-width:560px;">
         <div class="modal-title" id="slide-meta-title">Edit slide</div>
         <div id="slide-meta-fields"></div>
         <input type="hidden" id="slide-meta-idx">
@@ -479,9 +502,70 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       </div>
     </div>
 
+    <!-- Learnings editor modal -->
+    <div class="modal-overlay" id="learnings-modal" style="z-index:700;">
+      <div class="modal" style="max-width:620px;">
+        <div class="modal-title">Learnings &amp; Recommendations</div>
+        <div id="learnings-list" style="display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;margin-bottom:12px;"></div>
+        <button class="btn-sm" onclick="addLearningPoint()">+ Add point</button>
+        <div class="modal-actions" style="margin-top:12px;">
+          <button class="btn-cancel" onclick="closeModal('learnings-modal')">Cancel</button>
+          <button class="btn-confirm" id="learnings-save-btn" onclick="saveLearnings()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deep dive / image slide editor -->
+    <div class="modal-overlay" id="deepdive-modal" style="z-index:700;">
+      <div class="modal" style="max-width:680px;">
+        <div class="modal-title" id="deepdive-modal-title">Deep Dive slide</div>
+        <div class="field-label" style="margin-bottom:4px;">Slide heading</div>
+        <input type="text" id="dd-heading" placeholder="e.g. Retention Analysis — Episode 1" style="width:100%;margin-bottom:12px;">
+        <div class="field-label" style="margin-bottom:4px;">Screenshot / image</div>
+        <div id="dd-image-preview" style="margin-bottom:8px;min-height:60px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('dd-image-input').click()">
+          <span style="font-size:12px;color:var(--muted);">Click to upload image (screenshot, chart etc)</span>
+        </div>
+        <input type="file" id="dd-image-input" accept="image/*" style="display:none;" onchange="handleDdImage(this)">
+        <div class="field-label" style="margin-bottom:4px;margin-top:8px;">Commentary</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <button class="btn-sm" onclick="generateDdAI()" style="background:var(--accent);border-color:var(--accent);color:white;">⚡ Generate with AI</button>
+          <span style="font-size:12px;color:var(--muted);align-self:center;">or write below</span>
+        </div>
+        <textarea id="dd-commentary" placeholder="Your analysis and commentary..." style="width:100%;min-height:140px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.7;outline:none;resize:vertical;"></textarea>
+        <input type="hidden" id="dd-slide-idx">
+        <div class="modal-actions" style="margin-top:12px;">
+          <button class="btn-cancel" onclick="closeModal('deepdive-modal')">Cancel</button>
+          <button class="btn-confirm" onclick="saveDdSlide()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Look Ahead slide editor -->
+    <div class="modal-overlay" id="lookahead-modal" style="z-index:700;">
+      <div class="modal" style="max-width:560px;">
+        <div class="modal-title">Look Ahead — Upcoming Content</div>
+        <div class="field-label" style="margin-bottom:4px;">Campaign / content title</div>
+        <input type="text" id="la-title" placeholder="e.g. Big Game On Tour S3" style="width:100%;margin-bottom:12px;">
+        <div class="field-label" style="margin-bottom:4px;">Expected publish date</div>
+        <input type="date" id="la-date" style="width:100%;margin-bottom:12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;">
+        <div class="field-label" style="margin-bottom:4px;">Thumbnail image (optional)</div>
+        <div id="la-image-preview" style="margin-bottom:8px;min-height:60px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('la-image-input').click()">
+          <span style="font-size:12px;color:var(--muted);">Click to upload thumbnail</span>
+        </div>
+        <input type="file" id="la-image-input" accept="image/*" style="display:none;" onchange="handleLaImage(this)">
+        <div class="field-label" style="margin-bottom:4px;margin-top:8px;">Notes / expectations</div>
+        <textarea id="la-notes" placeholder="Expected views, key topics, format notes..." style="width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.7;outline:none;resize:vertical;"></textarea>
+        <input type="hidden" id="la-slide-idx">
+        <div class="modal-actions" style="margin-top:12px;">
+          <button class="btn-cancel" onclick="closeModal('lookahead-modal')">Cancel</button>
+          <button class="btn-confirm" onclick="saveLaSlide()">Save</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Preview modal -->
     <div class="modal-overlay" id="report-preview-modal" style="z-index:600;">
-      <div class="modal" style="max-width:900px;max-height:90vh;overflow-y:auto;">
+      <div class="modal" style="max-width:960px;max-height:92vh;overflow-y:auto;">
         <div class="modal-title">Report Preview</div>
         <div id="report-preview-body" style="margin-top:12px;"></div>
         <div class="modal-actions">
@@ -491,6 +575,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       </div>
     </div>
   </div>
+
 
   <!-- ── LIVE EVENTS PAGE ── -->
   <div class="page" id="page-live">
@@ -2813,46 +2898,94 @@ async function loadMonthlyPage(){
 // ══════════════════════════════════════════════
 // REPORT BUILDER
 // ══════════════════════════════════════════════
-let reportSlides=[];
+// ═══════════════════════════════════════════════════════
+// REPORT BUILDER — full rebuild
+// ═══════════════════════════════════════════════════════
 
-// ── Slide type definitions ──
-const SLIDE_TYPES=[
-  {id:'cover',        icon:'🎯', label:'Cover',              desc:'Title slide with branding',          group:'Layout'},
-  {id:'divider',      icon:'📌', label:'Section Divider',    desc:'Numbered section separator',         group:'Layout'},
-  {id:'ai-overview',  icon:'⚡', label:'AI Overview',        desc:'Claude-generated summary + chart',   group:'Content'},
-  {id:'learnings',    icon:'💡', label:'Learnings & Recs',   desc:'Numbered insights with category tags',group:'Content'},
-  {id:'kpi-scorecard',icon:'📊', label:'KPI Scorecard',      desc:'Key metrics for selected period',    group:'Data'},
-  {id:'episode-table',icon:'🎬', label:'Episode Breakdown',  desc:'Video campaign episode data',        group:'Data'},
-  {id:'comparison',   icon:'⚖️', label:'Comparison Table',  desc:'Compare two campaigns side by side', group:'Data'},
-  {id:'top-videos',   icon:'🏆', label:'Top Videos',         desc:'Best performing videos',             group:'Data'},
-  {id:'live-event',   icon:'🏅', label:'Live Event Stop',    desc:'Tournament/day metrics',             group:'Data'},
-  {id:'views-chart',  icon:'📈', label:'Views Chart',        desc:'Views over time with comparison',    group:'Charts'},
-  {id:'watch-chart',  icon:'⏱️', label:'Watch Time Chart',  desc:'Watch hours over time',              group:'Charts'},
-  {id:'revenue-chart',icon:'💰', label:'Revenue Chart',      desc:'Estimated revenue over time',        group:'Charts'},
+// ── Settings state ──
+let rptSettings = {
+  name: 'PokerStars YouTube Report',
+  campaign: '',
+  primary: '#003087',
+  accent:  '#E8112D',
+};
+let reportSlides = [];
+let _learningsEditIdx = -1;
+
+// ── Slide type catalogue ──
+const SLIDE_TYPES = [
+  // Structure
+  { id:'cover',       icon:'🎯', label:'Cover',                  desc:'Title, campaign, date',          group:'Structure' },
+  { id:'divider',     icon:'📌', label:'Section Divider',        desc:'Numbered section separator',     group:'Structure' },
+  { id:'end',         icon:'🏁', label:'End Slide',              desc:'PokerStars sign-off',            group:'Structure' },
+  // Summary
+  { id:'exec-summary',icon:'📊', label:'Executive Summary',      desc:'4 key KPIs + period',            group:'Summary' },
+  // Data
+  { id:'ep-table',    icon:'🎬', label:'Episode Table',          desc:'Campaign episode results table', group:'Data' },
+  { id:'ep-chart',    icon:'📈', label:'Episode Chart',          desc:'Metric line chart (one metric)', group:'Data' },
+  { id:'comparison',  icon:'⚖️', label:'Comparison Table',      desc:'Two campaigns side by side',     group:'Data' },
+  { id:'live-event',  icon:'🏅', label:'Live Event Stop',        desc:'Tournament day-by-day data',     group:'Data' },
+  { id:'top-videos',  icon:'🏆', label:'Top Videos',             desc:'Best performing videos',         group:'Data' },
+  // Deep Dive
+  { id:'deep-dive',   icon:'🔍', label:'Deep Dive',              desc:'Screenshot + commentary',        group:'Deep Dive' },
+  { id:'learnings',   icon:'💡', label:'Learnings & Recs',       desc:'Numbered insights + tags',       group:'Deep Dive' },
+  // Monthly extras
+  { id:'look-ahead',  icon:'🔭', label:'Look Ahead',             desc:'Upcoming content + date',        group:'Monthly' },
+  { id:'context',     icon:'🌐', label:'Trending / Context',     desc:'External context text slide',    group:'Monthly' },
 ];
 
-// ═══════════════════════════════════════════
-// REPORT BUILDER
-// ═══════════════════════════════════════════
+// ── Template presets ──
+const RPT_TEMPLATES = {
+  ept:   { name:'EPT Report', campaign:'EPT', primary:'#003087', accent:'#E8112D' },
+  bgot:  { name:'Big Game On Tour Report', campaign:'Big Game On Tour', primary:'#C9A84C', accent:'#FFFFFF' },
+  irish: { name:'Irish Open Report', campaign:'Irish Open', primary:'#009A44', accent:'#FF6600' },
+};
 
+function loadRptTemplate(key){
+  if(!key)return;
+  const t=RPT_TEMPLATES[key];if(!t)return;
+  rptSettings={...rptSettings,...t};
+  document.getElementById('rpt-name').value=t.name;
+  document.getElementById('rpt-campaign').value=t.campaign;
+  document.getElementById('rpt-primary').value=t.primary;
+  document.getElementById('rpt-accent').value=t.accent;
+  document.getElementById('rpt-primary-label').textContent=t.primary;
+  document.getElementById('rpt-accent-label').textContent=t.accent;
+  renderReportBuilder();
+}
+function saveRptTemplate(){
+  const key=prompt('Save as template name (no spaces):');
+  if(!key)return;
+  RPT_TEMPLATES[key]={...rptSettings};
+  const sel=document.getElementById('rpt-template-select');
+  if(!sel.querySelector(`option[value="${key}"]`)){
+    const opt=document.createElement('option');opt.value=key;opt.textContent=key;sel.appendChild(opt);
+  }
+  sel.value=key;
+  alert(`Template "${key}" saved.`);
+}
+
+// ── Render slide list ──
 function renderReportBuilder(){
+  // Sync colour labels
+  ['primary','accent'].forEach(k=>{
+    const el=document.getElementById('rpt-'+k);
+    const lbl=document.getElementById('rpt-'+k+'-label');
+    if(el&&lbl)lbl.textContent=el.value;
+  });
   const container=document.getElementById('report-slides');
   const empty=document.getElementById('report-empty');
   if(!reportSlides.length){container.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  const groups={'Layout':'🗂️','Content':'✍️','Data':'📊','Charts':'📈'};
+  const P=rptSettings.primary,A=rptSettings.accent;
   container.innerHTML=reportSlides.map((slide,i)=>{
     const st=SLIDE_TYPES.find(t=>t.id===slide.type)||{icon:'📄',label:slide.type};
-    const preview=renderSlidePreviewCard(slide);
-    return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
-      <!-- Header bar -->
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);">
-        <span style="font-size:16px;">${st.icon}</span>
-        <div>
-          <span style="font-weight:600;font-size:13px;">${st.label}</span>
-          ${slide.subtitle?`<span style="font-size:11px;color:var(--muted);margin-left:8px;">${slide.subtitle}</span>`:''}
-        </div>
-        <span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--muted);background:var(--bg);border-radius:4px;padding:2px 7px;">Slide ${i+1}</span>
+    return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);">
+        <span style="font-size:15px;">${st.icon}</span>
+        <span style="font-weight:600;font-size:13px;">${st.label}</span>
+        ${slide.subtitle?`<span style="font-size:11px;color:var(--muted);margin-left:4px;">· ${slide.subtitle}</span>`:''}
+        <span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--muted);background:var(--bg);border-radius:4px;padding:2px 6px;">${i+1}</span>
         <div style="display:flex;gap:4px;">
           ${i>0?`<button class="tag-btn" style="padding:2px 7px;font-size:10px;" onclick="moveSlide(${i},-1)">↑</button>`:''}
           ${i<reportSlides.length-1?`<button class="tag-btn" style="padding:2px 7px;font-size:10px;" onclick="moveSlide(${i},1)">↓</button>`:''}
@@ -2860,106 +2993,120 @@ function renderReportBuilder(){
           <button class="tag-btn" style="padding:2px 7px;font-size:10px;color:var(--accent);border-color:var(--accent);" onclick="removeSlide(${i})">✕</button>
         </div>
       </div>
-      <!-- Slide preview -->
-      <div style="padding:16px;">${preview}</div>
+      <div style="padding:14px;">${renderSlideThumb(slide,P,A)}</div>
     </div>`;
   }).join('');
 }
 
-function renderSlidePreviewCard(slide){
-  const muted='color:var(--muted);font-size:12px;font-style:italic;';
+function renderSlideThumb(slide,P,A){
+  const name=rptSettings.name||'Report';
+  const m='color:var(--muted);font-size:12px;font-style:italic;';
   switch(slide.type){
     case 'cover':
-      return`<div style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);border-radius:8px;padding:24px 32px;min-height:80px;display:flex;flex-direction:column;justify-content:center;">
-        <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;">${slide.title||'Report Title'}</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.6);">${slide.subtitle||'Subtitle · Date'}</div>
+      return`<div style="background:#000;border-radius:6px;padding:20px 28px;display:flex;flex-direction:column;justify-content:center;min-height:72px;border-left:4px solid ${P};">
+        <div style="font-size:11px;color:${P};text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">PokerStars</div>
+        <div style="font-size:18px;font-weight:700;color:#fff;">${name}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;">${rptSettings.campaign||'Campaign'} · ${slide.date||new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'})}</div>
       </div>`;
     case 'divider':
-      return`<div style="background:linear-gradient(135deg,#2d1b69,#11998e);border-radius:8px;padding:20px 28px;display:flex;align-items:center;gap:20px;">
-        <div style="font-size:48px;font-weight:900;color:rgba(255,255,255,0.2);line-height:1;">${slide.sectionNum||'1'}</div>
-        <div style="font-size:18px;font-weight:700;color:#fff;">${slide.title||'Section Name'}</div>
+      return`<div style="background:#000;border-radius:6px;padding:18px 24px;display:flex;align-items:center;gap:20px;min-height:60px;">
+        <div style="font-size:42px;font-weight:900;color:${P};opacity:0.3;line-height:1;">${slide.sectionNum||'1'}</div>
+        <div style="border-left:3px solid ${A};padding-left:16px;">
+          <div style="font-size:16px;font-weight:700;color:#fff;">${slide.title||'Section'}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">${name}</div>
+        </div>
       </div>`;
-    case 'ai-overview':
-      return`<div style="display:flex;flex-direction:column;gap:8px;">
-        ${slide.content?`<div style="font-size:12px;color:var(--text);line-height:1.7;white-space:pre-wrap;">${slide.content.slice(0,400)}${slide.content.length>400?'…':''}</div>`:`<div style="${muted}">Click Edit to generate AI content</div>`}
-        ${slide.attachedChart?`<div style="font-size:11px;color:var(--blue);margin-top:4px;">📊 Chart: ${slide.attachedChart}</div>`:''}
+    case 'end':
+      return`<div style="background:#000;border-radius:6px;padding:20px 28px;text-align:center;min-height:60px;display:flex;align-items:center;justify-content:center;border:1px solid ${P}33;">
+        <div style="font-size:16px;font-weight:700;color:#fff;">PokerStars</div>
+      </div>`;
+    case 'exec-summary':{
+      const t=ytData.totals||{};
+      const kpis=[['Views',fmt(t.views)],['Watch hrs',t.mins?fmt(Math.round(t.mins/60)):'—'],['Revenue',t.rev!=null?fmtEur(t.rev):'—'],['Subscribers',fmt(t.subs)]];
+      return`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">${kpis.map(([l,v])=>`
+        <div style="background:#000;border-radius:6px;padding:10px 12px;border-top:2px solid ${P};">
+          <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">${l}</div>
+          <div style="font-size:18px;font-weight:700;color:#fff;">${v}</div>
+        </div>`).join('')}</div>`;}
+    case 'ep-table':
+      return slide.campName&&slide.subName
+        ?`<div style="${m}">📋 ${slide.campName} / ${slide.subName} · window: ${slide.window||'First 28 days'}</div>`
+        :`<div style="${m}">Click Edit to select a campaign</div>`;
+    case 'ep-chart':
+      return slide.campA
+        ?`<div style="${m}">📈 ${slide.metric||'Views'} · ${slide.campA}${slide.campB?' vs '+slide.campB:''}</div>`
+        :`<div style="${m}">Click Edit to configure chart</div>`;
+    case 'comparison':
+      return slide.campA&&slide.campB
+        ?`<div style="${m}">⚖️ ${slide.campA} vs ${slide.campB}</div>`
+        :`<div style="${m}">Click Edit to select two campaigns</div>`;
+    case 'live-event':
+      return slide.stopKey&&campaigns[slide.stopKey]
+        ?`<div style="${m}">🏅 ${campaigns[slide.stopKey].stop} ${campaigns[slide.stopKey].year}</div>`
+        :`<div style="${m}">Click Edit to select a stop</div>`;
+    case 'top-videos':
+      return`<div style="${m}">🏆 Top videos · ${S}–${E}</div>`;
+    case 'deep-dive':
+      return`<div style="display:flex;gap:12px;align-items:flex-start;">
+        ${slide.imageData?`<img src="${slide.imageData}" style="width:120px;height:68px;object-fit:cover;border-radius:4px;flex-shrink:0;">`:`<div style="width:120px;height:68px;background:var(--surface2);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:10px;color:var(--muted);">No image</span></div>`}
+        <div style="font-size:12px;"><div style="font-weight:600;color:var(--text);margin-bottom:4px;">${slide.heading||'Deep Dive'}</div><div style="${m}">${slide.commentary?slide.commentary.slice(0,120)+'…':'Click Edit to add commentary'}</div></div>
       </div>`;
     case 'learnings':
       return slide.points&&slide.points.length
-        ?`<div style="display:flex;flex-direction:column;gap:8px;">${slide.points.slice(0,3).map((p,i)=>`
-          <div style="display:flex;gap:10px;align-items:flex-start;">
-            <span style="background:var(--accent);color:white;font-size:10px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</span>
-            <div><div style="font-size:12px;font-weight:600;color:var(--text);">${p.heading}</div><div style="font-size:11px;color:var(--muted);">${p.body?.slice(0,80)||''}</div></div>
-          </div>`).join('')}${slide.points.length>3?`<div style="${muted}">+${slide.points.length-3} more…</div>`:''}</div>`
-        :`<div style="${muted}">Click Edit to add learnings</div>`;
-    case 'kpi-scorecard':{
-      const t=ytData.totals||{};
-      const kpis=[['Views',fmt(t.views)],['Watch hrs',t.mins?fmt(Math.round(t.mins/60)):'—'],['Revenue',t.rev!=null?fmtEur(t.rev):'—'],['Subscribers',fmt(t.subs)]];
-      return`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">${kpis.map(([l,v])=>`
-        <div style="background:var(--surface2);border-radius:8px;padding:12px;">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">${l}</div>
-          <div style="font-size:20px;font-weight:700;color:var(--text);">${v}</div>
-        </div>`).join('')}</div>`;}
-    case 'episode-table':
-      return slide.campName&&slide.subName&&vidCampaigns[slide.campName]?.subs[slide.subName]
-        ?`<div style="font-size:12px;color:var(--text);"><strong>${slide.campName}</strong> / ${slide.subName} — ${vidCampaigns[slide.campName].subs[slide.subName].episodes?.length||0} episodes</div>`
-        :`<div style="${muted}">Click Edit to select a campaign</div>`;
-    case 'comparison':
-      return slide.campA&&slide.campB
-        ?`<div style="font-size:12px;color:var(--text);">Comparing <strong>${slide.campA}</strong> vs <strong>${slide.campB}</strong></div>`
-        :`<div style="${muted}">Click Edit to select two campaigns</div>`;
-    case 'top-videos':
-      return ytData.topEnriched?.length
-        ?`<div style="font-size:12px;color:var(--text);">Top ${Math.min(ytData.topEnriched.length,8)} videos from ${S} to ${E}</div>`
-        :`<div style="${muted}">Load Analytics tab first to populate</div>`;
-    case 'live-event':
-      return slide.stopKey&&campaigns[slide.stopKey]
-        ?`<div style="font-size:12px;color:var(--text);"><strong>${campaigns[slide.stopKey].stop} ${campaigns[slide.stopKey].year}</strong></div>`
-        :`<div style="${muted}">Click Edit to select a stop</div>`;
-    case 'views-chart':
-      return`<div style="font-size:12px;color:var(--blue);">📈 Views over time · current vs previous year · ${S}–${E}</div>`;
-    case 'watch-chart':
-      return`<div style="font-size:12px;color:var(--purple);">⏱ Watch time (hrs) · current vs previous year</div>`;
-    case 'revenue-chart':
-      return`<div style="font-size:12px;color:var(--green);">💰 Estimated revenue (EUR) · ${S}–${E}</div>`;
+        ?`<div style="display:flex;flex-direction:column;gap:6px;">${slide.points.slice(0,3).map((p,i)=>`
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="background:${A};color:#000;font-size:9px;font-weight:700;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</span>
+            <div style="font-size:12px;color:var(--text);font-weight:500;">${p.heading}</div>
+          </div>`).join('')}${slide.points.length>3?`<div style="${m}">+${slide.points.length-3} more</div>`:''}</div>`
+        :`<div style="${m}">Click Edit to add learnings</div>`;
+    case 'look-ahead':
+      return`<div style="display:flex;gap:12px;align-items:center;">
+        ${slide.imageData?`<img src="${slide.imageData}" style="width:80px;height:50px;object-fit:cover;border-radius:4px;">`:''}
+        <div><div style="font-size:13px;font-weight:600;color:var(--text);">${slide.title||'Upcoming content'}</div>
+        <div style="font-size:11px;color:var(--muted);">${slide.date||'Date TBC'}</div></div>
+      </div>`;
+    case 'context':
+      return slide.content
+        ?`<div style="font-size:12px;color:var(--text);">${slide.content.slice(0,180)}…</div>`
+        :`<div style="${m}">Click Edit to add context</div>`;
     default:
-      return`<div style="${muted}">Slide will use current dashboard data</div>`;
+      return`<div style="${m}">Slide will use current dashboard data</div>`;
   }
 }
 
-// ── Slide Picker ──
+// ── Slide picker ──
 function addReportSlide(){
   const grid=document.getElementById('slide-picker-grid');
   const groups={};
   SLIDE_TYPES.forEach(t=>{if(!groups[t.group])groups[t.group]=[];groups[t.group].push(t);});
   grid.innerHTML=Object.entries(groups).map(([g,types])=>`
-    <div style="grid-column:1/-1;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:8px;margin-bottom:4px;">${g}</div>
-    ${types.map(t=>`
-      <button onclick="pickSlideType('${t.id}');closeModal('slide-picker-modal');"
-        style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:14px;text-align:left;cursor:pointer;transition:border-color 0.15s;"
-        onmouseover="this.style.borderColor='var(--blue)';this.style.background='var(--surface)'"
-        onmouseout="this.style.borderColor='var(--border2)';this.style.background='var(--surface2)'">
-        <div style="font-size:18px;margin-bottom:6px;">${t.icon}</div>
-        <div style="font-size:12px;font-weight:600;color:var(--text);">${t.label}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${t.desc}</div>
-      </button>`).join('')}`).join('');
-  // Fix grid to span 2 cols for section labels
+    <div style="margin-bottom:12px;">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">${g}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        ${types.map(t=>`
+          <button onclick="pickSlideType('${t.id}');closeModal('slide-picker-modal');"
+            style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px 10px;text-align:left;cursor:pointer;"
+            onmouseover="this.style.borderColor='${rptSettings.primary}'"
+            onmouseout="this.style.borderColor='var(--border2)'">
+            <div style="font-size:16px;margin-bottom:4px;">${t.icon}</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px;">${t.label}</div>
+            <div style="font-size:10px;color:var(--muted);">${t.desc}</div>
+          </button>`).join('')}
+      </div>
+    </div>`).join('');
   document.getElementById('slide-picker-modal').classList.add('open');
 }
 
 function pickSlideType(typeId){
   const t=SLIDE_TYPES.find(x=>x.id===typeId);
   if(!t)return;
-  const slide={type:t.id,title:t.label};
-  // Set sensible defaults
-  if(typeId==='cover'){slide.title='Report Title';slide.subtitle=new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'});}
+  const slide={type:typeId};
+  if(typeId==='cover')slide.date=new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'});
   if(typeId==='divider'){slide.title='Section Name';slide.sectionNum=String(reportSlides.filter(s=>s.type==='divider').length+1);}
   if(typeId==='learnings')slide.points=[];
   reportSlides.push(slide);
   renderReportBuilder();
-  const newIdx=reportSlides.length-1;
-  // Auto-open editor for types that need configuration
-  setTimeout(()=>editSlide(newIdx),50);
+  setTimeout(()=>editSlide(reportSlides.length-1),60);
 }
 
 function removeSlide(i){reportSlides.splice(i,1);renderReportBuilder();}
@@ -2969,113 +3116,58 @@ function moveSlide(i,dir){
   renderReportBuilder();
 }
 
-// ── Slide Editor ──
+// ── Edit dispatcher ──
 async function editSlide(i){
   const slide=reportSlides[i];
   switch(slide.type){
     case 'cover':
     case 'divider':
+    case 'end':
       openMetaEditor(i,slide);break;
-    case 'ai-overview':
-      openTextEditor(i,slide,true);break;
+    case 'exec-summary':
+      alert('Executive Summary uses your current Analytics data automatically.');break;
+    case 'top-videos':
+      alert('Top Videos uses your current Analytics data automatically.');break;
+    case 'ep-table':
+      await pickEpTable(i,slide);break;
+    case 'ep-chart':
+      await pickEpChart(i,slide);break;
+    case 'comparison':
+      await pickComparison(i,slide);break;
+    case 'live-event':
+      await pickLiveEvent(i,slide);break;
+    case 'deep-dive':
+      openDdEditor(i,slide);break;
     case 'learnings':
       openLearningsEditor(i,slide);break;
-    case 'live-event':{
-      const stops=Object.keys(campaigns);
-      if(!stops.length){alert('No stops found in Live Events.');return;}
-      const choice=prompt('Choose a stop:\n'+stops.map((k,i)=>`${i+1}. ${campaigns[k].stop} ${campaigns[k].year}`).join('\n')+'\n\nEnter number:');
-      if(!choice)return;
-      const byNum=parseInt(choice);
-      const key=(!isNaN(byNum)&&byNum>=1&&byNum<=stops.length)?stops[byNum-1]:choice.trim();
-      if(!campaigns[key]){alert('Stop not found.');return;}
-      slide.stopKey=key;slide.subtitle=campaigns[key].stop+' '+campaigns[key].year;
-      renderReportBuilder();break;}
-    case 'episode-table':{
-      const camps=Object.keys(vidCampaigns);
-      if(!camps.length){alert('No video campaigns found.');return;}
-      const cc=prompt('Campaign:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n')+'\n\nEnter number:');
-      if(!cc)return;
-      const ci=parseInt(cc)-1;
-      const campName=camps[ci]||cc.trim();
-      if(!vidCampaigns[campName]){alert('Not found.');return;}
-      const subs=Object.keys(vidCampaigns[campName].subs||{});
-      const sc=subs.length>1?prompt('Sub-campaign:\n'+subs.map((s,i)=>`${i+1}. ${s}`).join('\n')+'\n\nEnter number:'):'1';
-      const si=parseInt(sc)-1;
-      const subName=subs[si]||sc.trim();
-      slide.campName=campName;slide.subName=subName;slide.subtitle=campName+' / '+subName;
-      renderReportBuilder();break;}
-    case 'comparison':{
-      const camps=Object.keys(vidCampaigns);
-      if(camps.length<2){alert('Need at least 2 campaigns.');return;}
-      const a=prompt('First campaign:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n'));
-      const b=prompt('Second campaign:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n'));
-      if(!a||!b)return;
-      const ai=parseInt(a)-1,bi=parseInt(b)-1;
-      slide.campA=camps[ai]||a.trim();slide.campB=camps[bi]||b.trim();
-      slide.subtitle=slide.campA+' vs '+slide.campB;
-      renderReportBuilder();break;}
+    case 'look-ahead':
+      openLaEditor(i,slide);break;
+    case 'context':
+    case 'ai-overview':
+      openTextEditor(i,slide);break;
     default:
-      // Charts and data slides use dashboard data automatically
-      alert('This slide uses your current dashboard data automatically — no editing needed.');
+      alert('This slide uses dashboard data automatically.');
   }
 }
 
-// Text editor (AI overview)
-function openTextEditor(idx,slide,isAI){
-  document.getElementById('slide-edit-idx').value=idx;
-  document.getElementById('slide-text-editor').value=slide.content||'';
-  document.getElementById('slide-text-modal-title').textContent=isAI?'AI Overview — Edit':'Edit text';
-  document.getElementById('slide-editor-ai-bar').style.display=isAI?'flex':'none';
-  const chartBar=document.getElementById('slide-editor-chart-bar');
-  chartBar.style.display=isAI?'block':'none';
-  if(isAI){
-    const sel=document.getElementById('slide-chart-select');
-    if(sel)sel.value=slide.attachedChart||'';
-  }
-  document.getElementById('slide-text-modal').classList.add('open');
-}
-function saveSlideText(){
-  const idx=parseInt(document.getElementById('slide-edit-idx').value);
-  if(!isNaN(idx)&&reportSlides[idx]){
-    reportSlides[idx].content=document.getElementById('slide-text-editor').value;
-    const sel=document.getElementById('slide-chart-select');
-    if(sel)reportSlides[idx].attachedChart=sel.value||'';
-  }
-  closeModal('slide-text-modal');renderReportBuilder();
-}
-async function generateSlideAI(){
-  const btn=document.getElementById('slide-gen-btn');
-  btn.disabled=true;btn.textContent='Generating…';
-  const t=ytData.totals||{};
-  const tops=(ytData.topEnriched||[]).slice(0,5).map(v=>v.sn?.title||v.id).join(', ');
-  const ctx=`YouTube channel analytics (${S} to ${E})\nViews: ${fmt(t.views)}\nWatch hrs: ${fmt(t.mins?Math.round(t.mins/60):null)}\nRevenue: ${t.rev!=null?fmtEur(t.rev):'N/A'}\nSubscribers: ${fmt(t.subs)}\nTop videos: ${tops||'N/A'}`;
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:'Write a concise executive summary (3 paragraphs) of this YouTube channel performance for a stakeholder slide deck. Be specific with the numbers and highlight what is performing well and what needs attention.\n\n'+ctx}]})});
-    const d=await r.json();if(d.error)throw new Error(d.error.message);
-    document.getElementById('slide-text-editor').value=d.content?.[0]?.text||'No response.';
-  }catch(e){alert('AI error: '+e.message);}
-  btn.disabled=false;btn.textContent='⚡ Generate with AI';
-}
-
-// Meta editor (cover/divider)
+// ── Meta editor (cover / divider / end) ──
 function openMetaEditor(idx,slide){
   document.getElementById('slide-meta-idx').value=idx;
-  document.getElementById('slide-meta-title').textContent=slide.type==='cover'?'Edit cover slide':'Edit section divider';
-  const fields=document.getElementById('slide-meta-fields');
+  document.getElementById('slide-meta-title').textContent=
+    slide.type==='cover'?'Edit cover':slide.type==='divider'?'Edit section divider':'Edit end slide';
+  const f=document.getElementById('slide-meta-fields');
   if(slide.type==='cover'){
-    fields.innerHTML=`
-      <div class="field-label">Report title</div>
-      <input type="text" id="meta-title" value="${slide.title||''}" style="margin-bottom:12px;">
-      <div class="field-label">Subtitle / date</div>
-      <input type="text" id="meta-subtitle" value="${slide.subtitle||''}" style="margin-bottom:12px;">
-      <div class="field-label">Author / team (optional)</div>
-      <input type="text" id="meta-author" value="${slide.author||''}" style="margin-bottom:4px;">`;
-  } else {
-    fields.innerHTML=`
+    f.innerHTML=`
+      <div class="field-label">Report date / subtitle</div>
+      <input type="text" id="meta-date" value="${slide.date||''}" placeholder="e.g. April 2026" style="width:100%;margin-bottom:12px;">`;
+  } else if(slide.type==='divider'){
+    f.innerHTML=`
       <div class="field-label">Section number</div>
-      <input type="text" id="meta-num" value="${slide.sectionNum||'1'}" style="margin-bottom:12px;width:80px;">
+      <input type="text" id="meta-num" value="${slide.sectionNum||'1'}" style="width:80px;margin-bottom:12px;">
       <div class="field-label">Section title</div>
-      <input type="text" id="meta-title" value="${slide.title||''}" style="margin-bottom:4px;">`;
+      <input type="text" id="meta-title" value="${slide.title||''}" style="width:100%;margin-bottom:4px;">`;
+  } else {
+    f.innerHTML=`<p style="font-size:13px;color:var(--muted);">End slide uses PokerStars branding automatically.</p>`;
   }
   document.getElementById('slide-meta-modal').classList.add('open');
 }
@@ -3083,79 +3175,245 @@ function saveSlideMetaModal(){
   const idx=parseInt(document.getElementById('slide-meta-idx').value);
   if(isNaN(idx)||!reportSlides[idx]){closeModal('slide-meta-modal');return;}
   const s=reportSlides[idx];
-  s.title=document.getElementById('meta-title')?.value||s.title;
-  s.subtitle=document.getElementById('meta-subtitle')?.value||'';
-  s.author=document.getElementById('meta-author')?.value||'';
-  s.sectionNum=document.getElementById('meta-num')?.value||s.sectionNum;
+  if(s.type==='cover')s.date=document.getElementById('meta-date')?.value||'';
+  if(s.type==='divider'){
+    s.sectionNum=document.getElementById('meta-num')?.value||'1';
+    s.title=document.getElementById('meta-title')?.value||'Section';
+    s.subtitle=s.sectionNum+'. '+s.title;
+  }
   closeModal('slide-meta-modal');renderReportBuilder();
 }
 
-// Learnings editor
+// ── Text editor (context / AI overview) ──
+function openTextEditor(idx,slide){
+  document.getElementById('slide-edit-idx').value=idx;
+  document.getElementById('slide-text-editor').value=slide.content||'';
+  document.getElementById('slide-text-modal-title').textContent=
+    slide.type==='context'?'Trending / Context — Edit':'AI Overview — Edit';
+  document.getElementById('slide-editor-ai-bar').style.display=
+    slide.type==='context'?'none':'flex';
+  document.getElementById('slide-text-modal').classList.add('open');
+}
+function saveSlideText(){
+  const idx=parseInt(document.getElementById('slide-edit-idx').value);
+  if(!isNaN(idx)&&reportSlides[idx])reportSlides[idx].content=document.getElementById('slide-text-editor').value;
+  closeModal('slide-text-modal');renderReportBuilder();
+}
+async function generateSlideAI(){
+  const btn=document.getElementById('slide-gen-btn');
+  btn.disabled=true;btn.textContent='Generating…';
+  const t=ytData.totals||{};
+  const tops=(ytData.topEnriched||[]).slice(0,5).map(v=>v.sn?.title||v.id).join(', ');
+  const ctx=`YouTube channel: ${rptSettings.campaign||'PokerStars'}\nPeriod: ${S} to ${E}\nViews: ${fmt(t.views)}\nWatch hrs: ${fmt(t.mins?Math.round(t.mins/60):null)}\nRevenue: ${t.rev!=null?fmtEur(t.rev):'N/A'}\nSubscribers: ${fmt(t.subs)}\nTop videos: ${tops||'N/A'}`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:'Write a concise executive summary (3 short paragraphs) of this YouTube channel performance for a senior stakeholder slide deck. Be specific with numbers, highlight what performed well, and note anything that needs attention.\n\n'+ctx}]})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message);
+    document.getElementById('slide-text-editor').value=d.content?.[0]?.text||'No response.';
+  }catch(e){alert('AI error: '+e.message);}
+  btn.disabled=false;btn.textContent='⚡ Generate with AI';
+}
+
+// ── Episode table picker ──
+async function pickEpTable(idx,slide){
+  const camps=Object.keys(vidCampaigns);
+  if(!camps.length){alert('No video campaigns found.');return;}
+  const cc=prompt('Campaign:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n')+'\n\nEnter number:');
+  if(!cc)return;
+  const campName=camps[parseInt(cc)-1]||cc.trim();
+  if(!vidCampaigns[campName]){alert('Not found.');return;}
+  const subs=Object.keys(vidCampaigns[campName].subs||{}).sort();
+  const sc=subs.length>1?prompt('Sub-campaign:\n'+subs.map((s,i)=>`${i+1}. ${s}`).join('\n')+'\n\nEnter number:'):'1';
+  if(!sc)return;
+  const subName=subs[parseInt(sc)-1]||sc.trim();
+  const wins=['First 7 days','First 28 days','All-time'];
+  const wc=prompt('Window:\n'+wins.map((w,i)=>`${i+1}. ${w}`).join('\n')+'\n\nEnter number:')||'2';
+  slide.campName=campName;slide.subName=subName;
+  slide.window=wins[parseInt(wc)-1]||'First 28 days';
+  slide.windowKey=slide.window==='First 7 days'?'w7':slide.window==='All-time'?'wall':'w28';
+  slide.subtitle=campName+' / '+subName;
+  renderReportBuilder();
+}
+
+// ── Episode chart picker ──
+async function pickEpChart(idx,slide){
+  const camps=Object.keys(vidCampaigns);
+  if(!camps.length){alert('No video campaigns found.');return;}
+  const metrics=['Views','Watch Hours','Revenue'];
+  const mc=prompt('Metric:\n'+metrics.map((m,i)=>`${i+1}. ${m}`).join('\n')+'\n\nEnter number:')||'1';
+  slide.metric=metrics[parseInt(mc)-1]||'Views';
+  const cc=prompt('First campaign (A):\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n')+'\n\nEnter number:');
+  if(!cc)return;
+  slide.campA=camps[parseInt(cc)-1]||cc.trim();
+  const dc=prompt('Second campaign for comparison (B) — optional, Enter to skip:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n'));
+  if(dc)slide.campB=camps[parseInt(dc)-1]||dc.trim();
+  const wins=['First 7 days','First 28 days','All-time'];
+  const wc=prompt('Window:\n'+wins.map((w,i)=>`${i+1}. ${w}`).join('\n')+'\n\nEnter number:')||'2';
+  slide.window=wins[parseInt(wc)-1]||'First 28 days';
+  slide.windowKey=slide.window==='First 7 days'?'w7':slide.window==='All-time'?'wall':'w28';
+  slide.subtitle=slide.metric+' · '+slide.campA+(slide.campB?' vs '+slide.campB:'');
+  renderReportBuilder();
+}
+
+// ── Comparison picker ──
+async function pickComparison(idx,slide){
+  const camps=Object.keys(vidCampaigns);
+  if(camps.length<1){alert('No campaigns found.');return;}
+  const a=prompt('Campaign A:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n'));
+  if(!a)return;
+  const b=prompt('Campaign B:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n'));
+  if(!b)return;
+  slide.campA=camps[parseInt(a)-1]||a.trim();
+  slide.campB=camps[parseInt(b)-1]||b.trim();
+  const wins=['First 7 days','First 28 days','All-time'];
+  const wc=prompt('Window:\n'+wins.map((w,i)=>`${i+1}. ${w}`).join('\n')+'\n\nEnter number:')||'2';
+  slide.window=wins[parseInt(wc)-1]||'First 28 days';
+  slide.windowKey=slide.window==='First 7 days'?'w7':slide.window==='All-time'?'wall':'w28';
+  slide.subtitle=slide.campA+' vs '+slide.campB;
+  renderReportBuilder();
+}
+
+// ── Live event picker ──
+async function pickLiveEvent(idx,slide){
+  const stops=Object.keys(campaigns);
+  if(!stops.length){alert('No stops found in Live Events.');return;}
+  const ch=prompt('Stop:\n'+stops.map((k,i)=>`${i+1}. ${campaigns[k].stop} ${campaigns[k].year}`).join('\n')+'\n\nEnter number:');
+  if(!ch)return;
+  const byNum=parseInt(ch);
+  const key=(!isNaN(byNum)&&byNum>=1&&byNum<=stops.length)?stops[byNum-1]:ch.trim();
+  if(!campaigns[key]){alert('Not found.');return;}
+  slide.stopKey=key;slide.subtitle=campaigns[key].stop+' '+campaigns[key].year;
+  renderReportBuilder();
+}
+
+// ── Deep Dive editor ──
+function openDdEditor(idx,slide){
+  document.getElementById('dd-slide-idx').value=idx;
+  document.getElementById('dd-heading').value=slide.heading||'';
+  document.getElementById('dd-commentary').value=slide.commentary||'';
+  const prev=document.getElementById('dd-image-preview');
+  prev.innerHTML=slide.imageData
+    ?`<img src="${slide.imageData}" style="max-height:120px;border-radius:4px;">`
+    :`<span style="font-size:12px;color:var(--muted);">Click to upload image</span>`;
+  document.getElementById('deepdive-modal').classList.add('open');
+}
+function handleDdImage(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const data=e.target.result;
+    document.getElementById('dd-image-preview').innerHTML=`<img src="${data}" style="max-height:120px;border-radius:4px;">`;
+    const idx=parseInt(document.getElementById('dd-slide-idx').value);
+    if(!isNaN(idx)&&reportSlides[idx])reportSlides[idx].imageData=data;
+  };
+  r.readAsDataURL(file);
+}
+async function generateDdAI(){
+  const heading=document.getElementById('dd-heading').value||'performance analysis';
+  const btn=document.querySelector('#deepdive-modal .btn-sm');
+  if(btn){btn.disabled=true;btn.textContent='Generating…';}
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:`Write 2-3 short analytical paragraphs for a slide titled "${heading}" about YouTube performance for a PokerStars stakeholder report. Be concise and insightful.`}]})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message);
+    document.getElementById('dd-commentary').value=d.content?.[0]?.text||'';
+  }catch(e){alert('AI error: '+e.message);}
+  if(btn){btn.disabled=false;btn.textContent='⚡ Generate with AI';}
+}
+function saveDdSlide(){
+  const idx=parseInt(document.getElementById('dd-slide-idx').value);
+  if(!isNaN(idx)&&reportSlides[idx]){
+    reportSlides[idx].heading=document.getElementById('dd-heading').value;
+    reportSlides[idx].commentary=document.getElementById('dd-commentary').value;
+    reportSlides[idx].subtitle=reportSlides[idx].heading;
+  }
+  closeModal('deepdive-modal');renderReportBuilder();
+}
+
+// ── Learnings editor ──
 function openLearningsEditor(idx,slide){
-  const points=slide.points||[];
-  const modal=document.createElement('div');
-  modal.className='modal-overlay open';modal.id='learnings-modal';modal.style.zIndex='750';
-  modal.innerHTML=`<div class="modal" style="max-width:600px;">
-    <div class="modal-title">Learnings &amp; Recommendations</div>
-    <div id="learnings-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
-      ${points.map((p,i)=>`
-        <div style="background:var(--surface2);border-radius:8px;padding:12px;border:1px solid var(--border);">
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-            <span style="background:var(--accent);color:white;font-size:10px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;">${i+1}</span>
-            <input type="text" value="${p.heading}" placeholder="Heading" id="lh${i}" style="flex:1;padding:4px 8px;font-size:12px;">
-            <select id="lt${i}" style="background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:3px 6px;font-size:11px;color:var(--muted);">
-              ${['Production','Content','Strategy','Advertising','Engagement','Reach','Awareness'].map(c=>`<option${p.tag===c?' selected':''}>${c}</option>`).join('')}
-            </select>
-            <button onclick="this.closest('div[id]').remove();reindexLearnings();" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;">✕</button>
-          </div>
-          <textarea id="lb${i}" placeholder="Detail..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:11px;color:var(--text);resize:none;height:52px;">${p.body||''}</textarea>
-        </div>`).join('')}
+  _learningsEditIdx=idx;
+  const list=document.getElementById('learnings-list');
+  list.innerHTML=(slide.points||[]).map((p,i)=>learningPointHTML(i,p)).join('');
+  document.getElementById('learnings-save-btn').onclick=()=>saveLearnings();
+  document.getElementById('learnings-modal').classList.add('open');
+}
+function learningPointHTML(i,p){
+  p=p||{};
+  return`<div style="background:var(--surface2);border-radius:8px;padding:12px;border:1px solid var(--border);" id="lp-${i}">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+      <span style="background:${rptSettings.accent};color:#000;font-size:10px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</span>
+      <input type="text" value="${p.heading||''}" placeholder="Heading" id="lh-${i}" style="flex:1;padding:4px 8px;font-size:12px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);">
+      <select id="lt-${i}" style="background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--muted);">
+        ${['Production','Content','Strategy','Advertising','Engagement','Reach','Awareness','Retention'].map(c=>`<option${p.tag===c?' selected':''}>${c}</option>`).join('')}
+      </select>
+      <button onclick="document.getElementById('lp-${i}').remove();" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;padding:0;">✕</button>
     </div>
-    <button class="btn-sm" onclick="addLearningPoint()">+ Add point</button>
-    <div class="modal-actions" style="margin-top:12px;">
-      <button class="btn-cancel" onclick="document.getElementById('learnings-modal').remove()">Cancel</button>
-      <button class="btn-confirm" onclick="saveLearnings(${idx})">Save</button>
-    </div>
+    <textarea id="lb-${i}" placeholder="Detail..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:11px;color:var(--text);resize:none;height:52px;font-family:var(--font-body);">${p.body||''}</textarea>
   </div>`;
-  document.body.appendChild(modal);
 }
 function addLearningPoint(){
   const list=document.getElementById('learnings-list');
   const i=list.children.length;
   const div=document.createElement('div');
-  div.style.cssText='background:var(--surface2);border-radius:8px;padding:12px;border:1px solid var(--border);';
-  div.innerHTML=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-    <span style="background:var(--accent);color:white;font-size:10px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;">${i+1}</span>
-    <input type="text" placeholder="Heading" id="lh${i}" style="flex:1;padding:4px 8px;font-size:12px;">
-    <select id="lt${i}" style="background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:3px 6px;font-size:11px;color:var(--muted);">
-      ${['Production','Content','Strategy','Advertising','Engagement','Reach','Awareness'].map(c=>`<option>${c}</option>`).join('')}
-    </select>
-    <button onclick="this.closest('div').parentElement.remove();" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;">✕</button>
-  </div>
-  <textarea id="lb${i}" placeholder="Detail..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:11px;color:var(--text);resize:none;height:52px;"></textarea>`;
-  list.appendChild(div);
+  div.innerHTML=learningPointHTML(i,{});
+  list.appendChild(div.firstElementChild);
 }
-function saveLearnings(idx){
-  const list=document.getElementById('learnings-list');
+function saveLearnings(){
+  if(_learningsEditIdx<0)return;
   const points=[];
-  list.querySelectorAll('input[id^="lh"]').forEach((el,i)=>{
-    const heading=el.value.trim();if(!heading)return;
-    points.push({heading,body:document.getElementById('lb'+i)?.value||'',tag:document.getElementById('lt'+i)?.value||''});
+  document.querySelectorAll('#learnings-list > div').forEach((el,i)=>{
+    const h=el.querySelector(`[id^="lh-"]`)?.value?.trim();
+    if(!h)return;
+    points.push({heading:h,body:el.querySelector(`[id^="lb-"]`)?.value||'',tag:el.querySelector(`[id^="lt-"]`)?.value||''});
   });
-  reportSlides[idx].points=points;
-  document.getElementById('learnings-modal').remove();
-  renderReportBuilder();
+  reportSlides[_learningsEditIdx].points=points;
+  reportSlides[_learningsEditIdx].subtitle=points.length+' point'+(points.length!==1?'s':'');
+  closeModal('learnings-modal');renderReportBuilder();
 }
 
-// Preview
+// ── Look Ahead editor ──
+function openLaEditor(idx,slide){
+  document.getElementById('la-slide-idx').value=idx;
+  document.getElementById('la-title').value=slide.title||'';
+  document.getElementById('la-date').value=slide.date||'';
+  document.getElementById('la-notes').value=slide.notes||'';
+  const prev=document.getElementById('la-image-preview');
+  prev.innerHTML=slide.imageData
+    ?`<img src="${slide.imageData}" style="max-height:80px;border-radius:4px;">`
+    :`<span style="font-size:12px;color:var(--muted);">Click to upload thumbnail</span>`;
+  document.getElementById('lookahead-modal').classList.add('open');
+}
+function handleLaImage(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const data=e.target.result;
+    document.getElementById('la-image-preview').innerHTML=`<img src="${data}" style="max-height:80px;border-radius:4px;">`;
+    const idx=parseInt(document.getElementById('la-slide-idx').value);
+    if(!isNaN(idx)&&reportSlides[idx])reportSlides[idx].imageData=data;
+  };
+  r.readAsDataURL(file);
+}
+function saveLaSlide(){
+  const idx=parseInt(document.getElementById('la-slide-idx').value);
+  if(!isNaN(idx)&&reportSlides[idx]){
+    reportSlides[idx].title=document.getElementById('la-title').value;
+    reportSlides[idx].date=document.getElementById('la-date').value;
+    reportSlides[idx].notes=document.getElementById('la-notes').value;
+    reportSlides[idx].subtitle=reportSlides[idx].title;
+  }
+  closeModal('lookahead-modal');renderReportBuilder();
+}
+
+// ── Preview ──
 function previewReport(){
   const body=document.getElementById('report-preview-body');
+  const P=rptSettings.primary,A=rptSettings.accent;
   body.innerHTML=reportSlides.map((slide,i)=>`
-    <div style="margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
-      <div style="background:var(--surface2);padding:8px 14px;font-size:10px;color:var(--muted);font-family:var(--font-mono);">
+    <div style="margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+      <div style="background:var(--surface2);padding:6px 12px;font-size:10px;color:var(--muted);font-family:var(--font-mono);">
         SLIDE ${i+1} — ${(SLIDE_TYPES.find(t=>t.id===slide.type)?.label||slide.type).toUpperCase()}
       </div>
-      <div style="padding:16px;">${renderSlidePreviewCard(slide)}</div>
+      <div style="padding:14px;">${renderSlideThumb(slide,P,A)}</div>
     </div>`).join('');
   document.getElementById('report-preview-modal').classList.add('open');
 }
@@ -3169,196 +3427,306 @@ async function exportReportPptx(){
     await new Promise(resolve=>script.onload=resolve);
   }
   const pptx=new PptxGenJS();
-  pptx.layout='LAYOUT_WIDE'; // 13.33" x 7.5"
+  pptx.layout='LAYOUT_WIDE'; // 13.33" × 7.5"
 
-  // Colour palette matching report PDF style
-  const BG='0A0A14',SURFACE='13131F',ACCENT='FF4444',ACCENT2='FF8800',
-        TEXT='F0F0F5',MUTED='7A7A8E',BLUE='4488FF',GREEN='00E5A0',
-        GRAD1='1A1033',GRAD2='0F2447';
+  const BG='000000', TEXT='FFFFFF', MUTED='888899';
+  const P=rptSettings.primary.replace('#','');
+  const A=rptSettings.accent.replace('#','');
+  const W=13.33,H=7.5;
+  const name=rptSettings.name||'Report';
+  const campaign=rptSettings.campaign||'';
 
+  // Header bar helper — appears on all non-cover/divider/end slides
+  const addHeader=(s)=>{
+    s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:0.55,fill:{color:'0A0A0A'}});
+    s.addShape(pptx.ShapeType.rect,{x:0,y:0.55,w:W,h:0.03,fill:{color:P}});
+    s.addText('PokerStars',{x:0.35,y:0.1,w:3,h:0.35,fontSize:9,bold:true,color:P,fontFace:'Arial',charSpacing:1.5});
+    s.addText(name,{x:0.35,y:0.1,w:W-0.7,h:0.35,fontSize:9,color:'555566',fontFace:'Arial',align:'right'});
+  };
+  const addFooter=(s,slideNum)=>{
+    s.addShape(pptx.ShapeType.rect,{x:0,y:H-0.38,w:W,h:0.38,fill:{color:'0A0A0A'}});
+    s.addText(campaign,{x:0.35,y:H-0.3,w:6,h:0.22,fontSize:8,color:'444455',fontFace:'Arial'});
+    s.addText(String(slideNum),{x:W-0.6,y:H-0.3,w:0.4,h:0.22,fontSize:8,color:'444455',fontFace:'Arial',align:'right'});
+  };
+
+  let slideNum=1;
   for(const slide of reportSlides){
     const s=pptx.addSlide();
     s.background={color:BG};
-    const W=13.33,H=7.5;
-
-    const addKV=(x,y,w,label,value,valColor)=>{
-      s.addText(label.toUpperCase(),{x,y,w,h:0.25,fontSize:8,color:MUTED,fontFace:'Arial',bold:true,charSpacing:1.5});
-      s.addText(value,{x,y:y+0.28,w,h:0.6,fontSize:26,bold:true,color:valColor||TEXT,fontFace:'Arial'});
-    };
-    const footer=()=>{
-      s.addText(S+' — '+E,{x:0.4,y:H-0.35,w:W-0.8,h:0.25,fontSize:8,color:'333344',align:'right',fontFace:'Arial'});
-    };
 
     switch(slide.type){
-      case 'cover':
-        // Dark gradient background
-        s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:H,fill:{color:'0D0D1A'}});
-        s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W*0.55,h:H,fill:{color:'0A0A14'}});
-        // Accent line
-        s.addShape(pptx.ShapeType.rect,{x:0.5,y:H*0.45,w:0.04,h:1.4,fill:{color:ACCENT}});
-        s.addText(slide.title||'Report',{x:0.7,y:H*0.45,w:6,h:0.9,fontSize:36,bold:true,color:TEXT,fontFace:'Arial'});
-        s.addText(slide.subtitle||'',{x:0.7,y:H*0.45+0.95,w:6,h:0.4,fontSize:14,color:MUTED,fontFace:'Arial'});
-        if(slide.author)s.addText(slide.author,{x:0.7,y:H-0.8,w:4,h:0.3,fontSize:10,color:MUTED,fontFace:'Arial'});
-        break;
+      case 'cover':{
+        // Left accent bar
+        s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:0.12,h:H,fill:{color:P}});
+        s.addText('POKERSTARS',{x:0.35,y:1.4,w:10,h:0.4,fontSize:11,bold:true,color:P,fontFace:'Arial',charSpacing:3});
+        s.addText(name,{x:0.35,y:1.9,w:10,h:1.1,fontSize:36,bold:true,color:TEXT,fontFace:'Arial'});
+        s.addText(campaign,{x:0.35,y:3.1,w:8,h:0.45,fontSize:16,color:MUTED,fontFace:'Arial'});
+        s.addShape(pptx.ShapeType.rect,{x:0.35,y:3.65,w:1.2,h:0.04,fill:{color:A}});
+        s.addText(slide.date||'',{x:0.35,y:3.8,w:6,h:0.3,fontSize:11,color:MUTED,fontFace:'Arial'});
+        break;}
 
-      case 'divider':
-        s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:H,fill:{color:'0D0A1E'}});
-        s.addText(slide.sectionNum||'1',{x:0.4,y:0.5,w:3,h:4,fontSize:180,bold:true,color:'1A1435',fontFace:'Arial',valign:'top'});
-        s.addShape(pptx.ShapeType.rect,{x:0.4,y:H-1.8,w:0.05,h:1.2,fill:{color:ACCENT}});
-        s.addText(slide.title||'Section',{x:0.6,y:H-1.7,w:10,h:1,fontSize:28,bold:true,color:TEXT,fontFace:'Arial',valign:'middle'});
-        break;
+      case 'divider':{
+        s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:H,fill:{color:'050505'}});
+        s.addText(slide.sectionNum||'1',{x:0.3,y:0.2,w:4,h:5.5,fontSize:200,bold:true,color:'111111',fontFace:'Arial',valign:'top'});
+        s.addShape(pptx.ShapeType.rect,{x:0.35,y:H-2.2,w:0.06,h:1.5,fill:{color:P}});
+        s.addText(slide.title||'Section',{x:0.6,y:H-2.1,w:11,h:0.8,fontSize:30,bold:true,color:TEXT,fontFace:'Arial',valign:'middle'});
+        s.addText(name,{x:0.6,y:H-1.2,w:8,h:0.3,fontSize:10,color:'333344',fontFace:'Arial'});
+        break;}
 
-      case 'ai-overview':
-        s.addText('AI OVERVIEW',{x:0.5,y:0.3,w:12,h:0.35,fontSize:10,bold:true,color:ACCENT,fontFace:'Arial',charSpacing:2});
-        s.addText(slide.content||'(No content generated)',{x:0.5,y:0.85,w:slide.attachedChart?6.5:12.3,h:5.8,fontSize:12,color:'C8C8D8',fontFace:'Arial',valign:'top',wrap:true,lineSpacingMultiple:1.4});
-        if(slide.attachedChart){
-          s.addShape(pptx.ShapeType.rect,{x:7.3,y:0.85,w:5.5,h:5.5,fill:{color:SURFACE},line:{color:'222233',w:0.5}});
-          s.addText('📊 '+slide.attachedChart.toUpperCase()+'\n(chart from dashboard)',{x:7.3,y:3,w:5.5,h:1.5,fontSize:10,color:MUTED,fontFace:'Arial',align:'center'});
-        }
-        footer();break;
+      case 'end':{
+        s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:H,fill:{color:'030303'}});
+        s.addShape(pptx.ShapeType.rect,{x:0,y:H/2-0.02,w:W,h:0.04,fill:{color:P}});
+        s.addText('POKERSTARS',{x:0,y:H/2-0.9,w:W,h:0.6,fontSize:32,bold:true,color:TEXT,fontFace:'Arial',align:'center',charSpacing:4});
+        s.addText(campaign,{x:0,y:H/2+0.2,w:W,h:0.4,fontSize:14,color:MUTED,fontFace:'Arial',align:'center'});
+        break;}
 
-      case 'learnings':
-        s.addText('LEARNINGS & RECOMMENDATIONS',{x:0.5,y:0.3,w:12,h:0.35,fontSize:10,bold:true,color:ACCENT,fontFace:'Arial',charSpacing:2});
-        (slide.points||[]).slice(0,4).forEach((p,i)=>{
-          const col=i<2?0:6.7,row=i%2;
-          const x=col+0.5,y=1.0+row*2.8;
-          s.addShape(pptx.ShapeType.rect,{x,y,w:0.3,h:0.3,fill:{color:ACCENT},rounding:true});
-          s.addText(String(i+1),{x,y,w:0.3,h:0.3,fontSize:9,bold:true,color:TEXT,fontFace:'Arial',align:'center',valign:'middle'});
-          s.addText(p.heading,{x:x+0.4,y,w:5.7,h:0.35,fontSize:12,bold:true,color:TEXT,fontFace:'Arial'});
-          if(p.tag)s.addShape(pptx.ShapeType.rect,{x:x+0.4,y:y+0.4,w:p.tag.length*0.08+0.3,h:0.22,fill:{color:ACCENT+'33'},rounding:true});
-          if(p.tag)s.addText(p.tag,{x:x+0.4,y:y+0.4,w:p.tag.length*0.08+0.3,h:0.22,fontSize:8,color:ACCENT,fontFace:'Arial',align:'center'});
-          s.addText(p.body||'',{x:x+0.4,y:y+0.7,w:5.7,h:1.8,fontSize:10,color:MUTED,fontFace:'Arial',wrap:true,lineSpacingMultiple:1.4});
-        });
-        footer();break;
-
-      case 'kpi-scorecard':{
-        s.addText('KEY METRICS',{x:0.5,y:0.3,w:12,h:0.35,fontSize:10,bold:true,color:BLUE,fontFace:'Arial',charSpacing:2});
-        s.addText(S+' — '+E,{x:0.5,y:0.7,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
+      case 'exec-summary':{
+        addHeader(s);addFooter(s,slideNum++);
+        s.addText('EXECUTIVE SUMMARY',{x:0.35,y:0.75,w:12,h:0.4,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
+        s.addText(S+' — '+E,{x:0.35,y:1.2,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
         const t=ytData.totals||{};
         const kpis=[
-          ['Views',fmt(t.views),BLUE],['Watch hrs',t.mins?fmt(Math.round(t.mins/60)):'—','AA66FF'],
-          ['Revenue',t.rev!=null?fmtEur(t.rev):'—',GREEN],['Subscribers',fmt(t.subs),BLUE],
+          ['Views',fmt(t.views),P],
+          ['Watch Hours',t.mins?fmt(Math.round(t.mins/60)):'—','9966FF'],
+          ['Est. Revenue',t.rev!=null?fmtEur(t.rev):'—','22CC88'],
+          ['Subscribers',fmt(t.subs),A],
         ];
         kpis.forEach(([l,v,c],i)=>{
-          const x=0.5+(i%2)*6.4,y=1.3+Math.floor(i/2)*2.5;
-          s.addShape(pptx.ShapeType.rect,{x,y,w:5.9,h:2.2,fill:{color:SURFACE},line:{color:'1E1E2E',w:0.5}});
-          s.addText(l.toUpperCase(),{x:x+0.25,y:y+0.2,w:5.4,h:0.3,fontSize:9,color:MUTED,fontFace:'Arial',bold:true,charSpacing:1.5});
-          s.addText(v,{x:x+0.25,y:y+0.55,w:5.4,h:1.2,fontSize:34,bold:true,color:c||TEXT,fontFace:'Arial'});
+          const x=0.35+(i%2)*6.4,y=1.6+Math.floor(i/2)*2.3;
+          s.addShape(pptx.ShapeType.rect,{x,y,w:6.0,h:2.1,fill:{color:'0A0A0A'},line:{color:c,w:1}});
+          s.addShape(pptx.ShapeType.rect,{x,y,w:6.0,h:0.07,fill:{color:c}});
+          s.addText(l.toUpperCase(),{x:x+0.2,y:y+0.2,w:5.6,h:0.28,fontSize:9,color:MUTED,fontFace:'Arial',bold:true,charSpacing:1.5});
+          s.addText(v,{x:x+0.2,y:y+0.55,w:5.6,h:1.1,fontSize:34,bold:true,color:TEXT,fontFace:'Arial'});
         });
         break;}
 
-      case 'top-videos':{
-        s.addText('TOP PERFORMING VIDEOS',{x:0.5,y:0.3,w:12,h:0.35,fontSize:10,bold:true,color:BLUE,fontFace:'Arial',charSpacing:2});
-        const vids=(ytData.topEnriched||[]).slice(0,8);
-        if(vids.length){
-          const rows=[['#','Title','Views','Watch Hrs','Revenue']];
-          vids.forEach((v,i)=>rows.push([String(i+1),v.sn?.title?.slice(0,45)||v.id,fmt(v.m[0]),v.m[1]?fmt(Math.round(v.m[1]/60)):'—',v.m[2]!=null?fmtEur(v.m[2]):'—']));
-          s.addTable(rows,{x:0.5,y:0.85,w:12.3,colW:[0.4,6.5,1.6,1.6,1.6],
-            color:MUTED,fontSize:10,fontFace:'Arial',
-            border:{type:'solid',color:'1A1A2A',pt:0.5},
-            fill:{color:SURFACE},
-            headerRow:{fill:{color:'0A0A14'},color:TEXT,bold:true}});
-        } else {
-          s.addText('No video data — load the Analytics tab first',{x:0.5,y:3,w:12,h:1,fontSize:13,color:MUTED,fontFace:'Arial',align:'center'});
-        }
-        footer();break;}
-
-      case 'episode-table':{
-        const epTitle=`${slide.campName||'Campaign'} / ${slide.subName||'Sub-campaign'}`;
-        s.addText('EPISODE BREAKDOWN',{x:0.5,y:0.3,w:12,h:0.35,fontSize:10,bold:true,color:BLUE,fontFace:'Arial',charSpacing:2});
-        s.addText(epTitle,{x:0.5,y:0.7,w:12,h:0.3,fontSize:14,bold:true,color:TEXT,fontFace:'Arial'});
+      case 'ep-table':{
+        addHeader(s);addFooter(s,slideNum++);
+        const epTitle=(slide.campName||'')+(slide.subName?' / '+slide.subName:'');
+        s.addText(epTitle,{x:0.35,y:0.75,w:12,h:0.4,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
+        s.addText((slide.window||'First 28 days')+' · Episode results',{x:0.35,y:1.2,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
         const eps=slide.campName&&slide.subName?vidCampaigns[slide.campName]?.subs[slide.subName]?.episodes||[]:[];
         if(eps.length){
+          const wk=slide.windowKey||'w28';
           const rows=[['Ep.','Title','Published','Views','Watch Hrs','Revenue']];
           eps.forEach((ep,i)=>{
             const imp=ytImportedRows.find(r=>r.id===ep.videoId);
             const ac=ytVideoCache[ep.videoId];
-            const d=ac?.wall||ac?.w28||imp;
-            rows.push(['Ep.'+(i+1),ep.label||imp?.title||ac?.title||ep.videoId.slice(0,20),
+            const d=ac?.[wk]||imp;
+            rows.push([
+              'Ep.'+(i+1),
+              (ep.label||imp?.title||ac?.title||ep.videoId).slice(0,38),
               (imp?.publishDate||ac?.publishDate)?new Date(imp?.publishDate||ac?.publishDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—',
-              d?.views!=null?fmt(d.views):'—',d?.watchHrs!=null?fmt(Math.round(d.watchHrs)):'—',
-              d?.revenue!=null?'€'+d.revenue.toFixed(2):'—']);
+              d?.views!=null?fmt(d.views):'—',
+              d?.watchHrs!=null?fmt(Math.round(d.watchHrs)):'—',
+              d?.revenue!=null?'€'+d.revenue.toFixed(2):'—',
+            ]);
           });
-          s.addTable(rows,{x:0.5,y:1.2,w:12.3,colW:[0.6,4.5,1.8,1.6,1.6,1.6],
+          s.addTable(rows,{x:0.35,y:1.55,w:12.6,colW:[0.7,5.2,1.8,1.5,1.5,1.5],
             color:MUTED,fontSize:10,fontFace:'Arial',
-            border:{type:'solid',color:'1A1A2A',pt:0.5},
-            fill:{color:SURFACE},
-            headerRow:{fill:{color:'0A0A14'},color:TEXT,bold:true}});
+            border:{type:'solid',color:'1A1A1A',pt:0.5},
+            fill:{color:'080808'},
+            headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
         }
-        footer();break;}
+        break;}
+
+      case 'ep-chart':{
+        addHeader(s);addFooter(s,slideNum++);
+        const metricKey=slide.metric==='Watch Hours'?'watchHrs':slide.metric==='Revenue'?'revenue':'views';
+        const wk=slide.windowKey||'w28';
+        const getEps=(cn)=>{
+          const subs=vidCampaigns[cn]?.subs||{};
+          const allEps=[];
+          Object.values(subs).forEach(sub=>(sub.episodes||[]).forEach(ep=>allEps.push(ep)));
+          return allEps;
+        };
+        const epsA=slide.campA?getEps(slide.campA):[];
+        const epsB=slide.campB?getEps(slide.campB):[];
+        const maxEps=Math.max(epsA.length,epsB.length,1);
+        const getVal=(ep)=>{
+          const ac=ytVideoCache[ep.videoId];const imp=ytImportedRows.find(r=>r.id===ep.videoId);
+          const d=ac?.[wk]||imp;return d?.[metricKey]??null;
+        };
+        const valsA=epsA.map(getVal);
+        const valsB=epsB.map(getVal);
+        const allVals=[...valsA,...valsB].filter(v=>v!=null);
+        const maxVal=allVals.length?Math.max(...allVals)*1.15:1;
+        // Chart area
+        const cx=0.5,cy=0.9,cw=12.3,ch=5.5;
+        s.addShape(pptx.ShapeType.rect,{x:cx,y:cy,w:cw,h:ch,fill:{color:'080808'},line:{color:'1A1A1A',w:0.5}});
+        s.addText((slide.metric||'Views').toUpperCase()+' BY EPISODE',{x:cx,y:0.65,w:cw,h:0.25,fontSize:10,bold:true,color:TEXT,fontFace:'Arial',charSpacing:1.5});
+        s.addText((slide.window||'First 28 days'),{x:cx,y:0.65,w:cw,h:0.25,fontSize:9,color:MUTED,fontFace:'Arial',align:'right'});
+        // Draw lines
+        [[valsA,P,slide.campA],[valsB,A,slide.campB]].forEach(([vals,col,label])=>{
+          if(!vals.length||!col||!label)return;
+          const pts=vals.map((v,i)=>({
+            x:cx+0.3+i*(cw-0.6)/(maxEps-1||1),
+            y:cy+ch-0.2-(v!=null?(v/maxVal)*(ch-0.4):0)
+          }));
+          // Draw line segments
+          for(let i=0;i<pts.length-1;i++){
+            if(vals[i]!=null&&vals[i+1]!=null){
+              // pptxgenjs doesn't support true SVG lines easily, use thin rect approximation
+              const dx=pts[i+1].x-pts[i].x,dy=pts[i+1].y-pts[i].y;
+              const len=Math.sqrt(dx*dx+dy*dy);
+              const angle=Math.atan2(dy,dx)*180/Math.PI;
+              s.addShape(pptx.ShapeType.rect,{x:pts[i].x,y:pts[i].y-0.015,w:len,h:0.03,fill:{color:col},rotate:angle});
+            }
+          }
+          // Dots
+          pts.forEach((pt,i)=>{if(vals[i]!=null)s.addShape(pptx.ShapeType.ellipse,{x:pt.x-0.06,y:pt.y-0.06,w:0.12,h:0.12,fill:{color:col}});});
+          // Label
+          if(pts.length){
+            const last=pts[pts.length-1];
+            s.addText(label.slice(0,20),{x:last.x+0.1,y:last.y-0.12,w:2,h:0.25,fontSize:8,color:col,fontFace:'Arial'});
+          }
+        });
+        // X axis labels
+        Array.from({length:maxEps}).forEach((_,i)=>{
+          const x=cx+0.3+i*(cw-0.6)/(maxEps-1||1);
+          s.addText('Ep.'+(i+1),{x:x-0.25,y:cy+ch+0.05,w:0.5,h:0.2,fontSize:7,color:MUTED,fontFace:'Arial',align:'center'});
+        });
+        break;}
 
       case 'comparison':{
-        s.addText('COMPARISON',{x:0.5,y:0.3,w:12,h:0.35,fontSize:10,bold:true,color:BLUE,fontFace:'Arial',charSpacing:2});
-        const cA=slide.campA||'',cB=slide.campB||'';
-        s.addText(cA,{x:0.5,y:0.7,w:5.9,h:0.4,fontSize:16,bold:true,color:BLUE,fontFace:'Arial'});
-        s.addText('vs',{x:6.5,y:0.7,w:0.8,h:0.4,fontSize:14,color:MUTED,fontFace:'Arial',align:'center'});
-        s.addText(cB,{x:7.4,y:0.7,w:5.5,h:0.4,fontSize:16,bold:true,color:ACCENT2,fontFace:'Arial'});
-        // Build comparison table from vidCampaigns all-time data
-        const getEpData=(cn,w)=>{
-          const subs=vidCampaigns[cn]?.subs||{};
-          let total={views:0,hrs:0,rev:0,eps:0};
-          Object.values(subs).forEach(sub=>{(sub.episodes||[]).forEach(ep=>{
-            const d=ytVideoCache[ep.videoId]?.[w]||ytImportedRows.find(r=>r.id===ep.videoId);
-            if(d){total.views+=d.views||0;total.hrs+=d.watchHrs||0;total.rev+=d.revenue||0;}
-            total.eps++;
-          });});
-          return total;
+        addHeader(s);addFooter(s,slideNum++);
+        s.addText('COMPARISON',{x:0.35,y:0.75,w:12,h:0.35,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
+        s.addText((slide.window||'First 28 days'),{x:0.35,y:1.18,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
+        s.addText(slide.campA||'',{x:0.35,y:1.55,w:5.9,h:0.35,fontSize:14,bold:true,color:'#'+P,fontFace:'Arial'});
+        s.addText('vs',{x:6.4,y:1.55,w:0.7,h:0.35,fontSize:12,color:MUTED,fontFace:'Arial',align:'center'});
+        s.addText(slide.campB||'',{x:7.2,y:1.55,w:5.5,h:0.35,fontSize:14,bold:true,color:'#'+A,fontFace:'Arial'});
+        const wk=slide.windowKey||'w28';
+        const sumCamp=(cn)=>{
+          let views=0,hrs=0,rev=0,eps=0;
+          Object.values(vidCampaigns[cn]?.subs||{}).forEach(sub=>{
+            (sub.episodes||[]).forEach(ep=>{
+              const ac=ytVideoCache[ep.videoId];const imp=ytImportedRows.find(r=>r.id===ep.videoId);
+              const d=ac?.[wk]||imp;
+              if(d){views+=d.views||0;hrs+=d.watchHrs||0;rev+=d.revenue||0;}
+              eps++;
+            });
+          });
+          return{views,hrs,rev,eps};
         };
-        const dA=getEpData(cA,'wall'),dB=getEpData(cB,'wall');
-        const rows=[['Metric',cA,cB],
+        const dA=slide.campA?sumCamp(slide.campA):{views:0,hrs:0,rev:0,eps:0};
+        const dB=slide.campB?sumCamp(slide.campB):{views:0,hrs:0,rev:0,eps:0};
+        const rows=[
+          ['Metric',slide.campA||'A',slide.campB||'B'],
           ['Episodes',String(dA.eps),String(dB.eps)],
           ['Total Views',fmt(dA.views),fmt(dB.views)],
-          ['Watch Hrs',fmt(Math.round(dA.hrs)),fmt(Math.round(dB.hrs))],
-          ['Revenue','€'+dA.rev.toFixed(2),'€'+dB.rev.toFixed(2)]];
-        s.addTable(rows,{x:0.5,y:1.3,w:8,colW:[2.5,2.5,2.5],
+          ['Watch Hours',fmt(Math.round(dA.hrs)),fmt(Math.round(dB.hrs))],
+          ['Revenue','€'+dA.rev.toFixed(2),'€'+dB.rev.toFixed(2)],
+          ['Avg Views/Ep',dA.eps?fmt(Math.round(dA.views/dA.eps)):'—',dB.eps?fmt(Math.round(dB.views/dB.eps)):'—'],
+        ];
+        s.addTable(rows,{x:0.35,y:2.05,w:9,colW:[3,3,3],
           color:MUTED,fontSize:11,fontFace:'Arial',
-          border:{type:'solid',color:'1A1A2A',pt:0.5},
-          fill:{color:SURFACE},
-          headerRow:{fill:{color:'0A0A14'},color:TEXT,bold:true}});
-        footer();break;}
+          border:{type:'solid',color:'1A1A1A',pt:0.5},
+          fill:{color:'080808'},
+          headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
+        break;}
 
       case 'live-event':{
+        addHeader(s);addFooter(s,slideNum++);
         const stop=slide.stopKey&&campaigns[slide.stopKey];
-        if(!stop){s.addText('No stop selected',{x:0.5,y:3,w:12,h:1,fontSize:13,color:MUTED,fontFace:'Arial',align:'center'});break;}
-        s.addText('LIVE EVENT',{x:0.5,y:0.3,w:12,h:0.35,fontSize:10,bold:true,color:ACCENT,fontFace:'Arial',charSpacing:2});
-        s.addText(stop.stop+' '+stop.year,{x:0.5,y:0.7,w:12,h:0.5,fontSize:22,bold:true,color:TEXT,fontFace:'Arial'});
-        s.addText((stop.series||'EPT'),{x:0.5,y:1.25,w:4,h:0.3,fontSize:11,color:MUTED,fontFace:'Arial'});
-        const rows=[['Tournament','Day','Avg Viewers','Peak Viewers','Views','Hours']];
+        if(!stop){s.addText('No stop selected',{x:0.35,y:3,w:12,h:1,fontSize:13,color:MUTED,fontFace:'Arial',align:'center'});break;}
+        s.addText('LIVE EVENT',{x:0.35,y:0.75,w:12,h:0.25,fontSize:10,bold:true,color:'#'+P,fontFace:'Arial',charSpacing:2});
+        s.addText(stop.stop+' '+stop.year,{x:0.35,y:1.05,w:12,h:0.5,fontSize:20,bold:true,color:TEXT,fontFace:'Arial'});
+        s.addText(stop.series||'',{x:0.35,y:1.6,w:4,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
+        const rows=[['Tournament','Day','Avg Viewers','Peak Viewers','Views','Hours Watched']];
         Object.keys(stop.tournaments).forEach(tn=>{
           Object.keys(stop.tournaments[tn].days).sort((a,b)=>dayOrder(a)-dayOrder(b)).forEach(day=>{
             const m=getDayMetrics(slide.stopKey,tn,day);
-            rows.push([tn,day,m.twAvgV!=null?fmt(m.twAvgV):'—',m.twPeak!=null?fmt(m.twPeak):'—',
+            rows.push([tn,day,
+              m.twAvgV!=null?fmt(m.twAvgV):'—',m.twPeak!=null?fmt(m.twPeak):'—',
               mergeSum([m.twViews,m.ythViews,m.ytvViews])!=null?fmt(mergeSum([m.twViews,m.ythViews,m.ytvViews])):'—',
-              mergeSum([m.twHrs,m.ythHrs,m.ytvHrs])!=null?fmt(Math.round(mergeSum([m.twHrs,m.ythHrs,m.ytvHrs]))):'—']);
+              mergeSum([m.twHrs,m.ythHrs,m.ytvHrs])!=null?fmt(Math.round(mergeSum([m.twHrs,m.ythHrs,m.ytvHrs]))):'—',
+            ]);
           });
         });
-        if(rows.length>1)s.addTable(rows,{x:0.5,y:1.7,w:12.3,colW:[2.8,1.4,2,2,2,2],
+        if(rows.length>1)s.addTable(rows,{x:0.35,y:1.95,w:12.6,colW:[2.8,1.4,2,2,2,2.2],
           color:MUTED,fontSize:10,fontFace:'Arial',
-          border:{type:'solid',color:'1A1A2A',pt:0.5},
-          fill:{color:SURFACE},
-          headerRow:{fill:{color:'0A0A14'},color:TEXT,bold:true}});
-        footer();break;}
+          border:{type:'solid',color:'1A1A1A',pt:0.5},fill:{color:'080808'},
+          headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
+        break;}
 
-      case 'views-chart':
-      case 'watch-chart':
-      case 'revenue-chart':
-        s.addText(slide.type==='views-chart'?'VIEWS OVER TIME':slide.type==='watch-chart'?'WATCH TIME':'REVENUE',
-          {x:0.5,y:0.3,w:12,h:0.35,fontSize:10,bold:true,color:BLUE,fontFace:'Arial',charSpacing:2});
-        s.addText(S+' — '+E,{x:0.5,y:0.7,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
-        s.addShape(pptx.ShapeType.rect,{x:0.5,y:1.1,w:12.3,h:5.5,fill:{color:SURFACE},line:{color:'1A1A2A',w:0.5}});
-        s.addText('Chart: open the dashboard and screenshot this chart to add it as an image slide',
-          {x:0.5,y:3.5,w:12.3,h:1,fontSize:11,color:'333344',fontFace:'Arial',align:'center',italic:true});
-        footer();break;
+      case 'top-videos':{
+        addHeader(s);addFooter(s,slideNum++);
+        s.addText('TOP PERFORMING VIDEOS',{x:0.35,y:0.75,w:12,h:0.35,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
+        s.addText(S+' — '+E,{x:0.35,y:1.18,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
+        const vids=(ytData.topEnriched||[]).slice(0,8);
+        if(vids.length){
+          const rows=[['#','Title','Views','Watch Hrs','Revenue']];
+          vids.forEach((v,i)=>rows.push([String(i+1),(v.sn?.title||v.id).slice(0,45),fmt(v.m[0]),v.m[1]?fmt(Math.round(v.m[1]/60)):'—',v.m[2]!=null?fmtEur(v.m[2]):'—']));
+          s.addTable(rows,{x:0.35,y:1.55,w:12.6,colW:[0.4,6.6,1.6,1.6,1.6],
+            color:MUTED,fontSize:10,fontFace:'Arial',
+            border:{type:'solid',color:'1A1A1A',pt:0.5},fill:{color:'080808'},
+            headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
+        } else {
+          s.addText('Load the Analytics tab first to populate top videos',{x:0.35,y:3,w:12,h:1,fontSize:12,color:MUTED,fontFace:'Arial',align:'center'});
+        }
+        break;}
 
-      default:
-        s.addText(slide.title||SLIDE_TYPES.find(t=>t.id===slide.type)?.label||'Slide',
-          {x:0.5,y:0.3,w:12,h:0.5,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
+      case 'deep-dive':{
+        addHeader(s);addFooter(s,slideNum++);
+        s.addText(slide.heading||'Deep Dive',{x:0.35,y:0.75,w:12,h:0.4,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
+        if(slide.imageData){
+          s.addImage({data:slide.imageData,x:0.35,y:1.25,w:7.2,h:4.5,sizing:{type:'contain',w:7.2,h:4.5}});
+        } else {
+          s.addShape(pptx.ShapeType.rect,{x:0.35,y:1.25,w:7.2,h:4.5,fill:{color:'080808'},line:{color:'1A1A1A',w:0.5}});
+          s.addText('[ Screenshot / image ]',{x:0.35,y:3.2,w:7.2,h:0.5,fontSize:11,color:'222233',fontFace:'Arial',align:'center',italic:true});
+        }
+        if(slide.commentary){
+          s.addText(slide.commentary,{x:7.8,y:1.25,w:5.2,h:4.5,fontSize:11,color:'CCCCDD',fontFace:'Arial',valign:'top',wrap:true,lineSpacingMultiple:1.5});
+        }
+        break;}
+
+      case 'learnings':{
+        addHeader(s);addFooter(s,slideNum++);
+        s.addText('LEARNINGS & RECOMMENDATIONS',{x:0.35,y:0.75,w:12,h:0.4,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
+        (slide.points||[]).slice(0,4).forEach((p,i)=>{
+          const col=i<2?0:6.5,row=i%2;
+          const x=col+0.35,y=1.35+row*2.7;
+          s.addShape(pptx.ShapeType.rect,{x,y,w:0.28,h:0.28,fill:{color:A},rounding:true});
+          s.addText(String(i+1),{x,y,w:0.28,h:0.28,fontSize:9,bold:true,color:'000000',fontFace:'Arial',align:'center',valign:'middle'});
+          s.addText(p.heading,{x:x+0.38,y:y,w:5.7,h:0.32,fontSize:12,bold:true,color:TEXT,fontFace:'Arial'});
+          if(p.tag){
+            s.addShape(pptx.ShapeType.rect,{x:x+0.38,y:y+0.38,w:Math.min(p.tag.length*0.09+0.3,2),h:0.22,fill:{color:P+'44'},rounding:true});
+            s.addText(p.tag,{x:x+0.38,y:y+0.38,w:Math.min(p.tag.length*0.09+0.3,2),h:0.22,fontSize:8,color:'#'+P,fontFace:'Arial',align:'center'});
+          }
+          s.addText(p.body||'',{x:x+0.38,y:y+0.7,w:5.7,h:1.7,fontSize:10,color:MUTED,fontFace:'Arial',wrap:true,lineSpacingMultiple:1.45});
+        });
+        break;}
+
+      case 'look-ahead':{
+        addHeader(s);addFooter(s,slideNum++);
+        s.addText('LOOK AHEAD',{x:0.35,y:0.75,w:5,h:0.35,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
+        s.addText('Upcoming content',{x:0.35,y:1.18,w:5,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
+        s.addShape(pptx.ShapeType.rect,{x:0.35,y:1.2,w:0.05,h:0.25,fill:{color:A}});
+        if(slide.imageData){
+          s.addImage({data:slide.imageData,x:7,y:0.65,w:6,h:4,sizing:{type:'contain',w:6,h:4}});
+        }
+        s.addText(slide.title||'',{x:0.35,y:2,w:6.2,h:0.8,fontSize:22,bold:true,color:TEXT,fontFace:'Arial'});
+        if(slide.date)s.addText(new Date(slide.date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),{x:0.35,y:2.9,w:6,h:0.3,fontSize:12,color:'#'+P,fontFace:'Arial',bold:true});
+        if(slide.notes)s.addText(slide.notes,{x:0.35,y:3.35,w:6.2,h:2.5,fontSize:11,color:MUTED,fontFace:'Arial',wrap:true,lineSpacingMultiple:1.5});
+        break;}
+
+      case 'context':{
+        addHeader(s);addFooter(s,slideNum++);
+        s.addText('CONTEXT & TRENDS',{x:0.35,y:0.75,w:12,h:0.4,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
+        if(slide.content)s.addText(slide.content,{x:0.35,y:1.3,w:12.3,h:5.5,fontSize:13,color:'CCCCDD',fontFace:'Arial',valign:'top',wrap:true,lineSpacingMultiple:1.6});
+        break;}
+
+      default:{
+        addHeader(s);addFooter(s,slideNum++);
+        s.addText(SLIDE_TYPES.find(t=>t.id===slide.type)?.label||'Slide',{x:0.35,y:0.75,w:12,h:0.5,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
+      }
     }
   }
 
-  const fileName='YTCommand_Report_'+new Date().toISOString().slice(0,10)+'.pptx';
+  const fileName=(rptSettings.name||'Report').replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.pptx';
   pptx.writeFile({fileName});
 }
+
 
 // ══════════════════════════════════════════════
 // SETTINGS
