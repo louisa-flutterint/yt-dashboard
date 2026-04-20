@@ -407,42 +407,49 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
   <!-- ── REPORT BUILDER PAGE ── -->
   <div class="page" id="page-report">
 
-    <!-- Report Settings Bar -->
+    <!-- Settings bar -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:12px;align-items:end;">
+      <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:12px;align-items:end;margin-bottom:12px;">
         <div>
           <div class="field-label" style="margin-bottom:4px;">Report name</div>
-          <input type="text" id="rpt-name" value="PokerStars YouTube Report" style="width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font-body);" oninput="rptSettings.name=this.value;renderReportBuilder();">
+          <input type="text" id="rpt-name" value="PokerStars YouTube Report"
+            style="width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font-body);"
+            oninput="rptSettings.name=this.value;renderReportBuilder();">
         </div>
         <div>
           <div class="field-label" style="margin-bottom:4px;">Campaign / series</div>
-          <input type="text" id="rpt-campaign" value="" placeholder="e.g. EPT Barcelona 2025" style="width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font-body);" oninput="rptSettings.campaign=this.value;">
+          <input type="text" id="rpt-campaign" placeholder="e.g. EPT Barcelona 2025"
+            style="width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font-body);"
+            oninput="rptSettings.campaign=this.value;">
         </div>
         <div>
-          <div class="field-label" style="margin-bottom:4px;">Primary colour</div>
+          <div class="field-label" style="margin-bottom:4px;">Primary</div>
           <div style="display:flex;align-items:center;gap:6px;">
-            <input type="color" id="rpt-primary" value="#003087" oninput="rptSettings.primary=this.value;" style="width:36px;height:36px;border:none;background:none;cursor:pointer;padding:0;">
-            <span id="rpt-primary-label" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">#003087</span>
+            <input type="color" id="rpt-primary" value="#003087"
+              style="width:36px;height:36px;border:none;background:none;cursor:pointer;padding:0;"
+              oninput="rptSettings.primary=this.value;document.getElementById('rpt-primary-hex').textContent=this.value;">
+            <span id="rpt-primary-hex" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">#003087</span>
           </div>
         </div>
         <div>
-          <div class="field-label" style="margin-bottom:4px;">Accent colour</div>
+          <div class="field-label" style="margin-bottom:4px;">Accent</div>
           <div style="display:flex;align-items:center;gap:6px;">
-            <input type="color" id="rpt-accent" value="#E8112D" oninput="rptSettings.accent=this.value;" style="width:36px;height:36px;border:none;background:none;cursor:pointer;padding:0;">
-            <span id="rpt-accent-label" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">#E8112D</span>
+            <input type="color" id="rpt-accent" value="#E8112D"
+              style="width:36px;height:36px;border:none;background:none;cursor:pointer;padding:0;"
+              oninput="rptSettings.accent=this.value;document.getElementById('rpt-accent-hex').textContent=this.value;">
+            <span id="rpt-accent-hex" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">#E8112D</span>
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap;">
-        <div style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);">
-          Saved templates:
-          <select id="rpt-template-select" onchange="loadRptTemplate(this.value)" style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;font-family:var(--font-body);">
-            <option value="">— select —</option>
-            <option value="ept">EPT</option>
-            <option value="bgot">Big Game On Tour</option>
-            <option value="irish">Irish Open</option>
-          </select>
-        </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:12px;color:var(--muted);">Template:</span>
+        <select id="rpt-template-select" onchange="loadRptTemplate(this.value)"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;font-family:var(--font-body);">
+          <option value="">— select —</option>
+          <option value="ept">EPT</option>
+          <option value="bgot">Big Game On Tour</option>
+          <option value="irish">Irish Open</option>
+        </select>
         <button class="btn-sm" onclick="saveRptTemplate()">💾 Save template</button>
         <div style="margin-left:auto;display:flex;gap:8px;">
           <button class="btn-sm" onclick="addReportSlide()">+ Add slide</button>
@@ -457,108 +464,61 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
     <div id="report-empty" style="text-align:center;padding:60px;color:var(--muted);">
       <div style="font-size:36px;margin-bottom:16px;">📑</div>
       <div style="font-size:15px;font-weight:500;margin-bottom:8px;">No slides yet</div>
-      <div style="font-size:13px;margin-bottom:24px;">Configure your report settings above then add slides</div>
+      <div style="font-size:13px;margin-bottom:24px;">Configure settings above then add slides</div>
       <button class="btn-primary" style="width:auto;padding:10px 24px;" onclick="addReportSlide()">+ Add first slide</button>
     </div>
 
-    <!-- Slide picker modal -->
+    <!-- Slide type picker modal -->
     <div class="modal-overlay" id="slide-picker-modal" style="z-index:800;">
-      <div class="modal" style="max-width:660px;">
-        <div class="modal-title">Add a slide</div>
-        <div id="slide-picker-grid" style="margin-bottom:16px;"></div>
-        <div class="modal-actions">
-          <button class="btn-cancel" onclick="closeModal('slide-picker-modal')">Cancel</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Generic text/AI editor modal -->
-    <div class="modal-overlay" id="slide-text-modal" style="z-index:700;">
       <div class="modal" style="max-width:680px;">
-        <div class="modal-title" id="slide-text-modal-title">Edit slide</div>
-        <div id="slide-editor-ai-bar" style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
-          <button class="btn-sm" id="slide-gen-btn" onclick="generateSlideAI()" style="background:var(--accent);border-color:var(--accent);color:white;">⚡ Generate with AI</button>
-          <span style="font-size:12px;color:var(--muted);">or write below</span>
+        <div class="modal-title">Add slide</div>
+        <div id="slide-picker-grid" style="margin-bottom:16px;"></div>
+        <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('slide-picker-modal')">Cancel</button></div>
+      </div>
+    </div>
+
+    <!-- Block type picker modal -->
+    <div class="modal-overlay" id="block-picker-modal" style="z-index:810;">
+      <div class="modal" style="max-width:660px;">
+        <div class="modal-title">Add block to slide</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Choose a block type, then set its column width</div>
+        <div id="block-picker-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;"></div>
+        <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:4px;">
+          <div class="field-label" style="margin-bottom:8px;">Column width</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;"><input type="radio" name="block-col" value="full" checked> Full width</label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;"><input type="radio" name="block-col" value="half"> Half (left/right)</label>
+            <label style="display:flex;align-items:center;gap=6px;cursor:pointer;font-size:12px;"><input type="radio" name="block-col" value="third"> Third (1 of 3)</label>
+          </div>
         </div>
-        <textarea id="slide-text-editor" style="width:100%;min-height:260px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.7;outline:none;resize:vertical;"></textarea>
-        <input type="hidden" id="slide-edit-idx">
-        <div class="modal-actions" style="margin-top:12px;">
-          <button class="btn-cancel" onclick="closeModal('slide-text-modal')">Cancel</button>
-          <button class="btn-confirm" onclick="saveSlideText()">Save</button>
+        <input type="hidden" id="block-picker-slide-idx">
+        <div class="modal-actions" style="margin-top:12px;"><button class="btn-cancel" onclick="closeModal('block-picker-modal')">Cancel</button></div>
+      </div>
+    </div>
+
+    <!-- Block editor modal -->
+    <div class="modal-overlay" id="block-editor-modal" style="z-index:820;">
+      <div class="modal" style="max-width:700px;max-height:90vh;overflow-y:auto;">
+        <div class="modal-title" id="block-editor-title">Edit block</div>
+        <div id="block-editor-body" style="margin-bottom:16px;"></div>
+        <input type="hidden" id="block-editor-slide-idx">
+        <input type="hidden" id="block-editor-block-idx">
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeModal('block-editor-modal')">Cancel</button>
+          <button class="btn-confirm" onclick="saveBlockEditor()">Save</button>
         </div>
       </div>
     </div>
 
-    <!-- Meta fields editor (cover, divider, look-ahead etc) -->
-    <div class="modal-overlay" id="slide-meta-modal" style="z-index:700;">
-      <div class="modal" style="max-width:560px;">
+    <!-- Meta editor (cover/divider) -->
+    <div class="modal-overlay" id="slide-meta-modal" style="z-index:800;">
+      <div class="modal" style="max-width:520px;">
         <div class="modal-title" id="slide-meta-title">Edit slide</div>
         <div id="slide-meta-fields"></div>
         <input type="hidden" id="slide-meta-idx">
         <div class="modal-actions" style="margin-top:12px;">
           <button class="btn-cancel" onclick="closeModal('slide-meta-modal')">Cancel</button>
           <button class="btn-confirm" onclick="saveSlideMetaModal()">Save</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Learnings editor modal -->
-    <div class="modal-overlay" id="learnings-modal" style="z-index:700;">
-      <div class="modal" style="max-width:620px;">
-        <div class="modal-title">Learnings &amp; Recommendations</div>
-        <div id="learnings-list" style="display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;margin-bottom:12px;"></div>
-        <button class="btn-sm" onclick="addLearningPoint()">+ Add point</button>
-        <div class="modal-actions" style="margin-top:12px;">
-          <button class="btn-cancel" onclick="closeModal('learnings-modal')">Cancel</button>
-          <button class="btn-confirm" id="learnings-save-btn" onclick="saveLearnings()">Save</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Deep dive / image slide editor -->
-    <div class="modal-overlay" id="deepdive-modal" style="z-index:700;">
-      <div class="modal" style="max-width:680px;">
-        <div class="modal-title" id="deepdive-modal-title">Deep Dive slide</div>
-        <div class="field-label" style="margin-bottom:4px;">Slide heading</div>
-        <input type="text" id="dd-heading" placeholder="e.g. Retention Analysis — Episode 1" style="width:100%;margin-bottom:12px;">
-        <div class="field-label" style="margin-bottom:4px;">Screenshot / image</div>
-        <div id="dd-image-preview" style="margin-bottom:8px;min-height:60px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('dd-image-input').click()">
-          <span style="font-size:12px;color:var(--muted);">Click to upload image (screenshot, chart etc)</span>
-        </div>
-        <input type="file" id="dd-image-input" accept="image/*" style="display:none;" onchange="handleDdImage(this)">
-        <div class="field-label" style="margin-bottom:4px;margin-top:8px;">Commentary</div>
-        <div style="display:flex;gap:8px;margin-bottom:8px;">
-          <button class="btn-sm" onclick="generateDdAI()" style="background:var(--accent);border-color:var(--accent);color:white;">⚡ Generate with AI</button>
-          <span style="font-size:12px;color:var(--muted);align-self:center;">or write below</span>
-        </div>
-        <textarea id="dd-commentary" placeholder="Your analysis and commentary..." style="width:100%;min-height:140px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.7;outline:none;resize:vertical;"></textarea>
-        <input type="hidden" id="dd-slide-idx">
-        <div class="modal-actions" style="margin-top:12px;">
-          <button class="btn-cancel" onclick="closeModal('deepdive-modal')">Cancel</button>
-          <button class="btn-confirm" onclick="saveDdSlide()">Save</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Look Ahead slide editor -->
-    <div class="modal-overlay" id="lookahead-modal" style="z-index:700;">
-      <div class="modal" style="max-width:560px;">
-        <div class="modal-title">Look Ahead — Upcoming Content</div>
-        <div class="field-label" style="margin-bottom:4px;">Campaign / content title</div>
-        <input type="text" id="la-title" placeholder="e.g. Big Game On Tour S3" style="width:100%;margin-bottom:12px;">
-        <div class="field-label" style="margin-bottom:4px;">Expected publish date</div>
-        <input type="date" id="la-date" style="width:100%;margin-bottom:12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;">
-        <div class="field-label" style="margin-bottom:4px;">Thumbnail image (optional)</div>
-        <div id="la-image-preview" style="margin-bottom:8px;min-height:60px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('la-image-input').click()">
-          <span style="font-size:12px;color:var(--muted);">Click to upload thumbnail</span>
-        </div>
-        <input type="file" id="la-image-input" accept="image/*" style="display:none;" onchange="handleLaImage(this)">
-        <div class="field-label" style="margin-bottom:4px;margin-top:8px;">Notes / expectations</div>
-        <textarea id="la-notes" placeholder="Expected views, key topics, format notes..." style="width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.7;outline:none;resize:vertical;"></textarea>
-        <input type="hidden" id="la-slide-idx">
-        <div class="modal-actions" style="margin-top:12px;">
-          <button class="btn-cancel" onclick="closeModal('lookahead-modal')">Cancel</button>
-          <button class="btn-confirm" onclick="saveLaSlide()">Save</button>
         </div>
       </div>
     </div>
@@ -575,6 +535,8 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
       </div>
     </div>
   </div>
+
+
 
 
   <!-- ── LIVE EVENTS PAGE ── -->
@@ -2903,192 +2865,209 @@ async function loadMonthlyPage(){
 // ═══════════════════════════════════════════════════════
 
 // ── Settings state ──
-let rptSettings = {
-  name: 'PokerStars YouTube Report',
-  campaign: '',
-  primary: '#003087',
-  accent:  '#E8112D',
-};
-let reportSlides = [];
-let _learningsEditIdx = -1;
+// ═══════════════════════════════════════════════════════
+// REPORT BUILDER v3 — canvas slides with multi-block rows
+// ═══════════════════════════════════════════════════════
 
-// ── Slide type catalogue ──
-const SLIDE_TYPES = [
-  // Structure
-  { id:'cover',       icon:'🎯', label:'Cover',                  desc:'Title, campaign, date',          group:'Structure' },
-  { id:'divider',     icon:'📌', label:'Section Divider',        desc:'Numbered section separator',     group:'Structure' },
-  { id:'end',         icon:'🏁', label:'End Slide',              desc:'PokerStars sign-off',            group:'Structure' },
-  // Summary
-  { id:'exec-summary',icon:'📊', label:'Executive Summary',      desc:'4 key KPIs + period',            group:'Summary' },
-  // Data
-  { id:'ep-table',    icon:'🎬', label:'Episode Table',          desc:'Campaign episode results table', group:'Data' },
-  { id:'ep-chart',    icon:'📈', label:'Episode Chart',          desc:'Metric line chart (one metric)', group:'Data' },
-  { id:'comparison',  icon:'⚖️', label:'Comparison Table',      desc:'Two campaigns side by side',     group:'Data' },
-  { id:'live-event',  icon:'🏅', label:'Live Event Stop',        desc:'Tournament day-by-day data',     group:'Data' },
-  { id:'top-videos',  icon:'🏆', label:'Top Videos',             desc:'Best performing videos',         group:'Data' },
-  // Deep Dive
-  { id:'deep-dive',   icon:'🔍', label:'Deep Dive',              desc:'Screenshot + commentary',        group:'Deep Dive' },
-  { id:'learnings',   icon:'💡', label:'Learnings & Recs',       desc:'Numbered insights + tags',       group:'Deep Dive' },
-  // Monthly extras
-  { id:'look-ahead',  icon:'🔭', label:'Look Ahead',             desc:'Upcoming content + date',        group:'Monthly' },
-  { id:'context',     icon:'🌐', label:'Trending / Context',     desc:'External context text slide',    group:'Monthly' },
+let rptSettings = { name:'PokerStars YouTube Report', campaign:'', primary:'#003087', accent:'#E8112D' };
+let reportSlides = [];
+
+// Fixed slide types (no blocks)
+const FIXED_SLIDE_TYPES = [
+  { id:'cover',        icon:'🎯', label:'Cover',             desc:'Title, campaign, date' },
+  { id:'divider',      icon:'📌', label:'Section Divider',   desc:'Numbered section separator' },
+  { id:'exec-summary', icon:'📊', label:'Executive Summary', desc:'4 KPIs from live data' },
+  { id:'end',          icon:'🏁', label:'End Slide',         desc:'PokerStars sign-off' },
 ];
 
-// ── Template presets ──
+// Block types (canvas slides)
+const BLOCK_TYPES = [
+  { id:'text',        icon:'✍️',  label:'Text / AI',         desc:'Free text or AI-generated',  group:'Content' },
+  { id:'kpi-row',     icon:'📊',  label:'KPI Row',           desc:'Inline metric callouts',     group:'Content' },
+  { id:'ep-table',    icon:'📋',  label:'Episode Table',     desc:'Campaign episode results',   group:'Data' },
+  { id:'comparison',  icon:'⚖️',  label:'Comparison Table', desc:'Two campaigns side by side',  group:'Data' },
+  { id:'live-event',  icon:'🏅',  label:'Live Event',        desc:'Tournament day data',        group:'Data' },
+  { id:'top-videos',  icon:'🏆',  label:'Top Videos',        desc:'Best performing videos',     group:'Data' },
+  { id:'ep-chart',    icon:'📈',  label:'Episode Chart',     desc:'Line chart per metric',      group:'Charts' },
+  { id:'image',       icon:'🖼️',  label:'Image / Screenshot',desc:'Upload image or screenshot', group:'Media' },
+  { id:'learnings',   icon:'💡',  label:'Learnings & Recs',  desc:'Numbered points + tags',    group:'Content' },
+  { id:'look-ahead',  icon:'🔭',  label:'Look Ahead',        desc:'Upcoming content + date',   group:'Monthly' },
+];
+
 const RPT_TEMPLATES = {
-  ept:   { name:'EPT Report', campaign:'EPT', primary:'#003087', accent:'#E8112D' },
-  bgot:  { name:'Big Game On Tour Report', campaign:'Big Game On Tour', primary:'#C9A84C', accent:'#FFFFFF' },
-  irish: { name:'Irish Open Report', campaign:'Irish Open', primary:'#009A44', accent:'#FF6600' },
+  ept:   { name:'EPT Report',          campaign:'EPT',            primary:'#003087', accent:'#E8112D' },
+  bgot:  { name:'Big Game On Tour',    campaign:'Big Game On Tour', primary:'#C9A84C', accent:'#FFFFFF' },
+  irish: { name:'Irish Open Report',   campaign:'Irish Open',     primary:'#009A44', accent:'#FF6600' },
 };
 
 function loadRptTemplate(key){
   if(!key)return;
-  const t=RPT_TEMPLATES[key];if(!t)return;
-  rptSettings={...rptSettings,...t};
+  const t=RPT_TEMPLATES[key]; if(!t)return;
+  Object.assign(rptSettings,t);
   document.getElementById('rpt-name').value=t.name;
   document.getElementById('rpt-campaign').value=t.campaign;
   document.getElementById('rpt-primary').value=t.primary;
   document.getElementById('rpt-accent').value=t.accent;
-  document.getElementById('rpt-primary-label').textContent=t.primary;
-  document.getElementById('rpt-accent-label').textContent=t.accent;
+  document.getElementById('rpt-primary-hex').textContent=t.primary;
+  document.getElementById('rpt-accent-hex').textContent=t.accent;
   renderReportBuilder();
 }
 function saveRptTemplate(){
-  const key=prompt('Save as template name (no spaces):');
+  const key=(prompt('Template name (no spaces):')||'').trim().replace(/\s+/g,'_');
   if(!key)return;
   RPT_TEMPLATES[key]={...rptSettings};
   const sel=document.getElementById('rpt-template-select');
   if(!sel.querySelector(`option[value="${key}"]`)){
-    const opt=document.createElement('option');opt.value=key;opt.textContent=key;sel.appendChild(opt);
+    const o=document.createElement('option');o.value=key;o.textContent=key;sel.appendChild(o);
   }
-  sel.value=key;
-  alert(`Template "${key}" saved.`);
+  sel.value=key; alert(`Saved "${key}"`);
 }
 
 // ── Render slide list ──
 function renderReportBuilder(){
-  // Sync colour labels
-  ['primary','accent'].forEach(k=>{
-    const el=document.getElementById('rpt-'+k);
-    const lbl=document.getElementById('rpt-'+k+'-label');
-    if(el&&lbl)lbl.textContent=el.value;
-  });
+  const P=rptSettings.primary, A=rptSettings.accent;
   const container=document.getElementById('report-slides');
   const empty=document.getElementById('report-empty');
   if(!reportSlides.length){container.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  const P=rptSettings.primary,A=rptSettings.accent;
-  container.innerHTML=reportSlides.map((slide,i)=>{
-    const st=SLIDE_TYPES.find(t=>t.id===slide.type)||{icon:'📄',label:slide.type};
+  container.innerHTML=reportSlides.map((slide,si)=>{
+    const isFixed=FIXED_SLIDE_TYPES.find(t=>t.id===slide.type);
+    const stLabel=isFixed?.label||(slide.title||'Canvas slide');
+    const stIcon=isFixed?.icon||'🖼️';
     return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <!-- Slide header -->
       <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);">
-        <span style="font-size:15px;">${st.icon}</span>
-        <span style="font-weight:600;font-size:13px;">${st.label}</span>
-        ${slide.subtitle?`<span style="font-size:11px;color:var(--muted);margin-left:4px;">· ${slide.subtitle}</span>`:''}
-        <span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--muted);background:var(--bg);border-radius:4px;padding:2px 6px;">${i+1}</span>
+        <span style="font-size:15px;">${stIcon}</span>
+        <span style="font-weight:600;font-size:13px;">${stLabel}</span>
+        ${slide.subtitle?`<span style="font-size:11px;color:var(--muted);">· ${slide.subtitle}</span>`:''}
+        <span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--muted);background:var(--bg);padding:2px 7px;border-radius:4px;">${si+1}</span>
         <div style="display:flex;gap:4px;">
-          ${i>0?`<button class="tag-btn" style="padding:2px 7px;font-size:10px;" onclick="moveSlide(${i},-1)">↑</button>`:''}
-          ${i<reportSlides.length-1?`<button class="tag-btn" style="padding:2px 7px;font-size:10px;" onclick="moveSlide(${i},1)">↓</button>`:''}
-          <button class="tag-btn" style="padding:2px 9px;font-size:10px;" onclick="editSlide(${i})">Edit</button>
-          <button class="tag-btn" style="padding:2px 7px;font-size:10px;color:var(--accent);border-color:var(--accent);" onclick="removeSlide(${i})">✕</button>
+          ${si>0?`<button class="tag-btn" style="padding:2px 7px;font-size:10px;" onclick="moveSlide(${si},-1)">↑</button>`:''}
+          ${si<reportSlides.length-1?`<button class="tag-btn" style="padding:2px 7px;font-size:10px;" onclick="moveSlide(${si},1)">↓</button>`:''}
+          ${isFixed?`<button class="tag-btn" style="padding:2px 9px;font-size:10px;" onclick="editFixedSlide(${si})">Edit</button>`:''}
+          <button class="tag-btn" style="padding:2px 7px;font-size:10px;color:var(--accent);border-color:var(--accent);" onclick="removeSlide(${si})">✕</button>
         </div>
       </div>
-      <div style="padding:14px;">${renderSlideThumb(slide,P,A)}</div>
+      <!-- Slide body: fixed preview OR canvas blocks -->
+      ${isFixed
+        ? `<div style="padding:14px;">${renderFixedThumb(slide,P,A)}</div>`
+        : `<div style="padding:12px;">
+            ${renderCanvasBlocks(slide,si,P,A)}
+            <button class="tag-btn" style="margin-top:8px;width:100%;justify-content:center;display:flex;padding:8px;font-size:12px;" onclick="openBlockPicker(${si})">+ Add block</button>
+           </div>`
+      }
     </div>`;
   }).join('');
 }
 
-function renderSlideThumb(slide,P,A){
-  const name=rptSettings.name||'Report';
-  const m='color:var(--muted);font-size:12px;font-style:italic;';
+// ── Fixed slide thumbnails ──
+function renderFixedThumb(slide,P,A){
+  const name=rptSettings.name;
   switch(slide.type){
     case 'cover':
-      return`<div style="background:#000;border-radius:6px;padding:20px 28px;display:flex;flex-direction:column;justify-content:center;min-height:72px;border-left:4px solid ${P};">
-        <div style="font-size:11px;color:${P};text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">PokerStars</div>
+      return`<div style="background:#000;border-radius:6px;padding:20px 24px;border-left:4px solid ${P};min-height:72px;">
+        <div style="font-size:10px;color:${P};text-transform:uppercase;letter-spacing:0.12em;margin-bottom:6px;">POKERSTARS</div>
         <div style="font-size:18px;font-weight:700;color:#fff;">${name}</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;">${rptSettings.campaign||'Campaign'} · ${slide.date||new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'})}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">${rptSettings.campaign||''} · ${slide.date||''}</div>
       </div>`;
     case 'divider':
-      return`<div style="background:#000;border-radius:6px;padding:18px 24px;display:flex;align-items:center;gap:20px;min-height:60px;">
-        <div style="font-size:42px;font-weight:900;color:${P};opacity:0.3;line-height:1;">${slide.sectionNum||'1'}</div>
-        <div style="border-left:3px solid ${A};padding-left:16px;">
-          <div style="font-size:16px;font-weight:700;color:#fff;">${slide.title||'Section'}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">${name}</div>
+      return`<div style="background:#000;border-radius:6px;padding:16px 20px;display:flex;align-items:center;gap:16px;min-height:60px;">
+        <div style="font-size:40px;font-weight:900;color:${P};opacity:0.25;">${slide.sectionNum||'1'}</div>
+        <div style="border-left:3px solid ${A};padding-left:14px;">
+          <div style="font-size:15px;font-weight:700;color:#fff;">${slide.title||'Section'}</div>
         </div>
-      </div>`;
-    case 'end':
-      return`<div style="background:#000;border-radius:6px;padding:20px 28px;text-align:center;min-height:60px;display:flex;align-items:center;justify-content:center;border:1px solid ${P}33;">
-        <div style="font-size:16px;font-weight:700;color:#fff;">PokerStars</div>
       </div>`;
     case 'exec-summary':{
       const t=ytData.totals||{};
-      const kpis=[['Views',fmt(t.views)],['Watch hrs',t.mins?fmt(Math.round(t.mins/60)):'—'],['Revenue',t.rev!=null?fmtEur(t.rev):'—'],['Subscribers',fmt(t.subs)]];
-      return`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">${kpis.map(([l,v])=>`
-        <div style="background:#000;border-radius:6px;padding:10px 12px;border-top:2px solid ${P};">
+      const kpis=[['Views',fmt(t.views),P],['Watch hrs',t.mins?fmt(Math.round(t.mins/60)):'—','9966FF'],['Revenue',t.rev!=null?fmtEur(t.rev):'—','22CC88'],['Subscribers',fmt(t.subs),A]];
+      return`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">${kpis.map(([l,v,c])=>`
+        <div style="background:#000;border-radius:6px;padding:10px 12px;border-top:2px solid ${c};">
           <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">${l}</div>
           <div style="font-size:18px;font-weight:700;color:#fff;">${v}</div>
         </div>`).join('')}</div>`;}
-    case 'ep-table':
-      return slide.campName&&slide.subName
-        ?`<div style="${m}">📋 ${slide.campName} / ${slide.subName} · window: ${slide.window||'First 28 days'}</div>`
-        :`<div style="${m}">Click Edit to select a campaign</div>`;
-    case 'ep-chart':
-      return slide.campA
-        ?`<div style="${m}">📈 ${slide.metric||'Views'} · ${slide.campA}${slide.campB?' vs '+slide.campB:''}</div>`
-        :`<div style="${m}">Click Edit to configure chart</div>`;
-    case 'comparison':
-      return slide.campA&&slide.campB
-        ?`<div style="${m}">⚖️ ${slide.campA} vs ${slide.campB}</div>`
-        :`<div style="${m}">Click Edit to select two campaigns</div>`;
-    case 'live-event':
-      return slide.stopKey&&campaigns[slide.stopKey]
-        ?`<div style="${m}">🏅 ${campaigns[slide.stopKey].stop} ${campaigns[slide.stopKey].year}</div>`
-        :`<div style="${m}">Click Edit to select a stop</div>`;
-    case 'top-videos':
-      return`<div style="${m}">🏆 Top videos · ${S}–${E}</div>`;
-    case 'deep-dive':
-      return`<div style="display:flex;gap:12px;align-items:flex-start;">
-        ${slide.imageData?`<img src="${slide.imageData}" style="width:120px;height:68px;object-fit:cover;border-radius:4px;flex-shrink:0;">`:`<div style="width:120px;height:68px;background:var(--surface2);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:10px;color:var(--muted);">No image</span></div>`}
-        <div style="font-size:12px;"><div style="font-weight:600;color:var(--text);margin-bottom:4px;">${slide.heading||'Deep Dive'}</div><div style="${m}">${slide.commentary?slide.commentary.slice(0,120)+'…':'Click Edit to add commentary'}</div></div>
+    case 'end':
+      return`<div style="background:#000;border-radius:6px;padding:18px 24px;text-align:center;border:1px solid ${P}33;">
+        <div style="font-size:16px;font-weight:700;color:#fff;letter-spacing:0.06em;">POKERSTARS</div>
       </div>`;
-    case 'learnings':
-      return slide.points&&slide.points.length
-        ?`<div style="display:flex;flex-direction:column;gap:6px;">${slide.points.slice(0,3).map((p,i)=>`
-          <div style="display:flex;gap:8px;align-items:flex-start;">
-            <span style="background:${A};color:#000;font-size:9px;font-weight:700;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</span>
-            <div style="font-size:12px;color:var(--text);font-weight:500;">${p.heading}</div>
-          </div>`).join('')}${slide.points.length>3?`<div style="${m}">+${slide.points.length-3} more</div>`:''}</div>`
-        :`<div style="${m}">Click Edit to add learnings</div>`;
-    case 'look-ahead':
-      return`<div style="display:flex;gap:12px;align-items:center;">
-        ${slide.imageData?`<img src="${slide.imageData}" style="width:80px;height:50px;object-fit:cover;border-radius:4px;">`:''}
-        <div><div style="font-size:13px;font-weight:600;color:var(--text);">${slide.title||'Upcoming content'}</div>
-        <div style="font-size:11px;color:var(--muted);">${slide.date||'Date TBC'}</div></div>
-      </div>`;
-    case 'context':
-      return slide.content
-        ?`<div style="font-size:12px;color:var(--text);">${slide.content.slice(0,180)}…</div>`
-        :`<div style="${m}">Click Edit to add context</div>`;
-    default:
-      return`<div style="${m}">Slide will use current dashboard data</div>`;
+    default: return '';
   }
 }
 
-// ── Slide picker ──
+// ── Canvas blocks renderer ──
+function renderCanvasBlocks(slide,si,P,A){
+  if(!slide.blocks||!slide.blocks.length){
+    return`<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--border2);border-radius:8px;">No blocks yet — click "+ Add block" below</div>`;
+  }
+  // Group consecutive blocks into rows by their col setting
+  // full = own row; half/third = share row with adjacent same-type
+  const rows=[];
+  let currentRow=[];
+  slide.blocks.forEach((blk,bi)=>{
+    if(blk.col==='full'){
+      if(currentRow.length)rows.push(currentRow);
+      rows.push([{blk,bi}]);
+      currentRow=[];
+    } else {
+      currentRow.push({blk,bi});
+      const maxInRow=blk.col==='third'?3:2;
+      if(currentRow.length>=maxInRow){rows.push(currentRow);currentRow=[];}
+    }
+  });
+  if(currentRow.length)rows.push(currentRow);
+
+  return rows.map(row=>{
+    const cols=row.length;
+    return`<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px;margin-bottom:8px;">
+      ${row.map(({blk,bi})=>`
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;position:relative;min-height:60px;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <span style="font-size:13px;">${BLOCK_TYPES.find(t=>t.id===blk.type)?.icon||'📄'}</span>
+            <span style="font-size:11px;font-weight:600;color:var(--text);">${BLOCK_TYPES.find(t=>t.id===blk.type)?.label||blk.type}</span>
+            <span style="font-size:10px;color:var(--muted);margin-left:2px;">(${blk.col||'full'})</span>
+            <div style="margin-left:auto;display:flex;gap:3px;">
+              <button class="tag-btn" style="padding:1px 6px;font-size:9px;" onclick="editBlock(${si},${bi})">Edit</button>
+              ${bi>0?`<button class="tag-btn" style="padding:1px 5px;font-size:9px;" onclick="moveBlock(${si},${bi},-1)">↑</button>`:''}
+              ${bi<slide.blocks.length-1?`<button class="tag-btn" style="padding:1px 5px;font-size:9px;" onclick="moveBlock(${si},${bi},1)">↓</button>`:''}
+              <button class="tag-btn" style="padding:1px 5px;font-size:9px;color:var(--accent);border-color:var(--accent);" onclick="removeBlock(${si},${bi})">✕</button>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);">${renderBlockThumb(blk)}</div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderBlockThumb(blk){
+  switch(blk.type){
+    case 'text': return blk.content?blk.content.slice(0,100)+'…':'<em>Click Edit to add text</em>';
+    case 'kpi-row':{const t=ytData.totals||{};return `Views: ${fmt(t.views)} · Watch hrs: ${t.mins?fmt(Math.round(t.mins/60)):'—'} · Rev: ${t.rev!=null?fmtEur(t.rev):'—'}`;}
+    case 'ep-table': return blk.campName?`${blk.campName} / ${blk.subName||'—'} · ${blk.window||'28 days'}`:'<em>Click Edit to select campaign</em>';
+    case 'comparison': return blk.campA&&blk.campB?`${blk.campA} vs ${blk.campB}`:'<em>Click Edit to select campaigns</em>';
+    case 'live-event': return blk.stopKey&&campaigns[blk.stopKey]?`${campaigns[blk.stopKey].stop} ${campaigns[blk.stopKey].year}`:'<em>Click Edit to select stop</em>';
+    case 'top-videos': return `Top videos · ${S}–${E}`;
+    case 'ep-chart': return blk.campA?`${blk.metric||'Views'} · ${blk.campA}${blk.campB?' vs '+blk.campB:''}`:'<em>Click Edit to configure</em>';
+    case 'image': return blk.imageData?`<img src="${blk.imageData}" style="max-height:60px;border-radius:4px;">`:'<em>Click Edit to upload image</em>';
+    case 'learnings': return blk.points?.length?blk.points.slice(0,2).map(p=>`• ${p.heading}`).join('<br>'):'<em>Click Edit to add points</em>';
+    case 'look-ahead': return blk.title?`${blk.title} · ${blk.date||'TBC'}`:'<em>Click Edit to add content</em>';
+    default: return '';
+  }
+}
+
+// ── Slide management ──
 function addReportSlide(){
+  const all=[...FIXED_SLIDE_TYPES,{id:'canvas',icon:'🖼️',label:'Canvas slide',desc:'Add blocks freely — tables, charts, text, images'}];
   const grid=document.getElementById('slide-picker-grid');
-  const groups={};
-  SLIDE_TYPES.forEach(t=>{if(!groups[t.group])groups[t.group]=[];groups[t.group].push(t);});
+  const groups={'Fixed':FIXED_SLIDE_TYPES,'Free canvas':[{id:'canvas',icon:'🖼️',label:'Canvas slide',desc:'Add blocks freely — tables, charts, text, images'}]};
   grid.innerHTML=Object.entries(groups).map(([g,types])=>`
-    <div style="margin-bottom:12px;">
+    <div style="margin-bottom:14px;">
       <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">${g}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div style="display:grid;grid-template-columns:repeat(${g==='Fixed'?4:1},1fr);gap:8px;">
         ${types.map(t=>`
           <button onclick="pickSlideType('${t.id}');closeModal('slide-picker-modal');"
             style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px 10px;text-align:left;cursor:pointer;"
             onmouseover="this.style.borderColor='${rptSettings.primary}'"
             onmouseout="this.style.borderColor='var(--border2)'">
-            <div style="font-size:16px;margin-bottom:4px;">${t.icon}</div>
+            <div style="font-size:16px;margin-bottom:5px;">${t.icon}</div>
             <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px;">${t.label}</div>
             <div style="font-size:10px;color:var(--muted);">${t.desc}</div>
           </button>`).join('')}
@@ -3098,84 +3077,45 @@ function addReportSlide(){
 }
 
 function pickSlideType(typeId){
-  const t=SLIDE_TYPES.find(x=>x.id===typeId);
-  if(!t)return;
   const slide={type:typeId};
-  if(typeId==='cover')slide.date=new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'});
-  if(typeId==='divider'){slide.title='Section Name';slide.sectionNum=String(reportSlides.filter(s=>s.type==='divider').length+1);}
-  if(typeId==='learnings')slide.points=[];
+  if(typeId==='canvas'){slide.title='Slide';slide.blocks=[];}
+  if(typeId==='divider'){slide.title='Section';slide.sectionNum=String(reportSlides.filter(s=>s.type==='divider').length+1);}
+  if(typeId==='cover'){slide.date=new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'});}
   reportSlides.push(slide);
   renderReportBuilder();
-  setTimeout(()=>editSlide(reportSlides.length-1),60);
+  const si=reportSlides.length-1;
+  setTimeout(()=>{
+    if(FIXED_SLIDE_TYPES.find(t=>t.id!=='exec-summary'&&t.id!=='end'&&t.id===typeId))editFixedSlide(si);
+  },60);
 }
 
-function removeSlide(i){reportSlides.splice(i,1);renderReportBuilder();}
-function moveSlide(i,dir){
-  const j=i+dir;if(j<0||j>=reportSlides.length)return;
-  [reportSlides[i],reportSlides[j]]=[reportSlides[j],reportSlides[i]];
-  renderReportBuilder();
-}
+function removeSlide(i){if(!confirm('Remove this slide?'))return;reportSlides.splice(i,1);renderReportBuilder();}
+function moveSlide(i,dir){const j=i+dir;if(j<0||j>=reportSlides.length)return;[reportSlides[i],reportSlides[j]]=[reportSlides[j],reportSlides[i]];renderReportBuilder();}
 
-// ── Edit dispatcher ──
-async function editSlide(i){
-  const slide=reportSlides[i];
-  switch(slide.type){
-    case 'cover':
-    case 'divider':
-    case 'end':
-      openMetaEditor(i,slide);break;
-    case 'exec-summary':
-      alert('Executive Summary uses your current Analytics data automatically.');break;
-    case 'top-videos':
-      alert('Top Videos uses your current Analytics data automatically.');break;
-    case 'ep-table':
-      await pickEpTable(i,slide);break;
-    case 'ep-chart':
-      await pickEpChart(i,slide);break;
-    case 'comparison':
-      await pickComparison(i,slide);break;
-    case 'live-event':
-      await pickLiveEvent(i,slide);break;
-    case 'deep-dive':
-      openDdEditor(i,slide);break;
-    case 'learnings':
-      openLearningsEditor(i,slide);break;
-    case 'look-ahead':
-      openLaEditor(i,slide);break;
-    case 'context':
-    case 'ai-overview':
-      openTextEditor(i,slide);break;
-    default:
-      alert('This slide uses dashboard data automatically.');
-  }
-}
-
-// ── Meta editor (cover / divider / end) ──
-function openMetaEditor(idx,slide){
-  document.getElementById('slide-meta-idx').value=idx;
-  document.getElementById('slide-meta-title').textContent=
-    slide.type==='cover'?'Edit cover':slide.type==='divider'?'Edit section divider':'Edit end slide';
+// ── Fixed slide editor ──
+function editFixedSlide(si){
+  const slide=reportSlides[si];
+  document.getElementById('slide-meta-idx').value=si;
+  document.getElementById('slide-meta-title').textContent=`Edit: ${FIXED_SLIDE_TYPES.find(t=>t.id===slide.type)?.label||slide.type}`;
   const f=document.getElementById('slide-meta-fields');
   if(slide.type==='cover'){
-    f.innerHTML=`
-      <div class="field-label">Report date / subtitle</div>
-      <input type="text" id="meta-date" value="${slide.date||''}" placeholder="e.g. April 2026" style="width:100%;margin-bottom:12px;">`;
+    f.innerHTML=`<div class="field-label">Date / subtitle line</div>
+      <input type="text" id="meta-date" value="${slide.date||''}" placeholder="e.g. April 2026" style="width:100%;margin-bottom:4px;">`;
   } else if(slide.type==='divider'){
-    f.innerHTML=`
-      <div class="field-label">Section number</div>
+    f.innerHTML=`<div class="field-label">Section number</div>
       <input type="text" id="meta-num" value="${slide.sectionNum||'1'}" style="width:80px;margin-bottom:12px;">
       <div class="field-label">Section title</div>
       <input type="text" id="meta-title" value="${slide.title||''}" style="width:100%;margin-bottom:4px;">`;
   } else {
-    f.innerHTML=`<p style="font-size:13px;color:var(--muted);">End slide uses PokerStars branding automatically.</p>`;
+    f.innerHTML=`<p style="font-size:13px;color:var(--muted);">This slide uses live dashboard data automatically.</p>`;
   }
   document.getElementById('slide-meta-modal').classList.add('open');
 }
 function saveSlideMetaModal(){
-  const idx=parseInt(document.getElementById('slide-meta-idx').value);
-  if(isNaN(idx)||!reportSlides[idx]){closeModal('slide-meta-modal');return;}
-  const s=reportSlides[idx];
-  if(s.type==='cover')s.date=document.getElementById('meta-date')?.value||'';
+  const si=parseInt(document.getElementById('slide-meta-idx').value);
+  if(isNaN(si)||!reportSlides[si]){closeModal('slide-meta-modal');return;}
+  const s=reportSlides[si];
+  if(s.type==='cover'){s.date=document.getElementById('meta-date')?.value||'';}
   if(s.type==='divider'){
     s.sectionNum=document.getElementById('meta-num')?.value||'1';
     s.title=document.getElementById('meta-title')?.value||'Section';
@@ -3184,236 +3124,291 @@ function saveSlideMetaModal(){
   closeModal('slide-meta-modal');renderReportBuilder();
 }
 
-// ── Text editor (context / AI overview) ──
-function openTextEditor(idx,slide){
-  document.getElementById('slide-edit-idx').value=idx;
-  document.getElementById('slide-text-editor').value=slide.content||'';
-  document.getElementById('slide-text-modal-title').textContent=
-    slide.type==='context'?'Trending / Context — Edit':'AI Overview — Edit';
-  document.getElementById('slide-editor-ai-bar').style.display=
-    slide.type==='context'?'none':'flex';
-  document.getElementById('slide-text-modal').classList.add('open');
-}
-function saveSlideText(){
-  const idx=parseInt(document.getElementById('slide-edit-idx').value);
-  if(!isNaN(idx)&&reportSlides[idx])reportSlides[idx].content=document.getElementById('slide-text-editor').value;
-  closeModal('slide-text-modal');renderReportBuilder();
-}
-async function generateSlideAI(){
-  const btn=document.getElementById('slide-gen-btn');
-  btn.disabled=true;btn.textContent='Generating…';
-  const t=ytData.totals||{};
-  const tops=(ytData.topEnriched||[]).slice(0,5).map(v=>v.sn?.title||v.id).join(', ');
-  const ctx=`YouTube channel: ${rptSettings.campaign||'PokerStars'}\nPeriod: ${S} to ${E}\nViews: ${fmt(t.views)}\nWatch hrs: ${fmt(t.mins?Math.round(t.mins/60):null)}\nRevenue: ${t.rev!=null?fmtEur(t.rev):'N/A'}\nSubscribers: ${fmt(t.subs)}\nTop videos: ${tops||'N/A'}`;
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:'Write a concise executive summary (3 short paragraphs) of this YouTube channel performance for a senior stakeholder slide deck. Be specific with numbers, highlight what performed well, and note anything that needs attention.\n\n'+ctx}]})});
-    const d=await r.json();if(d.error)throw new Error(d.error.message);
-    document.getElementById('slide-text-editor').value=d.content?.[0]?.text||'No response.';
-  }catch(e){alert('AI error: '+e.message);}
-  btn.disabled=false;btn.textContent='⚡ Generate with AI';
+// ── Block picker ──
+function openBlockPicker(si){
+  document.getElementById('block-picker-slide-idx').value=si;
+  const grid=document.getElementById('block-picker-grid');
+  const groups={};
+  BLOCK_TYPES.forEach(t=>{if(!groups[t.group])groups[t.group]=[];groups[t.group].push(t);});
+  grid.innerHTML='';
+  // Group headers + buttons
+  const container=document.getElementById('block-picker-grid');
+  container.style.display='block';
+  container.innerHTML=Object.entries(groups).map(([g,types])=>`
+    <div style="margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">${g}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+        ${types.map(t=>`
+          <button onclick="pickBlock('${t.id}')"
+            style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 8px;text-align:left;cursor:pointer;"
+            onmouseover="this.style.borderColor='${rptSettings.primary}'"
+            onmouseout="this.style.borderColor='var(--border2)'">
+            <div style="font-size:14px;margin-bottom:4px;">${t.icon}</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:1px;">${t.label}</div>
+            <div style="font-size:10px;color:var(--muted);">${t.desc}</div>
+          </button>`).join('')}
+      </div>
+    </div>`).join('');
+  document.getElementById('block-picker-modal').classList.add('open');
 }
 
-// ── Episode table picker ──
-async function pickEpTable(idx,slide){
-  const camps=Object.keys(vidCampaigns);
-  if(!camps.length){alert('No video campaigns found.');return;}
-  const cc=prompt('Campaign:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n')+'\n\nEnter number:');
-  if(!cc)return;
-  const campName=camps[parseInt(cc)-1]||cc.trim();
-  if(!vidCampaigns[campName]){alert('Not found.');return;}
-  const subs=Object.keys(vidCampaigns[campName].subs||{}).sort();
-  const sc=subs.length>1?prompt('Sub-campaign:\n'+subs.map((s,i)=>`${i+1}. ${s}`).join('\n')+'\n\nEnter number:'):'1';
-  if(!sc)return;
-  const subName=subs[parseInt(sc)-1]||sc.trim();
-  const wins=['First 7 days','First 28 days','All-time'];
-  const wc=prompt('Window:\n'+wins.map((w,i)=>`${i+1}. ${w}`).join('\n')+'\n\nEnter number:')||'2';
-  slide.campName=campName;slide.subName=subName;
-  slide.window=wins[parseInt(wc)-1]||'First 28 days';
-  slide.windowKey=slide.window==='First 7 days'?'w7':slide.window==='All-time'?'wall':'w28';
-  slide.subtitle=campName+' / '+subName;
+function pickBlock(typeId){
+  const si=parseInt(document.getElementById('block-picker-slide-idx').value);
+  const col=document.querySelector('input[name="block-col"]:checked')?.value||'full';
+  closeModal('block-picker-modal');
+  const blk={type:typeId,col};
+  if(typeId==='learnings')blk.points=[];
+  if(!reportSlides[si].blocks)reportSlides[si].blocks=[];
+  reportSlides[si].blocks.push(blk);
+  const bi=reportSlides[si].blocks.length-1;
   renderReportBuilder();
+  setTimeout(()=>editBlock(si,bi),60);
 }
 
-// ── Episode chart picker ──
-async function pickEpChart(idx,slide){
-  const camps=Object.keys(vidCampaigns);
-  if(!camps.length){alert('No video campaigns found.');return;}
-  const metrics=['Views','Watch Hours','Revenue'];
-  const mc=prompt('Metric:\n'+metrics.map((m,i)=>`${i+1}. ${m}`).join('\n')+'\n\nEnter number:')||'1';
-  slide.metric=metrics[parseInt(mc)-1]||'Views';
-  const cc=prompt('First campaign (A):\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n')+'\n\nEnter number:');
-  if(!cc)return;
-  slide.campA=camps[parseInt(cc)-1]||cc.trim();
-  const dc=prompt('Second campaign for comparison (B) — optional, Enter to skip:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n'));
-  if(dc)slide.campB=camps[parseInt(dc)-1]||dc.trim();
-  const wins=['First 7 days','First 28 days','All-time'];
-  const wc=prompt('Window:\n'+wins.map((w,i)=>`${i+1}. ${w}`).join('\n')+'\n\nEnter number:')||'2';
-  slide.window=wins[parseInt(wc)-1]||'First 28 days';
-  slide.windowKey=slide.window==='First 7 days'?'w7':slide.window==='All-time'?'wall':'w28';
-  slide.subtitle=slide.metric+' · '+slide.campA+(slide.campB?' vs '+slide.campB:'');
-  renderReportBuilder();
+function removeBlock(si,bi){reportSlides[si].blocks.splice(bi,1);renderReportBuilder();}
+function moveBlock(si,bi,dir){
+  const blocks=reportSlides[si].blocks;
+  const j=bi+dir;if(j<0||j>=blocks.length)return;
+  [blocks[bi],blocks[j]]=[blocks[j],blocks[bi]];renderReportBuilder();
 }
 
-// ── Comparison picker ──
-async function pickComparison(idx,slide){
-  const camps=Object.keys(vidCampaigns);
-  if(camps.length<1){alert('No campaigns found.');return;}
-  const a=prompt('Campaign A:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n'));
-  if(!a)return;
-  const b=prompt('Campaign B:\n'+camps.map((c,i)=>`${i+1}. ${c}`).join('\n'));
-  if(!b)return;
-  slide.campA=camps[parseInt(a)-1]||a.trim();
-  slide.campB=camps[parseInt(b)-1]||b.trim();
-  const wins=['First 7 days','First 28 days','All-time'];
-  const wc=prompt('Window:\n'+wins.map((w,i)=>`${i+1}. ${w}`).join('\n')+'\n\nEnter number:')||'2';
-  slide.window=wins[parseInt(wc)-1]||'First 28 days';
-  slide.windowKey=slide.window==='First 7 days'?'w7':slide.window==='All-time'?'wall':'w28';
-  slide.subtitle=slide.campA+' vs '+slide.campB;
-  renderReportBuilder();
+// ── Block editor ──
+async function editBlock(si,bi){
+  const blk=reportSlides[si].blocks[bi];
+  document.getElementById('block-editor-slide-idx').value=si;
+  document.getElementById('block-editor-block-idx').value=bi;
+  const t=BLOCK_TYPES.find(x=>x.id===blk.type)||{label:blk.type};
+  document.getElementById('block-editor-title').textContent='Edit: '+t.label;
+
+  const body=document.getElementById('block-editor-body');
+  switch(blk.type){
+    case 'text':
+      body.innerHTML=`
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <button class="btn-sm" id="be-ai-btn" onclick="generateBlockAI(${si},${bi})" style="background:var(--accent);border-color:var(--accent);color:white;">⚡ Generate with AI</button>
+        </div>
+        <textarea id="be-text" style="width:100%;min-height:200px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.7;outline:none;resize:vertical;">${blk.content||''}</textarea>`;
+      break;
+    case 'image':
+      body.innerHTML=`
+        <div id="be-img-preview" style="margin-bottom:10px;min-height:80px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('be-img-input').click()">
+          ${blk.imageData?`<img src="${blk.imageData}" style="max-height:160px;border-radius:6px;">`:`<span style="font-size:12px;color:var(--muted);">Click to upload image</span>`}
+        </div>
+        <input type="file" id="be-img-input" accept="image/*" style="display:none;" onchange="handleBeImage(this,${si},${bi})">
+        <div class="field-label" style="margin-bottom:4px;">Caption (optional)</div>
+        <input type="text" id="be-caption" value="${blk.caption||''}" placeholder="Caption text" style="width:100%;">`;
+      break;
+    case 'ep-table':{
+      const camps=Object.keys(vidCampaigns);
+      const subs=blk.campName&&vidCampaigns[blk.campName]?Object.keys(vidCampaigns[blk.campName].subs||{}).sort():[];
+      body.innerHTML=`
+        <div class="field-label" style="margin-bottom:4px;">Campaign</div>
+        <select id="be-camp" onchange="updateBeSubOptions()" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
+          ${camps.map(c=>`<option${blk.campName===c?' selected':''}>${c}</option>`).join('')}
+        </select>
+        <div class="field-label" style="margin-bottom:4px;">Sub-campaign</div>
+        <select id="be-sub" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
+          ${(blk.campName&&vidCampaigns[blk.campName]?Object.keys(vidCampaigns[blk.campName].subs||{}).sort():[]).map(s=>`<option${blk.subName===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+        <div class="field-label" style="margin-bottom:4px;">Window</div>
+        <select id="be-window" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;">
+          ${['First 7 days','First 28 days','All-time'].map(w=>`<option${blk.window===w?' selected':''}>${w}</option>`).join('')}
+        </select>`;
+      break;}
+    case 'ep-chart':{
+      const camps=Object.keys(vidCampaigns);
+      body.innerHTML=`
+        <div class="field-label" style="margin-bottom:4px;">Metric</div>
+        <select id="be-metric" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
+          ${['Views','Watch Hours','Revenue'].map(m=>`<option${blk.metric===m?' selected':''}>${m}</option>`).join('')}
+        </select>
+        <div class="field-label" style="margin-bottom:4px;">Campaign A</div>
+        <select id="be-campa" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
+          <option value="">— select —</option>
+          ${camps.map(c=>`<option${blk.campA===c?' selected':''}>${c}</option>`).join('')}
+        </select>
+        <div class="field-label" style="margin-bottom:4px;">Campaign B (optional comparison)</div>
+        <select id="be-campb" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
+          <option value="">— none —</option>
+          ${camps.map(c=>`<option${blk.campB===c?' selected':''}>${c}</option>`).join('')}
+        </select>
+        <div class="field-label" style="margin-bottom:4px;">Window</div>
+        <select id="be-window" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;">
+          ${['First 7 days','First 28 days','All-time'].map(w=>`<option${blk.window===w?' selected':''}>${w}</option>`).join('')}
+        </select>`;
+      break;}
+    case 'comparison':{
+      const camps=Object.keys(vidCampaigns);
+      body.innerHTML=`
+        <div class="field-label" style="margin-bottom:4px;">Campaign A</div>
+        <select id="be-campa" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
+          <option value="">— select —</option>${camps.map(c=>`<option${blk.campA===c?' selected':''}>${c}</option>`).join('')}
+        </select>
+        <div class="field-label" style="margin-bottom:4px;">Campaign B</div>
+        <select id="be-campb" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
+          <option value="">— select —</option>${camps.map(c=>`<option${blk.campB===c?' selected':''}>${c}</option>`).join('')}
+        </select>
+        <div class="field-label" style="margin-bottom:4px;">Window</div>
+        <select id="be-window" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;">
+          ${['First 7 days','First 28 days','All-time'].map(w=>`<option${blk.window===w?' selected':''}>${w}</option>`).join('')}
+        </select>`;
+      break;}
+    case 'live-event':{
+      const stops=Object.keys(campaigns);
+      body.innerHTML=`
+        <div class="field-label" style="margin-bottom:4px;">Stop</div>
+        <select id="be-stop" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;">
+          <option value="">— select —</option>
+          ${stops.map(k=>`<option value="${k}"${blk.stopKey===k?' selected':''}>${campaigns[k].stop} ${campaigns[k].year}</option>`).join('')}
+        </select>`;
+      break;}
+    case 'learnings':
+      body.innerHTML=`
+        <div id="be-learnings-list" style="display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto;margin-bottom:10px;">
+          ${(blk.points||[]).map((p,i)=>learningRowHTML(i,p)).join('')}
+        </div>
+        <button class="btn-sm" onclick="addLearningRow()">+ Add point</button>`;
+      break;
+    case 'look-ahead':
+      body.innerHTML=`
+        <div class="field-label" style="margin-bottom:4px;">Title</div>
+        <input type="text" id="be-la-title" value="${blk.title||''}" placeholder="Content title" style="width:100%;margin-bottom:10px;">
+        <div class="field-label" style="margin-bottom:4px;">Expected date</div>
+        <input type="date" id="be-la-date" value="${blk.date||''}" style="width:100%;margin-bottom:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;">
+        <div class="field-label" style="margin-bottom:4px;">Thumbnail</div>
+        <div id="be-la-img-preview" style="margin-bottom:8px;min-height:60px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('be-la-img-input').click()">
+          ${blk.imageData?`<img src="${blk.imageData}" style="max-height:80px;border-radius:4px;">`:`<span style="font-size:12px;color:var(--muted);">Click to upload thumbnail</span>`}
+        </div>
+        <input type="file" id="be-la-img-input" accept="image/*" style="display:none;" onchange="handleBeLaImage(this,${si},${bi})">
+        <div class="field-label" style="margin-bottom:4px;">Notes</div>
+        <textarea id="be-la-notes" style="width:100%;min-height:80px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;resize:vertical;">${blk.notes||''}</textarea>`;
+      break;
+    default:
+      body.innerHTML=`<p style="color:var(--muted);font-size:13px;">This block uses live dashboard data automatically.</p>`;
+  }
+  document.getElementById('block-editor-modal').classList.add('open');
 }
 
-// ── Live event picker ──
-async function pickLiveEvent(idx,slide){
-  const stops=Object.keys(campaigns);
-  if(!stops.length){alert('No stops found in Live Events.');return;}
-  const ch=prompt('Stop:\n'+stops.map((k,i)=>`${i+1}. ${campaigns[k].stop} ${campaigns[k].year}`).join('\n')+'\n\nEnter number:');
-  if(!ch)return;
-  const byNum=parseInt(ch);
-  const key=(!isNaN(byNum)&&byNum>=1&&byNum<=stops.length)?stops[byNum-1]:ch.trim();
-  if(!campaigns[key]){alert('Not found.');return;}
-  slide.stopKey=key;slide.subtitle=campaigns[key].stop+' '+campaigns[key].year;
-  renderReportBuilder();
+function updateBeSubOptions(){
+  const camp=document.getElementById('be-camp')?.value;
+  const subSel=document.getElementById('be-sub');
+  if(!subSel)return;
+  const subs=camp&&vidCampaigns[camp]?Object.keys(vidCampaigns[camp].subs||{}).sort():[];
+  subSel.innerHTML=subs.map(s=>`<option>${s}</option>`).join('');
 }
 
-// ── Deep Dive editor ──
-function openDdEditor(idx,slide){
-  document.getElementById('dd-slide-idx').value=idx;
-  document.getElementById('dd-heading').value=slide.heading||'';
-  document.getElementById('dd-commentary').value=slide.commentary||'';
-  const prev=document.getElementById('dd-image-preview');
-  prev.innerHTML=slide.imageData
-    ?`<img src="${slide.imageData}" style="max-height:120px;border-radius:4px;">`
-    :`<span style="font-size:12px;color:var(--muted);">Click to upload image</span>`;
-  document.getElementById('deepdive-modal').classList.add('open');
-}
-function handleDdImage(input){
+function handleBeImage(input,si,bi){
   const file=input.files[0];if(!file)return;
   const r=new FileReader();
   r.onload=e=>{
-    const data=e.target.result;
-    document.getElementById('dd-image-preview').innerHTML=`<img src="${data}" style="max-height:120px;border-radius:4px;">`;
-    const idx=parseInt(document.getElementById('dd-slide-idx').value);
-    if(!isNaN(idx)&&reportSlides[idx])reportSlides[idx].imageData=data;
-  };
-  r.readAsDataURL(file);
+    reportSlides[si].blocks[bi].imageData=e.target.result;
+    document.getElementById('be-img-preview').innerHTML=`<img src="${e.target.result}" style="max-height:160px;border-radius:6px;">`;
+  };r.readAsDataURL(file);
 }
-async function generateDdAI(){
-  const heading=document.getElementById('dd-heading').value||'performance analysis';
-  const btn=document.querySelector('#deepdive-modal .btn-sm');
+function handleBeLaImage(input,si,bi){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    reportSlides[si].blocks[bi].imageData=e.target.result;
+    document.getElementById('be-la-img-preview').innerHTML=`<img src="${e.target.result}" style="max-height:80px;border-radius:4px;">`;
+  };r.readAsDataURL(file);
+}
+
+async function generateBlockAI(si,bi){
+  const btn=document.getElementById('be-ai-btn');
   if(btn){btn.disabled=true;btn.textContent='Generating…';}
+  const t=ytData.totals||{};
+  const ctx=`Channel: ${rptSettings.campaign||'PokerStars'}\nPeriod: ${S}–${E}\nViews: ${fmt(t.views)}, Watch hrs: ${fmt(t.mins?Math.round(t.mins/60):null)}, Revenue: ${t.rev!=null?fmtEur(t.rev):'N/A'}, Subscribers: ${fmt(t.subs)}`;
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:`Write 2-3 short analytical paragraphs for a slide titled "${heading}" about YouTube performance for a PokerStars stakeholder report. Be concise and insightful.`}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:'Write 2-3 short analytical paragraphs for a YouTube performance report slide. Be specific with numbers and insights. Data:\n\n'+ctx}]})});
     const d=await r.json();if(d.error)throw new Error(d.error.message);
-    document.getElementById('dd-commentary').value=d.content?.[0]?.text||'';
+    const el=document.getElementById('be-text');
+    if(el)el.value=d.content?.[0]?.text||'';
   }catch(e){alert('AI error: '+e.message);}
   if(btn){btn.disabled=false;btn.textContent='⚡ Generate with AI';}
 }
-function saveDdSlide(){
-  const idx=parseInt(document.getElementById('dd-slide-idx').value);
-  if(!isNaN(idx)&&reportSlides[idx]){
-    reportSlides[idx].heading=document.getElementById('dd-heading').value;
-    reportSlides[idx].commentary=document.getElementById('dd-commentary').value;
-    reportSlides[idx].subtitle=reportSlides[idx].heading;
+
+function saveBlockEditor(){
+  const si=parseInt(document.getElementById('block-editor-slide-idx').value);
+  const bi=parseInt(document.getElementById('block-editor-block-idx').value);
+  if(isNaN(si)||isNaN(bi)){closeModal('block-editor-modal');return;}
+  const blk=reportSlides[si].blocks[bi];
+  switch(blk.type){
+    case 'text':
+      blk.content=document.getElementById('be-text')?.value||'';break;
+    case 'image':
+      blk.caption=document.getElementById('be-caption')?.value||'';break;
+    case 'ep-table':{
+      blk.campName=document.getElementById('be-camp')?.value||'';
+      blk.subName=document.getElementById('be-sub')?.value||'';
+      blk.window=document.getElementById('be-window')?.value||'First 28 days';
+      blk.windowKey=blk.window==='First 7 days'?'w7':blk.window==='All-time'?'wall':'w28';
+      break;}
+    case 'ep-chart':{
+      blk.metric=document.getElementById('be-metric')?.value||'Views';
+      blk.campA=document.getElementById('be-campa')?.value||'';
+      blk.campB=document.getElementById('be-campb')?.value||'';
+      blk.window=document.getElementById('be-window')?.value||'First 28 days';
+      blk.windowKey=blk.window==='First 7 days'?'w7':blk.window==='All-time'?'wall':'w28';
+      break;}
+    case 'comparison':{
+      blk.campA=document.getElementById('be-campa')?.value||'';
+      blk.campB=document.getElementById('be-campb')?.value||'';
+      blk.window=document.getElementById('be-window')?.value||'First 28 days';
+      blk.windowKey=blk.window==='First 7 days'?'w7':blk.window==='All-time'?'wall':'w28';
+      break;}
+    case 'live-event':
+      blk.stopKey=document.getElementById('be-stop')?.value||'';break;
+    case 'learnings':{
+      const pts=[];
+      document.querySelectorAll('#be-learnings-list .learning-row').forEach((row,i)=>{
+        const h=row.querySelector('.lh')?.value?.trim();
+        if(h)pts.push({heading:h,body:row.querySelector('.lb')?.value||'',tag:row.querySelector('.lt')?.value||''});
+      });
+      blk.points=pts;break;}
+    case 'look-ahead':
+      blk.title=document.getElementById('be-la-title')?.value||'';
+      blk.date=document.getElementById('be-la-date')?.value||'';
+      blk.notes=document.getElementById('be-la-notes')?.value||'';
+      break;
   }
-  closeModal('deepdive-modal');renderReportBuilder();
+  closeModal('block-editor-modal');renderReportBuilder();
 }
 
-// ── Learnings editor ──
-function openLearningsEditor(idx,slide){
-  _learningsEditIdx=idx;
-  const list=document.getElementById('learnings-list');
-  list.innerHTML=(slide.points||[]).map((p,i)=>learningPointHTML(i,p)).join('');
-  document.getElementById('learnings-save-btn').onclick=()=>saveLearnings();
-  document.getElementById('learnings-modal').classList.add('open');
-}
-function learningPointHTML(i,p){
+// Learnings row helpers
+function learningRowHTML(i,p){
   p=p||{};
-  return`<div style="background:var(--surface2);border-radius:8px;padding:12px;border:1px solid var(--border);" id="lp-${i}">
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-      <span style="background:${rptSettings.accent};color:#000;font-size:10px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</span>
-      <input type="text" value="${p.heading||''}" placeholder="Heading" id="lh-${i}" style="flex:1;padding:4px 8px;font-size:12px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);">
-      <select id="lt-${i}" style="background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--muted);">
+  return`<div class="learning-row" style="background:var(--surface2);border-radius:8px;padding:10px;border:1px solid var(--border);">
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+      <span style="background:${rptSettings.accent};color:#000;font-size:9px;font-weight:700;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;">${i+1}</span>
+      <input type="text" class="lh" value="${p.heading||''}" placeholder="Heading" style="flex:1;padding:4px 8px;font-size:12px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);">
+      <select class="lt" style="background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:3px 6px;font-size:11px;color:var(--muted);">
         ${['Production','Content','Strategy','Advertising','Engagement','Reach','Awareness','Retention'].map(c=>`<option${p.tag===c?' selected':''}>${c}</option>`).join('')}
       </select>
-      <button onclick="document.getElementById('lp-${i}').remove();" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;padding:0;">✕</button>
+      <button onclick="this.closest('.learning-row').remove();" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;padding:0;">✕</button>
     </div>
-    <textarea id="lb-${i}" placeholder="Detail..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:11px;color:var(--text);resize:none;height:52px;font-family:var(--font-body);">${p.body||''}</textarea>
+    <textarea class="lb" placeholder="Detail..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:11px;color:var(--text);resize:none;height:48px;font-family:var(--font-body);">${p.body||''}</textarea>
   </div>`;
 }
-function addLearningPoint(){
-  const list=document.getElementById('learnings-list');
-  const i=list.children.length;
+function addLearningRow(){
+  const list=document.getElementById('be-learnings-list');
+  const i=list.querySelectorAll('.learning-row').length;
   const div=document.createElement('div');
-  div.innerHTML=learningPointHTML(i,{});
+  div.innerHTML=learningRowHTML(i,{});
   list.appendChild(div.firstElementChild);
-}
-function saveLearnings(){
-  if(_learningsEditIdx<0)return;
-  const points=[];
-  document.querySelectorAll('#learnings-list > div').forEach((el,i)=>{
-    const h=el.querySelector(`[id^="lh-"]`)?.value?.trim();
-    if(!h)return;
-    points.push({heading:h,body:el.querySelector(`[id^="lb-"]`)?.value||'',tag:el.querySelector(`[id^="lt-"]`)?.value||''});
-  });
-  reportSlides[_learningsEditIdx].points=points;
-  reportSlides[_learningsEditIdx].subtitle=points.length+' point'+(points.length!==1?'s':'');
-  closeModal('learnings-modal');renderReportBuilder();
-}
-
-// ── Look Ahead editor ──
-function openLaEditor(idx,slide){
-  document.getElementById('la-slide-idx').value=idx;
-  document.getElementById('la-title').value=slide.title||'';
-  document.getElementById('la-date').value=slide.date||'';
-  document.getElementById('la-notes').value=slide.notes||'';
-  const prev=document.getElementById('la-image-preview');
-  prev.innerHTML=slide.imageData
-    ?`<img src="${slide.imageData}" style="max-height:80px;border-radius:4px;">`
-    :`<span style="font-size:12px;color:var(--muted);">Click to upload thumbnail</span>`;
-  document.getElementById('lookahead-modal').classList.add('open');
-}
-function handleLaImage(input){
-  const file=input.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=e=>{
-    const data=e.target.result;
-    document.getElementById('la-image-preview').innerHTML=`<img src="${data}" style="max-height:80px;border-radius:4px;">`;
-    const idx=parseInt(document.getElementById('la-slide-idx').value);
-    if(!isNaN(idx)&&reportSlides[idx])reportSlides[idx].imageData=data;
-  };
-  r.readAsDataURL(file);
-}
-function saveLaSlide(){
-  const idx=parseInt(document.getElementById('la-slide-idx').value);
-  if(!isNaN(idx)&&reportSlides[idx]){
-    reportSlides[idx].title=document.getElementById('la-title').value;
-    reportSlides[idx].date=document.getElementById('la-date').value;
-    reportSlides[idx].notes=document.getElementById('la-notes').value;
-    reportSlides[idx].subtitle=reportSlides[idx].title;
-  }
-  closeModal('lookahead-modal');renderReportBuilder();
 }
 
 // ── Preview ──
 function previewReport(){
-  const body=document.getElementById('report-preview-body');
   const P=rptSettings.primary,A=rptSettings.accent;
-  body.innerHTML=reportSlides.map((slide,i)=>`
+  document.getElementById('report-preview-body').innerHTML=reportSlides.map((slide,si)=>`
     <div style="margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
       <div style="background:var(--surface2);padding:6px 12px;font-size:10px;color:var(--muted);font-family:var(--font-mono);">
-        SLIDE ${i+1} — ${(SLIDE_TYPES.find(t=>t.id===slide.type)?.label||slide.type).toUpperCase()}
+        SLIDE ${si+1} — ${(FIXED_SLIDE_TYPES.find(t=>t.id===slide.type)?.label||'CANVAS').toUpperCase()}
       </div>
-      <div style="padding:14px;">${renderSlideThumb(slide,P,A)}</div>
+      <div style="padding:14px;">
+        ${FIXED_SLIDE_TYPES.find(t=>t.id===slide.type)?renderFixedThumb(slide,P,A):renderCanvasBlocks(slide,si,P,A)}
+      </div>
     </div>`).join('');
   document.getElementById('report-preview-modal').classList.add('open');
 }
@@ -3427,303 +3422,216 @@ async function exportReportPptx(){
     await new Promise(resolve=>script.onload=resolve);
   }
   const pptx=new PptxGenJS();
-  pptx.layout='LAYOUT_WIDE'; // 13.33" × 7.5"
+  pptx.layout='LAYOUT_WIDE';
 
-  const BG='000000', TEXT='FFFFFF', MUTED='888899';
+  const BG='000000',TEXT='FFFFFF',MUTED='777788';
   const P=rptSettings.primary.replace('#','');
   const A=rptSettings.accent.replace('#','');
   const W=13.33,H=7.5;
   const name=rptSettings.name||'Report';
   const campaign=rptSettings.campaign||'';
 
-  // Header bar helper — appears on all non-cover/divider/end slides
   const addHeader=(s)=>{
-    s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:0.55,fill:{color:'0A0A0A'}});
-    s.addShape(pptx.ShapeType.rect,{x:0,y:0.55,w:W,h:0.03,fill:{color:P}});
-    s.addText('PokerStars',{x:0.35,y:0.1,w:3,h:0.35,fontSize:9,bold:true,color:P,fontFace:'Arial',charSpacing:1.5});
-    s.addText(name,{x:0.35,y:0.1,w:W-0.7,h:0.35,fontSize:9,color:'555566',fontFace:'Arial',align:'right'});
+    s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:0.52,fill:{color:'080808'}});
+    s.addShape(pptx.ShapeType.rect,{x:0,y:0.52,w:W,h:0.03,fill:{color:P}});
+    s.addText('POKERSTARS',{x:0.35,y:0.12,w:3,h:0.3,fontSize:8,bold:true,color:P,fontFace:'Arial',charSpacing:2});
+    s.addText(name,{x:0.35,y:0.12,w:W-0.7,h:0.3,fontSize:8,color:'333344',fontFace:'Arial',align:'right'});
   };
-  const addFooter=(s,slideNum)=>{
-    s.addShape(pptx.ShapeType.rect,{x:0,y:H-0.38,w:W,h:0.38,fill:{color:'0A0A0A'}});
-    s.addText(campaign,{x:0.35,y:H-0.3,w:6,h:0.22,fontSize:8,color:'444455',fontFace:'Arial'});
-    s.addText(String(slideNum),{x:W-0.6,y:H-0.3,w:0.4,h:0.22,fontSize:8,color:'444455',fontFace:'Arial',align:'right'});
+  const addFooter=(s,n)=>{
+    s.addShape(pptx.ShapeType.rect,{x:0,y:H-0.35,w:W,h:0.35,fill:{color:'060606'}});
+    s.addText(campaign,{x:0.35,y:H-0.27,w:6,h:0.2,fontSize:7,color:'333344',fontFace:'Arial'});
+    s.addText(String(n),{x:W-0.5,y:H-0.27,w:0.3,h:0.2,fontSize:7,color:'333344',fontFace:'Arial',align:'right'});
   };
+
+  // Helper: render a single block into a pptx slide at given x,y,w,h
+  const renderBlock=(s,blk,x,y,w,h)=>{
+    const wk=blk.windowKey||'w28';
+    switch(blk.type){
+      case 'text':
+        if(blk.content)s.addText(blk.content,{x,y,w,h,fontSize:11,color:'CCCCDD',fontFace:'Arial',valign:'top',wrap:true,lineSpacingMultiple:1.5});
+        break;
+      case 'kpi-row':{
+        const t=ytData.totals||{};
+        const kpis=[['Views',fmt(t.views),P],['Watch Hrs',t.mins?fmt(Math.round(t.mins/60)):'—','9966FF'],['Revenue',t.rev!=null?fmtEur(t.rev):'—','22CC88'],['Subscribers',fmt(t.subs),A]];
+        const kw=(w-0.1*(kpis.length-1))/kpis.length;
+        kpis.forEach(([l,v,c],i)=>{
+          const kx=x+i*(kw+0.1);
+          s.addShape(pptx.ShapeType.rect,{x:kx,y,w:kw,h,fill:{color:'0A0A0A'},line:{color:c,w:1}});
+          s.addShape(pptx.ShapeType.rect,{x:kx,y,w:kw,h:0.06,fill:{color:c}});
+          s.addText(l.toUpperCase(),{x:kx+0.12,y:y+0.12,w:kw-0.24,h:0.22,fontSize:8,color:MUTED,fontFace:'Arial',bold:true,charSpacing:1.2});
+          s.addText(v,{x:kx+0.12,y:y+0.38,w:kw-0.24,h:h-0.5,fontSize:22,bold:true,color:TEXT,fontFace:'Arial'});
+        });
+        break;}
+      case 'image':
+        if(blk.imageData){
+          s.addImage({data:blk.imageData,x,y,w,h:h-0.3,sizing:{type:'contain',w,h:h-0.3}});
+          if(blk.caption)s.addText(blk.caption,{x,y:y+h-0.28,w,h:0.25,fontSize:8,color:MUTED,fontFace:'Arial',align:'center',italic:true});
+        } else {
+          s.addShape(pptx.ShapeType.rect,{x,y,w,h,fill:{color:'0A0A0A'},line:{color:'1A1A1A',w:0.5}});
+          s.addText('[Image]',{x,y:y+h/2-0.2,w,h:0.4,fontSize:10,color:'222233',fontFace:'Arial',align:'center',italic:true});
+        }
+        break;
+      case 'ep-table':{
+        const eps=blk.campName&&blk.subName?vidCampaigns[blk.campName]?.subs[blk.subName]?.episodes||[]:[];
+        s.addText((blk.campName||'')+(blk.subName?' / '+blk.subName:''),{x,y,w,h:0.3,fontSize:10,bold:true,color:TEXT,fontFace:'Arial'});
+        s.addText(blk.window||'First 28 days',{x,y:y+0.3,w,h:0.2,fontSize:8,color:MUTED,fontFace:'Arial'});
+        if(eps.length){
+          const rows=[['Ep.','Title','Published','Views','Watch Hrs','Rev']];
+          eps.forEach((ep,i)=>{
+            const imp=ytImportedRows.find(r=>r.id===ep.videoId);const ac=ytVideoCache[ep.videoId];const d=ac?.[wk]||imp;
+            rows.push(['Ep.'+(i+1),(ep.label||imp?.title||ac?.title||ep.videoId).slice(0,28),
+              (imp?.publishDate||ac?.publishDate)?new Date(imp?.publishDate||ac?.publishDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'—',
+              d?.views!=null?fmt(d.views):'—',d?.watchHrs!=null?fmt(Math.round(d.watchHrs)):'—',d?.revenue!=null?'€'+d.revenue.toFixed(0):'—']);
+          });
+          const cw=w/(rows[0].length);
+          s.addTable(rows,{x,y:y+0.55,w,colW:rows[0].map((_,i)=>i===1?cw*2.2:cw*0.76),
+            color:MUTED,fontSize:9,fontFace:'Arial',border:{type:'solid',color:'1A1A1A',pt:0.5},
+            fill:{color:'080808'},headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
+        }
+        break;}
+      case 'comparison':{
+        const sumC=(cn)=>{let v=0,hr=0,rv=0,ep=0;Object.values(vidCampaigns[cn]?.subs||{}).forEach(sub=>{(sub.episodes||[]).forEach(e=>{const ac=ytVideoCache[e.videoId];const imp=ytImportedRows.find(r=>r.id===e.videoId);const d=ac?.[wk]||imp;if(d){v+=d.views||0;hr+=d.watchHrs||0;rv+=d.revenue||0;}ep++;});});return{v,hr,rv,ep};};
+        const dA=blk.campA?sumC(blk.campA):{v:0,hr:0,rv:0,ep:0};
+        const dB=blk.campB?sumC(blk.campB):{v:0,hr:0,rv:0,ep:0};
+        s.addText((blk.campA||'A')+' vs '+(blk.campB||'B'),{x,y,w,h:0.28,fontSize:10,bold:true,color:TEXT,fontFace:'Arial'});
+        s.addText(blk.window||'',{x,y:y+0.28,w,h:0.2,fontSize:8,color:MUTED,fontFace:'Arial'});
+        const rows=[['Metric',blk.campA||'A',blk.campB||'B'],['Episodes',String(dA.ep),String(dB.ep)],['Views',fmt(dA.v),fmt(dB.v)],['Watch Hrs',fmt(Math.round(dA.hr)),fmt(Math.round(dB.hr))],['Revenue','€'+dA.rv.toFixed(0),'€'+dB.rv.toFixed(0)],['Avg/Ep',dA.ep?fmt(Math.round(dA.v/dA.ep)):'—',dB.ep?fmt(Math.round(dB.v/dB.ep)):'—']];
+        s.addTable(rows,{x,y:y+0.53,w,colW:[w*0.35,w*0.325,w*0.325],color:MUTED,fontSize:9,fontFace:'Arial',border:{type:'solid',color:'1A1A1A',pt:0.5},fill:{color:'080808'},headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
+        break;}
+      case 'live-event':{
+        const stop=blk.stopKey&&campaigns[blk.stopKey];
+        if(!stop)break;
+        s.addText(stop.stop+' '+stop.year,{x,y,w,h:0.3,fontSize:11,bold:true,color:TEXT,fontFace:'Arial'});
+        const rows=[['Tournament','Day','Avg Viewers','Peak','Views','Hrs']];
+        Object.keys(stop.tournaments).forEach(tn=>{Object.keys(stop.tournaments[tn].days).sort((a,b)=>dayOrder(a)-dayOrder(b)).forEach(day=>{const m=getDayMetrics(blk.stopKey,tn,day);rows.push([tn,day,m.twAvgV!=null?fmt(m.twAvgV):'—',m.twPeak!=null?fmt(m.twPeak):'—',mergeSum([m.twViews,m.ythViews,m.ytvViews])!=null?fmt(mergeSum([m.twViews,m.ythViews,m.ytvViews])):'—',mergeSum([m.twHrs,m.ythHrs,m.ytvHrs])!=null?fmt(Math.round(mergeSum([m.twHrs,m.ythHrs,m.ytvHrs]))):'—']);});});
+        if(rows.length>1)s.addTable(rows,{x,y:y+0.38,w,colW:[w*0.3,w*0.12,w*0.16,w*0.14,w*0.14,w*0.14],color:MUTED,fontSize:9,fontFace:'Arial',border:{type:'solid',color:'1A1A1A',pt:0.5},fill:{color:'080808'},headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
+        break;}
+      case 'top-videos':{
+        const vids=(ytData.topEnriched||[]).slice(0,6);
+        s.addText('Top Videos · '+S+'–'+E,{x,y,w,h:0.28,fontSize:10,bold:true,color:TEXT,fontFace:'Arial'});
+        if(vids.length){
+          const rows=[['#','Title','Views','Hrs','Rev']];
+          vids.forEach((v,i)=>rows.push([String(i+1),(v.sn?.title||v.id).slice(0,30),fmt(v.m[0]),v.m[1]?fmt(Math.round(v.m[1]/60)):'—',v.m[2]!=null?fmtEur(v.m[2]):'—']));
+          s.addTable(rows,{x,y:y+0.33,w,colW:[w*0.05,w*0.5,w*0.16,w*0.13,w*0.16],color:MUTED,fontSize:9,fontFace:'Arial',border:{type:'solid',color:'1A1A1A',pt:0.5},fill:{color:'080808'},headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
+        }
+        break;}
+      case 'ep-chart':{
+        const getEpVals=(cn)=>{
+          const eps=[];
+          Object.values(vidCampaigns[cn]?.subs||{}).forEach(sub=>(sub.episodes||[]).forEach(ep=>eps.push(ep)));
+          return eps.map(ep=>{const ac=ytVideoCache[ep.videoId];const imp=ytImportedRows.find(r=>r.id===ep.videoId);const d=ac?.[wk]||imp;const mk=blk.metric==='Watch Hours'?'watchHrs':blk.metric==='Revenue'?'revenue':'views';return d?.[mk]??null;});
+        };
+        const vA=blk.campA?getEpVals(blk.campA):[];
+        const vB=blk.campB?getEpVals(blk.campB):[];
+        const maxEp=Math.max(vA.length,vB.length,1);
+        const allV=[...vA,...vB].filter(v=>v!=null);
+        const maxV=allV.length?Math.max(...allV)*1.15:1;
+        s.addText((blk.metric||'Views')+' by episode · '+(blk.window||''),{x,y,w,h:0.25,fontSize:9,bold:true,color:TEXT,fontFace:'Arial'});
+        const cx=x,cy=y+0.32,cw=w,ch=h-0.4;
+        s.addShape(pptx.ShapeType.rect,{x:cx,y:cy,w:cw,h:ch,fill:{color:'080808'},line:{color:'1A1A1A',w:0.5}});
+        [[vA,P,blk.campA],[vB,A,blk.campB]].forEach(([vals,col,label])=>{
+          if(!vals.length||!col||!label)return;
+          const pts=vals.map((v,i)=>({x:cx+0.2+i*(cw-0.4)/(maxEp-1||1),y:cy+ch-0.15-(v!=null?(v/maxV)*(ch-0.25):0)}));
+          for(let i=0;i<pts.length-1;i++){if(vals[i]!=null&&vals[i+1]!=null){const dx=pts[i+1].x-pts[i].x,dy=pts[i+1].y-pts[i].y;const len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;s.addShape(pptx.ShapeType.rect,{x:pts[i].x,y:pts[i].y-0.012,w:len,h:0.024,fill:{color:col},rotate:ang});}}
+          pts.forEach((pt,i)=>{if(vals[i]!=null)s.addShape(pptx.ShapeType.ellipse,{x:pt.x-0.05,y:pt.y-0.05,w:0.1,h:0.1,fill:{color:col}});});
+          if(pts.length)s.addText((label||'').slice(0,18),{x:pts[pts.length-1].x+0.08,y:pts[pts.length-1].y-0.12,w:1.8,h:0.22,fontSize:7,color:col,fontFace:'Arial'});
+        });
+        Array.from({length:maxEp}).forEach((_,i)=>{const px=cx+0.2+i*(cw-0.4)/(maxEp-1||1);s.addText('E'+(i+1),{x:px-0.18,y:cy+ch+0.02,w:0.36,h:0.16,fontSize:6,color:MUTED,fontFace:'Arial',align:'center'});});
+        break;}
+      case 'learnings':
+        (blk.points||[]).slice(0,4).forEach((p,i)=>{
+          const py=y+i*(h/Math.min(blk.points.length,4));
+          const rowH=h/Math.min(blk.points.length,4)-0.05;
+          s.addShape(pptx.ShapeType.rect,{x,y:py,w:0.22,h:0.22,fill:{color:A},rounding:true});
+          s.addText(String(i+1),{x,y:py,w:0.22,h:0.22,fontSize:8,bold:true,color:'000000',fontFace:'Arial',align:'center',valign:'middle'});
+          s.addText(p.heading,{x:x+0.28,y:py,w:w-0.28,h:0.25,fontSize:10,bold:true,color:TEXT,fontFace:'Arial'});
+          if(p.tag){s.addShape(pptx.ShapeType.rect,{x:x+0.28,y:py+0.27,w:Math.min(p.tag.length*0.08+0.25,1.8),h:0.18,fill:{color:P+'44'},rounding:true});s.addText(p.tag,{x:x+0.28,y:py+0.27,w:Math.min(p.tag.length*0.08+0.25,1.8),h:0.18,fontSize:7,color:'#'+P,fontFace:'Arial',align:'center'});}
+          if(p.body)s.addText(p.body.slice(0,120),{x:x+0.28,y:py+0.48,w:w-0.28,h:rowH-0.55,fontSize:9,color:MUTED,fontFace:'Arial',wrap:true});
+        });
+        break;
+      case 'look-ahead':
+        if(blk.imageData)s.addImage({data:blk.imageData,x,y,w:w*0.45,h:h*0.6,sizing:{type:'contain',w:w*0.45,h:h*0.6}});
+        s.addText(blk.title||'',{x:x+w*0.5,y,w:w*0.5,h:0.4,fontSize:13,bold:true,color:TEXT,fontFace:'Arial'});
+        if(blk.date)s.addText(new Date(blk.date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),{x:x+w*0.5,y:y+0.42,w:w*0.5,h:0.25,fontSize:10,color:'#'+P,fontFace:'Arial',bold:true});
+        if(blk.notes)s.addText(blk.notes,{x:x+w*0.5,y:y+0.72,w:w*0.5,h:h-0.8,fontSize:10,color:MUTED,fontFace:'Arial',wrap:true,lineSpacingMultiple:1.4});
+        break;
+    }
+  };
+
+  const CONTENT_Y=0.62, CONTENT_H=H-1.05, GUTTER=0.15;
 
   let slideNum=1;
   for(const slide of reportSlides){
     const s=pptx.addSlide();
     s.background={color:BG};
+    const isFixed=FIXED_SLIDE_TYPES.find(t=>t.id===slide.type);
 
-    switch(slide.type){
-      case 'cover':{
-        // Left accent bar
-        s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:0.12,h:H,fill:{color:P}});
-        s.addText('POKERSTARS',{x:0.35,y:1.4,w:10,h:0.4,fontSize:11,bold:true,color:P,fontFace:'Arial',charSpacing:3});
-        s.addText(name,{x:0.35,y:1.9,w:10,h:1.1,fontSize:36,bold:true,color:TEXT,fontFace:'Arial'});
-        s.addText(campaign,{x:0.35,y:3.1,w:8,h:0.45,fontSize:16,color:MUTED,fontFace:'Arial'});
-        s.addShape(pptx.ShapeType.rect,{x:0.35,y:3.65,w:1.2,h:0.04,fill:{color:A}});
-        s.addText(slide.date||'',{x:0.35,y:3.8,w:6,h:0.3,fontSize:11,color:MUTED,fontFace:'Arial'});
-        break;}
-
-      case 'divider':{
-        s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:H,fill:{color:'050505'}});
-        s.addText(slide.sectionNum||'1',{x:0.3,y:0.2,w:4,h:5.5,fontSize:200,bold:true,color:'111111',fontFace:'Arial',valign:'top'});
-        s.addShape(pptx.ShapeType.rect,{x:0.35,y:H-2.2,w:0.06,h:1.5,fill:{color:P}});
-        s.addText(slide.title||'Section',{x:0.6,y:H-2.1,w:11,h:0.8,fontSize:30,bold:true,color:TEXT,fontFace:'Arial',valign:'middle'});
-        s.addText(name,{x:0.6,y:H-1.2,w:8,h:0.3,fontSize:10,color:'333344',fontFace:'Arial'});
-        break;}
-
-      case 'end':{
-        s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:H,fill:{color:'030303'}});
-        s.addShape(pptx.ShapeType.rect,{x:0,y:H/2-0.02,w:W,h:0.04,fill:{color:P}});
-        s.addText('POKERSTARS',{x:0,y:H/2-0.9,w:W,h:0.6,fontSize:32,bold:true,color:TEXT,fontFace:'Arial',align:'center',charSpacing:4});
-        s.addText(campaign,{x:0,y:H/2+0.2,w:W,h:0.4,fontSize:14,color:MUTED,fontFace:'Arial',align:'center'});
-        break;}
-
-      case 'exec-summary':{
-        addHeader(s);addFooter(s,slideNum++);
-        s.addText('EXECUTIVE SUMMARY',{x:0.35,y:0.75,w:12,h:0.4,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
-        s.addText(S+' — '+E,{x:0.35,y:1.2,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
-        const t=ytData.totals||{};
-        const kpis=[
-          ['Views',fmt(t.views),P],
-          ['Watch Hours',t.mins?fmt(Math.round(t.mins/60)):'—','9966FF'],
-          ['Est. Revenue',t.rev!=null?fmtEur(t.rev):'—','22CC88'],
-          ['Subscribers',fmt(t.subs),A],
-        ];
-        kpis.forEach(([l,v,c],i)=>{
-          const x=0.35+(i%2)*6.4,y=1.6+Math.floor(i/2)*2.3;
-          s.addShape(pptx.ShapeType.rect,{x,y,w:6.0,h:2.1,fill:{color:'0A0A0A'},line:{color:c,w:1}});
-          s.addShape(pptx.ShapeType.rect,{x,y,w:6.0,h:0.07,fill:{color:c}});
-          s.addText(l.toUpperCase(),{x:x+0.2,y:y+0.2,w:5.6,h:0.28,fontSize:9,color:MUTED,fontFace:'Arial',bold:true,charSpacing:1.5});
-          s.addText(v,{x:x+0.2,y:y+0.55,w:5.6,h:1.1,fontSize:34,bold:true,color:TEXT,fontFace:'Arial'});
-        });
-        break;}
-
-      case 'ep-table':{
-        addHeader(s);addFooter(s,slideNum++);
-        const epTitle=(slide.campName||'')+(slide.subName?' / '+slide.subName:'');
-        s.addText(epTitle,{x:0.35,y:0.75,w:12,h:0.4,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
-        s.addText((slide.window||'First 28 days')+' · Episode results',{x:0.35,y:1.2,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
-        const eps=slide.campName&&slide.subName?vidCampaigns[slide.campName]?.subs[slide.subName]?.episodes||[]:[];
-        if(eps.length){
-          const wk=slide.windowKey||'w28';
-          const rows=[['Ep.','Title','Published','Views','Watch Hrs','Revenue']];
-          eps.forEach((ep,i)=>{
-            const imp=ytImportedRows.find(r=>r.id===ep.videoId);
-            const ac=ytVideoCache[ep.videoId];
-            const d=ac?.[wk]||imp;
-            rows.push([
-              'Ep.'+(i+1),
-              (ep.label||imp?.title||ac?.title||ep.videoId).slice(0,38),
-              (imp?.publishDate||ac?.publishDate)?new Date(imp?.publishDate||ac?.publishDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—',
-              d?.views!=null?fmt(d.views):'—',
-              d?.watchHrs!=null?fmt(Math.round(d.watchHrs)):'—',
-              d?.revenue!=null?'€'+d.revenue.toFixed(2):'—',
-            ]);
+    if(isFixed){
+      switch(slide.type){
+        case 'cover':
+          s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:0.1,h:H,fill:{color:P}});
+          s.addText('POKERSTARS',{x:0.3,y:1.6,w:10,h:0.4,fontSize:10,bold:true,color:P,fontFace:'Arial',charSpacing:3});
+          s.addText(name,{x:0.3,y:2.1,w:10,h:1.0,fontSize:34,bold:true,color:TEXT,fontFace:'Arial'});
+          s.addText(campaign,{x:0.3,y:3.2,w:8,h:0.4,fontSize:14,color:MUTED,fontFace:'Arial'});
+          s.addShape(pptx.ShapeType.rect,{x:0.3,y:3.72,w:1.0,h:0.04,fill:{color:A}});
+          s.addText(slide.date||'',{x:0.3,y:3.85,w:6,h:0.3,fontSize:11,color:MUTED,fontFace:'Arial'});
+          break;
+        case 'divider':
+          s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:H,fill:{color:'030303'}});
+          s.addText(slide.sectionNum||'1',{x:0.2,y:0.1,w:5,h:6,fontSize:220,bold:true,color:'0E0E0E',fontFace:'Arial',valign:'top'});
+          s.addShape(pptx.ShapeType.rect,{x:0.3,y:H-2.1,w:0.06,h:1.4,fill:{color:P}});
+          s.addText(slide.title||'Section',{x:0.55,y:H-2.0,w:11,h:0.75,fontSize:28,bold:true,color:TEXT,fontFace:'Arial',valign:'middle'});
+          s.addText(name,{x:0.55,y:H-1.15,w:8,h:0.28,fontSize:9,color:'222233',fontFace:'Arial'});
+          break;
+        case 'exec-summary':{
+          addHeader(s);addFooter(s,slideNum++);
+          s.addText('EXECUTIVE SUMMARY',{x:0.35,y:0.72,w:12,h:0.42,fontSize:20,bold:true,color:TEXT,fontFace:'Arial'});
+          s.addText(S+' — '+E,{x:0.35,y:1.2,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
+          const t=ytData.totals||{};
+          const kpis=[['Views',fmt(t.views),P],['Watch Hours',t.mins?fmt(Math.round(t.mins/60)):'—','9966FF'],['Est. Revenue',t.rev!=null?fmtEur(t.rev):'—','22CC88'],['Subscribers',fmt(t.subs),A]];
+          kpis.forEach(([l,v,c],i)=>{
+            const kx=0.35+(i%2)*6.4,ky=1.6+Math.floor(i/2)*2.4;
+            s.addShape(pptx.ShapeType.rect,{x:kx,y:ky,w:6.1,h:2.2,fill:{color:'090909'},line:{color:c,w:1}});
+            s.addShape(pptx.ShapeType.rect,{x:kx,y:ky,w:6.1,h:0.07,fill:{color:c}});
+            s.addText(l.toUpperCase(),{x:kx+0.2,y:ky+0.2,w:5.7,h:0.28,fontSize:9,color:MUTED,fontFace:'Arial',bold:true,charSpacing:1.5});
+            s.addText(v,{x:kx+0.2,y:ky+0.55,w:5.7,h:1.2,fontSize:36,bold:true,color:TEXT,fontFace:'Arial'});
           });
-          s.addTable(rows,{x:0.35,y:1.55,w:12.6,colW:[0.7,5.2,1.8,1.5,1.5,1.5],
-            color:MUTED,fontSize:10,fontFace:'Arial',
-            border:{type:'solid',color:'1A1A1A',pt:0.5},
-            fill:{color:'080808'},
-            headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
-        }
-        break;}
-
-      case 'ep-chart':{
-        addHeader(s);addFooter(s,slideNum++);
-        const metricKey=slide.metric==='Watch Hours'?'watchHrs':slide.metric==='Revenue'?'revenue':'views';
-        const wk=slide.windowKey||'w28';
-        const getEps=(cn)=>{
-          const subs=vidCampaigns[cn]?.subs||{};
-          const allEps=[];
-          Object.values(subs).forEach(sub=>(sub.episodes||[]).forEach(ep=>allEps.push(ep)));
-          return allEps;
-        };
-        const epsA=slide.campA?getEps(slide.campA):[];
-        const epsB=slide.campB?getEps(slide.campB):[];
-        const maxEps=Math.max(epsA.length,epsB.length,1);
-        const getVal=(ep)=>{
-          const ac=ytVideoCache[ep.videoId];const imp=ytImportedRows.find(r=>r.id===ep.videoId);
-          const d=ac?.[wk]||imp;return d?.[metricKey]??null;
-        };
-        const valsA=epsA.map(getVal);
-        const valsB=epsB.map(getVal);
-        const allVals=[...valsA,...valsB].filter(v=>v!=null);
-        const maxVal=allVals.length?Math.max(...allVals)*1.15:1;
-        // Chart area
-        const cx=0.5,cy=0.9,cw=12.3,ch=5.5;
-        s.addShape(pptx.ShapeType.rect,{x:cx,y:cy,w:cw,h:ch,fill:{color:'080808'},line:{color:'1A1A1A',w:0.5}});
-        s.addText((slide.metric||'Views').toUpperCase()+' BY EPISODE',{x:cx,y:0.65,w:cw,h:0.25,fontSize:10,bold:true,color:TEXT,fontFace:'Arial',charSpacing:1.5});
-        s.addText((slide.window||'First 28 days'),{x:cx,y:0.65,w:cw,h:0.25,fontSize:9,color:MUTED,fontFace:'Arial',align:'right'});
-        // Draw lines
-        [[valsA,P,slide.campA],[valsB,A,slide.campB]].forEach(([vals,col,label])=>{
-          if(!vals.length||!col||!label)return;
-          const pts=vals.map((v,i)=>({
-            x:cx+0.3+i*(cw-0.6)/(maxEps-1||1),
-            y:cy+ch-0.2-(v!=null?(v/maxVal)*(ch-0.4):0)
-          }));
-          // Draw line segments
-          for(let i=0;i<pts.length-1;i++){
-            if(vals[i]!=null&&vals[i+1]!=null){
-              // pptxgenjs doesn't support true SVG lines easily, use thin rect approximation
-              const dx=pts[i+1].x-pts[i].x,dy=pts[i+1].y-pts[i].y;
-              const len=Math.sqrt(dx*dx+dy*dy);
-              const angle=Math.atan2(dy,dx)*180/Math.PI;
-              s.addShape(pptx.ShapeType.rect,{x:pts[i].x,y:pts[i].y-0.015,w:len,h:0.03,fill:{color:col},rotate:angle});
-            }
-          }
-          // Dots
-          pts.forEach((pt,i)=>{if(vals[i]!=null)s.addShape(pptx.ShapeType.ellipse,{x:pt.x-0.06,y:pt.y-0.06,w:0.12,h:0.12,fill:{color:col}});});
-          // Label
-          if(pts.length){
-            const last=pts[pts.length-1];
-            s.addText(label.slice(0,20),{x:last.x+0.1,y:last.y-0.12,w:2,h:0.25,fontSize:8,color:col,fontFace:'Arial'});
-          }
-        });
-        // X axis labels
-        Array.from({length:maxEps}).forEach((_,i)=>{
-          const x=cx+0.3+i*(cw-0.6)/(maxEps-1||1);
-          s.addText('Ep.'+(i+1),{x:x-0.25,y:cy+ch+0.05,w:0.5,h:0.2,fontSize:7,color:MUTED,fontFace:'Arial',align:'center'});
-        });
-        break;}
-
-      case 'comparison':{
-        addHeader(s);addFooter(s,slideNum++);
-        s.addText('COMPARISON',{x:0.35,y:0.75,w:12,h:0.35,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
-        s.addText((slide.window||'First 28 days'),{x:0.35,y:1.18,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
-        s.addText(slide.campA||'',{x:0.35,y:1.55,w:5.9,h:0.35,fontSize:14,bold:true,color:'#'+P,fontFace:'Arial'});
-        s.addText('vs',{x:6.4,y:1.55,w:0.7,h:0.35,fontSize:12,color:MUTED,fontFace:'Arial',align:'center'});
-        s.addText(slide.campB||'',{x:7.2,y:1.55,w:5.5,h:0.35,fontSize:14,bold:true,color:'#'+A,fontFace:'Arial'});
-        const wk=slide.windowKey||'w28';
-        const sumCamp=(cn)=>{
-          let views=0,hrs=0,rev=0,eps=0;
-          Object.values(vidCampaigns[cn]?.subs||{}).forEach(sub=>{
-            (sub.episodes||[]).forEach(ep=>{
-              const ac=ytVideoCache[ep.videoId];const imp=ytImportedRows.find(r=>r.id===ep.videoId);
-              const d=ac?.[wk]||imp;
-              if(d){views+=d.views||0;hrs+=d.watchHrs||0;rev+=d.revenue||0;}
-              eps++;
-            });
-          });
-          return{views,hrs,rev,eps};
-        };
-        const dA=slide.campA?sumCamp(slide.campA):{views:0,hrs:0,rev:0,eps:0};
-        const dB=slide.campB?sumCamp(slide.campB):{views:0,hrs:0,rev:0,eps:0};
-        const rows=[
-          ['Metric',slide.campA||'A',slide.campB||'B'],
-          ['Episodes',String(dA.eps),String(dB.eps)],
-          ['Total Views',fmt(dA.views),fmt(dB.views)],
-          ['Watch Hours',fmt(Math.round(dA.hrs)),fmt(Math.round(dB.hrs))],
-          ['Revenue','€'+dA.rev.toFixed(2),'€'+dB.rev.toFixed(2)],
-          ['Avg Views/Ep',dA.eps?fmt(Math.round(dA.views/dA.eps)):'—',dB.eps?fmt(Math.round(dB.views/dB.eps)):'—'],
-        ];
-        s.addTable(rows,{x:0.35,y:2.05,w:9,colW:[3,3,3],
-          color:MUTED,fontSize:11,fontFace:'Arial',
-          border:{type:'solid',color:'1A1A1A',pt:0.5},
-          fill:{color:'080808'},
-          headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
-        break;}
-
-      case 'live-event':{
-        addHeader(s);addFooter(s,slideNum++);
-        const stop=slide.stopKey&&campaigns[slide.stopKey];
-        if(!stop){s.addText('No stop selected',{x:0.35,y:3,w:12,h:1,fontSize:13,color:MUTED,fontFace:'Arial',align:'center'});break;}
-        s.addText('LIVE EVENT',{x:0.35,y:0.75,w:12,h:0.25,fontSize:10,bold:true,color:'#'+P,fontFace:'Arial',charSpacing:2});
-        s.addText(stop.stop+' '+stop.year,{x:0.35,y:1.05,w:12,h:0.5,fontSize:20,bold:true,color:TEXT,fontFace:'Arial'});
-        s.addText(stop.series||'',{x:0.35,y:1.6,w:4,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
-        const rows=[['Tournament','Day','Avg Viewers','Peak Viewers','Views','Hours Watched']];
-        Object.keys(stop.tournaments).forEach(tn=>{
-          Object.keys(stop.tournaments[tn].days).sort((a,b)=>dayOrder(a)-dayOrder(b)).forEach(day=>{
-            const m=getDayMetrics(slide.stopKey,tn,day);
-            rows.push([tn,day,
-              m.twAvgV!=null?fmt(m.twAvgV):'—',m.twPeak!=null?fmt(m.twPeak):'—',
-              mergeSum([m.twViews,m.ythViews,m.ytvViews])!=null?fmt(mergeSum([m.twViews,m.ythViews,m.ytvViews])):'—',
-              mergeSum([m.twHrs,m.ythHrs,m.ytvHrs])!=null?fmt(Math.round(mergeSum([m.twHrs,m.ythHrs,m.ytvHrs]))):'—',
-            ]);
-          });
-        });
-        if(rows.length>1)s.addTable(rows,{x:0.35,y:1.95,w:12.6,colW:[2.8,1.4,2,2,2,2.2],
-          color:MUTED,fontSize:10,fontFace:'Arial',
-          border:{type:'solid',color:'1A1A1A',pt:0.5},fill:{color:'080808'},
-          headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
-        break;}
-
-      case 'top-videos':{
-        addHeader(s);addFooter(s,slideNum++);
-        s.addText('TOP PERFORMING VIDEOS',{x:0.35,y:0.75,w:12,h:0.35,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
-        s.addText(S+' — '+E,{x:0.35,y:1.18,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
-        const vids=(ytData.topEnriched||[]).slice(0,8);
-        if(vids.length){
-          const rows=[['#','Title','Views','Watch Hrs','Revenue']];
-          vids.forEach((v,i)=>rows.push([String(i+1),(v.sn?.title||v.id).slice(0,45),fmt(v.m[0]),v.m[1]?fmt(Math.round(v.m[1]/60)):'—',v.m[2]!=null?fmtEur(v.m[2]):'—']));
-          s.addTable(rows,{x:0.35,y:1.55,w:12.6,colW:[0.4,6.6,1.6,1.6,1.6],
-            color:MUTED,fontSize:10,fontFace:'Arial',
-            border:{type:'solid',color:'1A1A1A',pt:0.5},fill:{color:'080808'},
-            headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
-        } else {
-          s.addText('Load the Analytics tab first to populate top videos',{x:0.35,y:3,w:12,h:1,fontSize:12,color:MUTED,fontFace:'Arial',align:'center'});
-        }
-        break;}
-
-      case 'deep-dive':{
-        addHeader(s);addFooter(s,slideNum++);
-        s.addText(slide.heading||'Deep Dive',{x:0.35,y:0.75,w:12,h:0.4,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
-        if(slide.imageData){
-          s.addImage({data:slide.imageData,x:0.35,y:1.25,w:7.2,h:4.5,sizing:{type:'contain',w:7.2,h:4.5}});
-        } else {
-          s.addShape(pptx.ShapeType.rect,{x:0.35,y:1.25,w:7.2,h:4.5,fill:{color:'080808'},line:{color:'1A1A1A',w:0.5}});
-          s.addText('[ Screenshot / image ]',{x:0.35,y:3.2,w:7.2,h:0.5,fontSize:11,color:'222233',fontFace:'Arial',align:'center',italic:true});
-        }
-        if(slide.commentary){
-          s.addText(slide.commentary,{x:7.8,y:1.25,w:5.2,h:4.5,fontSize:11,color:'CCCCDD',fontFace:'Arial',valign:'top',wrap:true,lineSpacingMultiple:1.5});
-        }
-        break;}
-
-      case 'learnings':{
-        addHeader(s);addFooter(s,slideNum++);
-        s.addText('LEARNINGS & RECOMMENDATIONS',{x:0.35,y:0.75,w:12,h:0.4,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
-        (slide.points||[]).slice(0,4).forEach((p,i)=>{
-          const col=i<2?0:6.5,row=i%2;
-          const x=col+0.35,y=1.35+row*2.7;
-          s.addShape(pptx.ShapeType.rect,{x,y,w:0.28,h:0.28,fill:{color:A},rounding:true});
-          s.addText(String(i+1),{x,y,w:0.28,h:0.28,fontSize:9,bold:true,color:'000000',fontFace:'Arial',align:'center',valign:'middle'});
-          s.addText(p.heading,{x:x+0.38,y:y,w:5.7,h:0.32,fontSize:12,bold:true,color:TEXT,fontFace:'Arial'});
-          if(p.tag){
-            s.addShape(pptx.ShapeType.rect,{x:x+0.38,y:y+0.38,w:Math.min(p.tag.length*0.09+0.3,2),h:0.22,fill:{color:P+'44'},rounding:true});
-            s.addText(p.tag,{x:x+0.38,y:y+0.38,w:Math.min(p.tag.length*0.09+0.3,2),h:0.22,fontSize:8,color:'#'+P,fontFace:'Arial',align:'center'});
-          }
-          s.addText(p.body||'',{x:x+0.38,y:y+0.7,w:5.7,h:1.7,fontSize:10,color:MUTED,fontFace:'Arial',wrap:true,lineSpacingMultiple:1.45});
-        });
-        break;}
-
-      case 'look-ahead':{
-        addHeader(s);addFooter(s,slideNum++);
-        s.addText('LOOK AHEAD',{x:0.35,y:0.75,w:5,h:0.35,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
-        s.addText('Upcoming content',{x:0.35,y:1.18,w:5,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
-        s.addShape(pptx.ShapeType.rect,{x:0.35,y:1.2,w:0.05,h:0.25,fill:{color:A}});
-        if(slide.imageData){
-          s.addImage({data:slide.imageData,x:7,y:0.65,w:6,h:4,sizing:{type:'contain',w:6,h:4}});
-        }
-        s.addText(slide.title||'',{x:0.35,y:2,w:6.2,h:0.8,fontSize:22,bold:true,color:TEXT,fontFace:'Arial'});
-        if(slide.date)s.addText(new Date(slide.date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),{x:0.35,y:2.9,w:6,h:0.3,fontSize:12,color:'#'+P,fontFace:'Arial',bold:true});
-        if(slide.notes)s.addText(slide.notes,{x:0.35,y:3.35,w:6.2,h:2.5,fontSize:11,color:MUTED,fontFace:'Arial',wrap:true,lineSpacingMultiple:1.5});
-        break;}
-
-      case 'context':{
-        addHeader(s);addFooter(s,slideNum++);
-        s.addText('CONTEXT & TRENDS',{x:0.35,y:0.75,w:12,h:0.4,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
-        if(slide.content)s.addText(slide.content,{x:0.35,y:1.3,w:12.3,h:5.5,fontSize:13,color:'CCCCDD',fontFace:'Arial',valign:'top',wrap:true,lineSpacingMultiple:1.6});
-        break;}
-
-      default:{
-        addHeader(s);addFooter(s,slideNum++);
-        s.addText(SLIDE_TYPES.find(t=>t.id===slide.type)?.label||'Slide',{x:0.35,y:0.75,w:12,h:0.5,fontSize:18,bold:true,color:TEXT,fontFace:'Arial'});
+          break;}
+        case 'end':
+          s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:H,fill:{color:'030303'}});
+          s.addShape(pptx.ShapeType.rect,{x:0,y:H/2-0.02,w:W,h:0.04,fill:{color:P}});
+          s.addText('POKERSTARS',{x:0,y:H/2-0.85,w:W,h:0.6,fontSize:30,bold:true,color:TEXT,fontFace:'Arial',align:'center',charSpacing:5});
+          s.addText(campaign,{x:0,y:H/2+0.18,w:W,h:0.35,fontSize:13,color:MUTED,fontFace:'Arial',align:'center'});
+          break;
       }
+    } else {
+      // Canvas slide — lay out blocks into a grid
+      addHeader(s);addFooter(s,slideNum++);
+      const blocks=slide.blocks||[];
+      if(!blocks.length)continue;
+
+      // Group into rows
+      const rows=[];let cur=[];
+      blocks.forEach((blk,bi)=>{
+        if(blk.col==='full'){if(cur.length)rows.push(cur);rows.push([{blk,bi}]);cur=[];}
+        else{cur.push({blk,bi});const max=blk.col==='third'?3:2;if(cur.length>=max){rows.push(cur);cur=[];}}
+      });
+      if(cur.length)rows.push(cur);
+
+      // Distribute height equally across rows
+      const rowH=(CONTENT_H-GUTTER*(rows.length-1))/rows.length;
+      rows.forEach((row,ri)=>{
+        const blockW=(W-0.7-GUTTER*(row.length-1))/row.length;
+        const rowY=CONTENT_Y+ri*(rowH+GUTTER);
+        row.forEach(({blk},ci)=>{
+          const bx=0.35+ci*(blockW+GUTTER);
+          renderBlock(s,blk,bx,rowY,blockW,rowH);
+        });
+      });
     }
   }
 
-  const fileName=(rptSettings.name||'Report').replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.pptx';
+  const fileName=(name||'Report').replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.pptx';
   pptx.writeFile({fileName});
 }
 
