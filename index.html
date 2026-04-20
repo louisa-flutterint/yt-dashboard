@@ -3045,7 +3045,10 @@ function renderBlockThumb(blk){
     case 'comparison': return blk.campA&&blk.campB?`${blk.campA} vs ${blk.campB}`:'<em>Click Edit to select campaigns</em>';
     case 'live-event': return blk.stopKey&&campaigns[blk.stopKey]?`${campaigns[blk.stopKey].stop} ${campaigns[blk.stopKey].year}`:'<em>Click Edit to select stop</em>';
     case 'top-videos': return `Top videos · ${S}–${E}`;
-    case 'ep-chart': return blk.campA?`${blk.metric||'Views'} · ${blk.campA}${blk.campB?' vs '+blk.campB:''}`:'<em>Click Edit to configure</em>';
+    case 'ep-chart':{
+      const labelA=blk.subA||blk.campA||'';
+      const labelB=blk.subB||blk.campB||'';
+      return blk.campA?`${blk.metric||'Views'} · ${labelA}${blk.campB?' vs '+labelB:''}`:'<em>Click Edit to configure</em>';}
     case 'image': return blk.imageData?`<img src="${blk.imageData}" style="max-height:60px;border-radius:4px;">`:'<em>Click Edit to upload image</em>';
     case 'learnings': return blk.points?.length?blk.points.slice(0,2).map(p=>`• ${p.heading}`).join('<br>'):'<em>Click Edit to add points</em>';
     case 'look-ahead': return blk.title?`${blk.title} · ${blk.date||'TBC'}`:'<em>Click Edit to add content</em>';
@@ -3219,23 +3222,42 @@ async function editBlock(si,bi){
       break;}
     case 'ep-chart':{
       const camps=Object.keys(vidCampaigns);
+      const ss='width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);margin-bottom:10px;';
+      const subsA=blk.campA&&vidCampaigns[blk.campA]?Object.keys(vidCampaigns[blk.campA].subs||{}).sort():[];
+      const subsB=blk.campB&&vidCampaigns[blk.campB]?Object.keys(vidCampaigns[blk.campB].subs||{}).sort():[];
       body.innerHTML=`
         <div class="field-label" style="margin-bottom:4px;">Metric</div>
-        <select id="be-metric" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
+        <select id="be-metric" style="${ss}">
           ${['Views','Watch Hours','Revenue'].map(m=>`<option${blk.metric===m?' selected':''}>${m}</option>`).join('')}
         </select>
-        <div class="field-label" style="margin-bottom:4px;">Campaign A</div>
-        <select id="be-campa" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
-          <option value="">— select —</option>
-          ${camps.map(c=>`<option${blk.campA===c?' selected':''}>${c}</option>`).join('')}
-        </select>
-        <div class="field-label" style="margin-bottom:4px;">Campaign B (optional comparison)</div>
-        <select id="be-campb" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
-          <option value="">— none —</option>
-          ${camps.map(c=>`<option${blk.campB===c?' selected':''}>${c}</option>`).join('')}
-        </select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>
+            <div class="field-label" style="margin-bottom:4px;">Campaign A</div>
+            <select id="be-campa" onchange="updateBeChartSubs('a')" style="${ss}">
+              <option value="">— select —</option>
+              ${camps.map(c=>`<option${blk.campA===c?' selected':''}>${c}</option>`).join('')}
+            </select>
+            <div class="field-label" style="margin-bottom:4px;">Sub-campaign A</div>
+            <select id="be-suba" style="${ss}">
+              <option value="">— all —</option>
+              ${subsA.map(s=>`<option${blk.subA===s?' selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <div class="field-label" style="margin-bottom:4px;">Campaign B (optional)</div>
+            <select id="be-campb" onchange="updateBeChartSubs('b')" style="${ss}">
+              <option value="">— none —</option>
+              ${camps.map(c=>`<option${blk.campB===c?' selected':''}>${c}</option>`).join('')}
+            </select>
+            <div class="field-label" style="margin-bottom:4px;">Sub-campaign B</div>
+            <select id="be-subb" style="${ss}">
+              <option value="">— all —</option>
+              ${subsB.map(s=>`<option${blk.subB===s?' selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+        </div>
         <div class="field-label" style="margin-bottom:4px;">Window</div>
-        <select id="be-window" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;">
+        <select id="be-window" style="${ss}">
           ${['First 7 days','First 28 days','All-time'].map(w=>`<option${blk.window===w?' selected':''}>${w}</option>`).join('')}
         </select>`;
       break;}
@@ -3323,6 +3345,14 @@ function updateBeSubOptionsComp(side){
   const subs=camp&&vidCampaigns[camp]?Object.keys(vidCampaigns[camp].subs||{}).sort():[];
   subSel.innerHTML='<option value="">— all sub-campaigns —</option>'+subs.map(s=>`<option>${s}</option>`).join('');
 }
+function updateBeChartSubs(side){
+  const campSel=document.getElementById('be-camp'+side);
+  const subSel=document.getElementById('be-sub'+side);
+  if(!campSel||!subSel)return;
+  const camp=campSel.value;
+  const subs=camp&&vidCampaigns[camp]?Object.keys(vidCampaigns[camp].subs||{}).sort():[];
+  subSel.innerHTML='<option value="">— all —</option>'+subs.map(s=>`<option>${s}</option>`).join('');
+}
 
 function handleBeImage(input,si,bi){
   const file=input.files[0];if(!file)return;
@@ -3374,7 +3404,9 @@ function saveBlockEditor(){
     case 'ep-chart':{
       blk.metric=document.getElementById('be-metric')?.value||'Views';
       blk.campA=document.getElementById('be-campa')?.value||'';
+      blk.subA=document.getElementById('be-suba')?.value||'';
       blk.campB=document.getElementById('be-campb')?.value||'';
+      blk.subB=document.getElementById('be-subb')?.value||'';
       blk.window=document.getElementById('be-window')?.value||'First 28 days';
       blk.windowKey=blk.window==='First 7 days'?'w7':blk.window==='All-time'?'wall':'w28';
       break;}
@@ -3545,20 +3577,24 @@ async function exportReportPptx(){
         }
         break;}
       case 'ep-chart':{
-        const getEpVals=(cn)=>{
+        const getEpVals=(cn,sn)=>{
           const eps=[];
-          Object.values(vidCampaigns[cn]?.subs||{}).forEach(sub=>(sub.episodes||[]).forEach(ep=>eps.push(ep)));
+          const subsObj=vidCampaigns[cn]?.subs||{};
+          const subsToUse=sn&&subsObj[sn]?{[sn]:subsObj[sn]}:subsObj;
+          Object.values(subsToUse).forEach(sub=>(sub.episodes||[]).forEach(ep=>eps.push(ep)));
           return eps.map(ep=>{const ac=ytVideoCache[ep.videoId];const imp=ytImportedRows.find(r=>r.id===ep.videoId);const d=ac?.[wk]||imp;const mk=blk.metric==='Watch Hours'?'watchHrs':blk.metric==='Revenue'?'revenue':'views';return d?.[mk]??null;});
         };
-        const vA=blk.campA?getEpVals(blk.campA):[];
-        const vB=blk.campB?getEpVals(blk.campB):[];
+        const vA=blk.campA?getEpVals(blk.campA,blk.subA||''):[];
+        const vB=blk.campB?getEpVals(blk.campB,blk.subB||''):[];
         const maxEp=Math.max(vA.length,vB.length,1);
         const allV=[...vA,...vB].filter(v=>v!=null);
         const maxV=allV.length?Math.max(...allV)*1.15:1;
         s.addText((blk.metric||'Views')+' by episode · '+(blk.window||''),{x,y,w,h:0.25,fontSize:9,bold:true,color:TEXT,fontFace:'Arial'});
         const cx=x,cy=y+0.32,cw=w,ch=h-0.4;
         s.addShape(pptx.ShapeType.rect,{x:cx,y:cy,w:cw,h:ch,fill:{color:'080808'},line:{color:'1A1A1A',w:0.5}});
-        [[vA,P,blk.campA],[vB,A,blk.campB]].forEach(([vals,col,label])=>{
+        const labelA=(blk.subA||blk.campA||'').slice(0,20);
+        const labelB=(blk.subB||blk.campB||'').slice(0,20);
+        [[vA,P,labelA],[vB,A,labelB]].forEach(([vals,col,label])=>{
           if(!vals.length||!col||!label)return;
           const pts=vals.map((v,i)=>({x:cx+0.2+i*(cw-0.4)/(maxEp-1||1),y:cy+ch-0.15-(v!=null?(v/maxV)*(ch-0.25):0)}));
           for(let i=0;i<pts.length-1;i++){if(vals[i]!=null&&vals[i+1]!=null){const dx=pts[i+1].x-pts[i].x,dy=pts[i+1].y-pts[i].y;const len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;s.addShape(pptx.ShapeType.rect,{x:pts[i].x,y:pts[i].y-0.012,w:len,h:0.024,fill:{color:col},rotate:ang});}}
