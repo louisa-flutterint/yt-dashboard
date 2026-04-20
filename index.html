@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YT Command — YouTube Analytics Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0a0a0f;--surface:#111118;--surface2:#18181f;
@@ -13,7 +13,7 @@
   --text:#f0f0f5;--muted:#7a7a8e;
   --accent:#ff4444;--accent2:#ff8800;--green:#00e5a0;--blue:#4488ff;--purple:#aa66ff;--twitch:#9147ff;
   --radius:12px;
-  --font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'DM Mono',monospace;
+  --font-head:'Oswald',sans-serif;--font-body:'Roboto',sans-serif;--font-mono:'DM Mono',monospace;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
@@ -84,7 +84,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
 .date-range-input{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;color:var(--text);font-family:var(--font-mono);font-size:12px;outline:none;}
 .section-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;margin-top:32px;}
 .section-head:first-child{margin-top:0;}
-.section-title{font-family:var(--font-head);font-size:15px;font-weight:700;letter-spacing:-0.2px;}
+.section-title{font-family:'Oswald',sans-serif;font-size:15px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;}
 .section-pill{font-family:var(--font-mono);font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--muted);}
 .section-pill.purple{background:rgba(145,71,255,0.1);border-color:rgba(145,71,255,0.3);color:#bb88ff;}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:8px;}
@@ -97,7 +97,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px;}
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;}
 .chart-card.full{grid-column:1/-1;}
-.chart-title{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:20px;}
+.chart-title{font-family:'Oswald',sans-serif;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:20px;}
 .demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .video-table{width:100%;border-collapse:collapse;}
 .video-table th{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
@@ -163,7 +163,7 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
 .tournament-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;}
 .tournament-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
 .tournament-header:hover{background:var(--surface2);}
-.tournament-name{font-family:var(--font-head);font-size:14px;font-weight:700;}
+.tournament-name{font-family:'Oswald',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;}
 .tournament-meta{font-size:11px;color:var(--muted);font-family:var(--font-mono);}
 .platform-toggle{display:flex;gap:4px;}
 .ptog{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:var(--font-mono);color:var(--muted);transition:all 0.15s;}
@@ -3200,18 +3200,20 @@ async function editBlock(si,bi){
       break;
     case 'ep-table':{
       const camps=Object.keys(vidCampaigns);
-      const subs=blk.campName&&vidCampaigns[blk.campName]?Object.keys(vidCampaigns[blk.campName].subs||{}).sort():[];
+      const initSubs=blk.campName&&vidCampaigns[blk.campName]?Object.keys(vidCampaigns[blk.campName].subs||{}).sort():[];
       body.innerHTML=`
         <div class="field-label" style="margin-bottom:4px;">Campaign</div>
-        <select id="be-camp" onchange="updateBeSubOptions()" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
+        <select id="be-camp" onchange="updateBeSubOptions()" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);margin-bottom:10px;">
+          <option value="">— select campaign —</option>
           ${camps.map(c=>`<option${blk.campName===c?' selected':''}>${c}</option>`).join('')}
         </select>
         <div class="field-label" style="margin-bottom:4px;">Sub-campaign</div>
-        <select id="be-sub" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
-          ${(blk.campName&&vidCampaigns[blk.campName]?Object.keys(vidCampaigns[blk.campName].subs||{}).sort():[]).map(s=>`<option${blk.subName===s?' selected':''}>${s}</option>`).join('')}
+        <select id="be-sub" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);margin-bottom:10px;">
+          <option value="">— select sub-campaign —</option>
+          ${initSubs.map(s=>`<option${blk.subName===s?' selected':''}>${s}</option>`).join('')}
         </select>
         <div class="field-label" style="margin-bottom:4px;">Window</div>
-        <select id="be-window" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;">
+        <select id="be-window" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);">
           ${['First 7 days','First 28 days','All-time'].map(w=>`<option${blk.window===w?' selected':''}>${w}</option>`).join('')}
         </select>`;
       break;}
@@ -3239,17 +3241,34 @@ async function editBlock(si,bi){
       break;}
     case 'comparison':{
       const camps=Object.keys(vidCampaigns);
+      const subsA=blk.campA&&vidCampaigns[blk.campA]?Object.keys(vidCampaigns[blk.campA].subs||{}).sort():[];
+      const subsB=blk.campB&&vidCampaigns[blk.campB]?Object.keys(vidCampaigns[blk.campB].subs||{}).sort():[];
+      const selStyle='width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);margin-bottom:10px;';
       body.innerHTML=`
-        <div class="field-label" style="margin-bottom:4px;">Campaign A</div>
-        <select id="be-campa" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
-          <option value="">— select —</option>${camps.map(c=>`<option${blk.campA===c?' selected':''}>${c}</option>`).join('')}
-        </select>
-        <div class="field-label" style="margin-bottom:4px;">Campaign B</div>
-        <select id="be-campb" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;">
-          <option value="">— select —</option>${camps.map(c=>`<option${blk.campB===c?' selected':''}>${c}</option>`).join('')}
-        </select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>
+            <div class="field-label" style="margin-bottom:4px;">Campaign A</div>
+            <select id="be-campa" onchange="updateBeSubOptionsComp('a')" style="${selStyle}">
+              <option value="">— select —</option>${camps.map(c=>`<option${blk.campA===c?' selected':''}>${c}</option>`).join('')}
+            </select>
+            <div class="field-label" style="margin-bottom:4px;">Sub-campaign A</div>
+            <select id="be-suba" style="${selStyle}">
+              <option value="">— all sub-campaigns —</option>${subsA.map(s=>`<option${blk.subA===s?' selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <div class="field-label" style="margin-bottom:4px;">Campaign B</div>
+            <select id="be-campb" onchange="updateBeSubOptionsComp('b')" style="${selStyle}">
+              <option value="">— select —</option>${camps.map(c=>`<option${blk.campB===c?' selected':''}>${c}</option>`).join('')}
+            </select>
+            <div class="field-label" style="margin-bottom:4px;">Sub-campaign B</div>
+            <select id="be-subb" style="${selStyle}">
+              <option value="">— all sub-campaigns —</option>${subsB.map(s=>`<option${blk.subB===s?' selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+        </div>
         <div class="field-label" style="margin-bottom:4px;">Window</div>
-        <select id="be-window" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;">
+        <select id="be-window" style="${selStyle}">
           ${['First 7 days','First 28 days','All-time'].map(w=>`<option${blk.window===w?' selected':''}>${w}</option>`).join('')}
         </select>`;
       break;}
@@ -3294,7 +3313,15 @@ function updateBeSubOptions(){
   const subSel=document.getElementById('be-sub');
   if(!subSel)return;
   const subs=camp&&vidCampaigns[camp]?Object.keys(vidCampaigns[camp].subs||{}).sort():[];
-  subSel.innerHTML=subs.map(s=>`<option>${s}</option>`).join('');
+  subSel.innerHTML='<option value="">— select sub-campaign —</option>'+subs.map(s=>`<option>${s}</option>`).join('');
+}
+function updateBeSubOptionsComp(side){
+  const campSel=document.getElementById('be-camp'+side);
+  const subSel=document.getElementById('be-sub'+side);
+  if(!campSel||!subSel)return;
+  const camp=campSel.value;
+  const subs=camp&&vidCampaigns[camp]?Object.keys(vidCampaigns[camp].subs||{}).sort():[];
+  subSel.innerHTML='<option value="">— all sub-campaigns —</option>'+subs.map(s=>`<option>${s}</option>`).join('');
 }
 
 function handleBeImage(input,si,bi){
@@ -3353,7 +3380,9 @@ function saveBlockEditor(){
       break;}
     case 'comparison':{
       blk.campA=document.getElementById('be-campa')?.value||'';
+      blk.subA=document.getElementById('be-suba')?.value||'';
       blk.campB=document.getElementById('be-campb')?.value||'';
+      blk.subB=document.getElementById('be-subb')?.value||'';
       blk.window=document.getElementById('be-window')?.value||'First 28 days';
       blk.windowKey=blk.window==='First 7 days'?'w7':blk.window==='All-time'?'wall':'w28';
       break;}
@@ -3490,9 +3519,9 @@ async function exportReportPptx(){
         }
         break;}
       case 'comparison':{
-        const sumC=(cn)=>{let v=0,hr=0,rv=0,ep=0;Object.values(vidCampaigns[cn]?.subs||{}).forEach(sub=>{(sub.episodes||[]).forEach(e=>{const ac=ytVideoCache[e.videoId];const imp=ytImportedRows.find(r=>r.id===e.videoId);const d=ac?.[wk]||imp;if(d){v+=d.views||0;hr+=d.watchHrs||0;rv+=d.revenue||0;}ep++;});});return{v,hr,rv,ep};};
-        const dA=blk.campA?sumC(blk.campA):{v:0,hr:0,rv:0,ep:0};
-        const dB=blk.campB?sumC(blk.campB):{v:0,hr:0,rv:0,ep:0};
+        const sumC=(cn,sn)=>{let v=0,hr=0,rv=0,ep=0;const subsObj=vidCampaigns[cn]?.subs||{};const subsToSum=sn?{[sn]:subsObj[sn]}:subsObj;Object.values(subsToSum).forEach(sub=>{if(!sub)return;(sub.episodes||[]).forEach(e=>{const ac=ytVideoCache[e.videoId];const imp=ytImportedRows.find(r=>r.id===e.videoId);const d=ac?.[wk]||imp;if(d){v+=d.views||0;hr+=d.watchHrs||0;rv+=d.revenue||0;}ep++;});});return{v,hr,rv,ep};};
+        const dA=blk.campA?sumC(blk.campA,blk.subA||''):{v:0,hr:0,rv:0,ep:0};
+        const dB=blk.campB?sumC(blk.campB,blk.subB||''):{v:0,hr:0,rv:0,ep:0};
         s.addText((blk.campA||'A')+' vs '+(blk.campB||'B'),{x,y,w,h:0.28,fontSize:10,bold:true,color:TEXT,fontFace:'Arial'});
         s.addText(blk.window||'',{x,y:y+0.28,w,h:0.2,fontSize:8,color:MUTED,fontFace:'Arial'});
         const rows=[['Metric',blk.campA||'A',blk.campB||'B'],['Episodes',String(dA.ep),String(dB.ep)],['Views',fmt(dA.v),fmt(dB.v)],['Watch Hrs',fmt(Math.round(dA.hr)),fmt(Math.round(dB.hr))],['Revenue','€'+dA.rv.toFixed(0),'€'+dB.rv.toFixed(0)],['Avg/Ep',dA.ep?fmt(Math.round(dA.v/dA.ep)):'—',dB.ep?fmt(Math.round(dB.v/dB.ep)):'—']];
