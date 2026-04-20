@@ -163,6 +163,12 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
 .tournament-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;}
 .tournament-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
 .tournament-header:hover{background:var(--surface2);}
+.rpt-slide-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+.rpt-slide-header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-family:'Oswald',sans-serif;font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;}
+.rpt-slide-body{padding:16px;}
+.rpt-scorecard{background:var(--bg);border-radius:8px;padding:12px 14px;border-top:2px solid var(--blue);}
+.rpt-sc-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;}
+.rpt-sc-val{font-family:'Oswald',sans-serif;font-size:22px;font-weight:500;color:var(--text);}
 .tournament-name{font-family:'Oswald',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;}
 .tournament-meta{font-size:11px;color:var(--muted);font-family:var(--font-mono);}
 .platform-toggle{display:flex;gap:4px;}
@@ -407,118 +413,235 @@ input[type="text"]:focus,input[type="password"]:focus{border-color:var(--accent)
   <!-- ── REPORT BUILDER PAGE ── -->
   <div class="page" id="page-report">
 
-    <!-- Settings bar -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:12px;align-items:end;margin-bottom:12px;">
+    <!-- Top bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <div class="section-title">Report Builder</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">6-slide YouTube campaign report</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-sm" onclick="previewReport()">👁 Preview</button>
+        <button class="btn-primary" style="width:auto;padding:8px 20px;font-size:13px;" onclick="exportReportPptx()">⬇ Download PPTX</button>
+      </div>
+    </div>
+
+    <!-- Report config panel -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;">Report settings</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
         <div>
-          <div class="field-label" style="margin-bottom:4px;">Report name</div>
-          <input type="text" id="rpt-name" value="PokerStars YouTube Report"
-            style="width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font-body);"
-            oninput="rptSettings.name=this.value;renderReportBuilder();">
+          <div class="field-label">Report title</div>
+          <input type="text" id="rpt-title" placeholder="e.g. Big Game On Tour S2H3" style="width:100%;" oninput="syncRptPreview()">
         </div>
         <div>
-          <div class="field-label" style="margin-bottom:4px;">Campaign / series</div>
-          <input type="text" id="rpt-campaign" placeholder="e.g. EPT Barcelona 2025"
-            style="width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font-body);"
-            oninput="rptSettings.campaign=this.value;">
+          <div class="field-label">Month / period</div>
+          <input type="text" id="rpt-period" placeholder="e.g. April 2026" style="width:100%;" oninput="syncRptPreview()">
         </div>
         <div>
-          <div class="field-label" style="margin-bottom:4px;">Primary</div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <input type="color" id="rpt-primary" value="#003087"
-              style="width:36px;height:36px;border:none;background:none;cursor:pointer;padding:0;"
-              oninput="rptSettings.primary=this.value;document.getElementById('rpt-primary-hex').textContent=this.value;">
-            <span id="rpt-primary-hex" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">#003087</span>
+          <div class="field-label">Primary colour</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="color" id="rpt-primary" value="#003087" style="width:40px;height:36px;border:none;padding:0;cursor:pointer;background:none;" oninput="rptCfg.primary=this.value;document.getElementById('rpt-primary-hex').textContent=this.value;">
+            <input type="color" id="rpt-accent" value="#E8112D" style="width:40px;height:36px;border:none;padding:0;cursor:pointer;background:none;" oninput="rptCfg.accent=this.value;document.getElementById('rpt-accent-hex').textContent=this.value;">
+            <span id="rpt-primary-hex" style="font-size:10px;color:var(--muted);font-family:var(--font-mono);">#003087</span>
+            <span id="rpt-accent-hex" style="font-size:10px;color:var(--muted);font-family:var(--font-mono);">#E8112D</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+        <div>
+          <div class="field-label">Campaign (this report)</div>
+          <select id="rpt-camp-a" onchange="rptCfg.campA=this.value;populateRptSubA()" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);">
+            <option value="">— select —</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label">Sub-campaign (this report)</div>
+          <select id="rpt-sub-a" onchange="rptCfg.subA=this.value;" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);">
+            <option value="">— select campaign first —</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label">Window</div>
+          <select id="rpt-window" onchange="rptCfg.window=this.value;rptCfg.windowKey=this.value==='First 7 days'?'w7':this.value==='All-time'?'wall':'w28';" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);">
+            <option>First 7 days</option>
+            <option>First 28 days</option>
+            <option>All-time</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
+        <div>
+          <div class="field-label">Comparison campaign (previous series)</div>
+          <select id="rpt-camp-b" onchange="rptCfg.campB=this.value;populateRptSubB()" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);">
+            <option value="">— none —</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label">Comparison sub-campaign</div>
+          <select id="rpt-sub-b" onchange="rptCfg.subB=this.value;" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);">
+            <option value="">— select campaign first —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 1: Cover -->
+    <div class="rpt-slide-card" id="rpt-s1">
+      <div class="rpt-slide-header">
+        <span style="font-size:16px;">🎯</span>
+        <span>Slide 1 — Cover</span>
+      </div>
+      <div class="rpt-slide-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>
+            <div class="field-label">Cover image</div>
+            <div id="rpt-cover-img-preview" onclick="document.getElementById('rpt-cover-img-input').click()"
+              style="height:100px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <span style="font-size:12px;color:var(--muted);">Click to upload image</span>
+            </div>
+            <input type="file" id="rpt-cover-img-input" accept="image/*" style="display:none;" onchange="handleRptImg('cover',this)">
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:14px;border-left:3px solid var(--blue);">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:6px;">PREVIEW</div>
+            <div style="font-family:'Oswald',sans-serif;font-size:16px;font-weight:500;color:var(--text);" id="rpt-s1-title-preview">—</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="rpt-s1-sub-preview">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Executive Summary -->
+    <div class="rpt-slide-card" id="rpt-s2">
+      <div class="rpt-slide-header">
+        <span style="font-size:16px;">📊</span>
+        <span>Slide 2 — Executive Summary</span>
+        <button class="btn-sm" style="margin-left:auto;" onclick="loadRptScorecards()">↻ Load data</button>
+      </div>
+      <div class="rpt-slide-body">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;" id="rpt-scorecards">
+          <div class="rpt-scorecard"><div class="rpt-sc-label">Views (7d)</div><div class="rpt-sc-val" id="rsc-views">—</div></div>
+          <div class="rpt-scorecard"><div class="rpt-sc-label">Watch hrs (7d)</div><div class="rpt-sc-val" id="rsc-watch">—</div></div>
+          <div class="rpt-scorecard"><div class="rpt-sc-label">Revenue (7d)</div><div class="rpt-sc-val" id="rsc-rev">—</div></div>
+          <div class="rpt-scorecard"><div class="rpt-sc-label">Subscribers (7d)</div><div class="rpt-sc-val" id="rsc-subs">—</div></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <button class="btn-sm" onclick="generateRptExecSummary()" style="background:var(--accent);border-color:var(--accent);color:white;">⚡ Generate AI summary</button>
+          <span style="font-size:12px;color:var(--muted);align-self:center;">Compares this series to the comparison sub-campaign above</span>
+        </div>
+        <textarea id="rpt-exec-summary" placeholder="AI-generated executive summary will appear here, or type your own..." style="width:100%;min-height:120px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.7;outline:none;resize:vertical;"></textarea>
+      </div>
+    </div>
+
+    <!-- Slide 3: Data -->
+    <div class="rpt-slide-card" id="rpt-s3">
+      <div class="rpt-slide-header">
+        <span style="font-size:16px;">📋</span>
+        <span>Slide 3 — Data</span>
+        <button class="btn-sm" style="margin-left:auto;" onclick="loadRptEpisodeData()">↻ Load episode data</button>
+      </div>
+      <div class="rpt-slide-body">
+        <div id="rpt-ep-table-preview" style="font-size:12px;color:var(--muted);margin-bottom:14px;padding:12px;background:var(--surface2);border-radius:8px;">
+          Select a campaign and sub-campaign above, then click Load episode data
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <div class="field-label">Chart metric 1</div>
+            <select id="rpt-metric-1" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);">
+              <option>Views</option><option>Watch Hours</option><option>Revenue</option>
+            </select>
+          </div>
+          <div>
+            <div class="field-label">Chart metric 2</div>
+            <select id="rpt-metric-2" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);">
+              <option>Watch Hours</option><option>Views</option><option>Revenue</option>
+            </select>
           </div>
         </div>
         <div>
-          <div class="field-label" style="margin-bottom:4px;">Accent</div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <input type="color" id="rpt-accent" value="#E8112D"
-              style="width:36px;height:36px;border:none;background:none;cursor:pointer;padding:0;"
-              oninput="rptSettings.accent=this.value;document.getElementById('rpt-accent-hex').textContent=this.value;">
-            <span id="rpt-accent-hex" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">#E8112D</span>
+          <div class="field-label">Slide comment</div>
+          <input type="text" id="rpt-s3-comment" placeholder="e.g. Strong opening performance with Ep.1 outperforming all previous series..." style="width:100%;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Deep Dive -->
+    <div class="rpt-slide-card" id="rpt-s4">
+      <div class="rpt-slide-header">
+        <span style="font-size:16px;">🔍</span>
+        <span>Slide 4 — Deep Dive</span>
+      </div>
+      <div class="rpt-slide-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>
+            <div class="field-label">Retention screenshot (from YT Studio)</div>
+            <div id="rpt-retention-preview" onclick="document.getElementById('rpt-retention-input').click()"
+              style="height:120px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:10px;">
+              <span style="font-size:12px;color:var(--muted);">Click to upload retention graph screenshot</span>
+            </div>
+            <input type="file" id="rpt-retention-input" accept="image/*" style="display:none;" onchange="handleRptImg('retention',this)">
+            <div class="field-label">Retention analysis</div>
+            <div style="display:flex;gap:6px;margin-bottom:6px;">
+              <button class="btn-sm" onclick="generateRptRetention()" style="background:var(--accent);border-color:var(--accent);color:white;font-size:11px;">⚡ AI analyse</button>
+            </div>
+            <textarea id="rpt-retention-text" placeholder="Upload screenshot then click AI analyse, or write your own..." style="width:100%;min-height:90px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px;color:var(--text);font-family:var(--font-body);font-size:12px;line-height:1.6;outline:none;resize:vertical;"></textarea>
+          </div>
+          <div>
+            <div class="field-label">Comments screenshot (for sentiment)</div>
+            <div id="rpt-sentiment-preview" onclick="document.getElementById('rpt-sentiment-input').click()"
+              style="height:120px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:10px;">
+              <span style="font-size:12px;color:var(--muted);">Click to upload comments screenshot</span>
+            </div>
+            <input type="file" id="rpt-sentiment-input" accept="image/*" style="display:none;" onchange="handleRptImg('sentiment',this)">
+            <div class="field-label">Sentiment analysis</div>
+            <div style="display:flex;gap:6px;margin-bottom:6px;">
+              <button class="btn-sm" onclick="generateRptSentiment()" style="background:var(--accent);border-color:var(--accent);color:white;font-size:11px;">⚡ AI analyse</button>
+            </div>
+            <textarea id="rpt-sentiment-text" placeholder="Upload comments screenshot then click AI analyse, or write your own..." style="width:100%;min-height:90px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px;color:var(--text);font-family:var(--font-body);font-size:12px;line-height:1.6;outline:none;resize:vertical;"></textarea>
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <span style="font-size:12px;color:var(--muted);">Template:</span>
-        <select id="rpt-template-select" onchange="loadRptTemplate(this.value)"
-          style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;font-family:var(--font-body);">
-          <option value="">— select —</option>
-          <option value="ept">EPT</option>
-          <option value="bgot">Big Game On Tour</option>
-          <option value="irish">Irish Open</option>
-        </select>
-        <button class="btn-sm" onclick="saveRptTemplate()">💾 Save template</button>
-        <div style="margin-left:auto;display:flex;gap:8px;">
-          <button class="btn-sm" onclick="addReportSlide()">+ Add slide</button>
-          <button class="btn-sm" onclick="previewReport()">👁 Preview</button>
-          <button class="btn-primary" style="width:auto;padding:8px 18px;font-size:13px;" onclick="exportReportPptx()">⬇ Download PPTX</button>
-        </div>
+    </div>
+
+    <!-- Slide 5: Learnings -->
+    <div class="rpt-slide-card" id="rpt-s5">
+      <div class="rpt-slide-header">
+        <span style="font-size:16px;">💡</span>
+        <span>Slide 5 — Learnings &amp; Takeaways</span>
+        <button class="btn-sm" style="margin-left:auto;" onclick="generateRptLearnings()" style="background:var(--accent);border-color:var(--accent);color:white;">⚡ Generate with AI</button>
       </div>
-    </div>
-
-    <!-- Slide list -->
-    <div id="report-slides" style="display:flex;flex-direction:column;gap:10px;"></div>
-    <div id="report-empty" style="text-align:center;padding:60px;color:var(--muted);">
-      <div style="font-size:36px;margin-bottom:16px;">📑</div>
-      <div style="font-size:15px;font-weight:500;margin-bottom:8px;">No slides yet</div>
-      <div style="font-size:13px;margin-bottom:24px;">Configure settings above then add slides</div>
-      <button class="btn-primary" style="width:auto;padding:10px 24px;" onclick="addReportSlide()">+ Add first slide</button>
-    </div>
-
-    <!-- Slide type picker modal -->
-    <div class="modal-overlay" id="slide-picker-modal" style="z-index:800;">
-      <div class="modal" style="max-width:680px;">
-        <div class="modal-title">Add slide</div>
-        <div id="slide-picker-grid" style="margin-bottom:16px;"></div>
-        <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('slide-picker-modal')">Cancel</button></div>
-      </div>
-    </div>
-
-    <!-- Block type picker modal -->
-    <div class="modal-overlay" id="block-picker-modal" style="z-index:810;">
-      <div class="modal" style="max-width:660px;">
-        <div class="modal-title">Add block to slide</div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Choose a block type, then set its column width</div>
-        <div id="block-picker-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;"></div>
-        <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:4px;">
-          <div class="field-label" style="margin-bottom:8px;">Column width</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;"><input type="radio" name="block-col" value="full" checked> Full width</label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;"><input type="radio" name="block-col" value="half"> Half (left/right)</label>
-            <label style="display:flex;align-items:center;gap=6px;cursor:pointer;font-size:12px;"><input type="radio" name="block-col" value="third"> Third (1 of 3)</label>
+      <div class="rpt-slide-body">
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+          <div>
+            <div class="field-label">Key learning 1</div>
+            <input type="text" id="rpt-l1" placeholder="e.g. Episode 1 retention dropped sharply after intro — shorter intros recommended" style="width:100%;">
+          </div>
+          <div>
+            <div class="field-label">Key learning 2</div>
+            <input type="text" id="rpt-l2" placeholder="e.g. Shorts drove 22% of total views — continue Shorts strategy" style="width:100%;">
+          </div>
+          <div>
+            <div class="field-label">Key learning 3</div>
+            <input type="text" id="rpt-l3" placeholder="e.g. Revenue CPM up 18% vs S2H2 — audience quality improving" style="width:100%;">
           </div>
         </div>
-        <input type="hidden" id="block-picker-slide-idx">
-        <div class="modal-actions" style="margin-top:12px;"><button class="btn-cancel" onclick="closeModal('block-picker-modal')">Cancel</button></div>
-      </div>
-    </div>
-
-    <!-- Block editor modal -->
-    <div class="modal-overlay" id="block-editor-modal" style="z-index:820;">
-      <div class="modal" style="max-width:700px;max-height:90vh;overflow-y:auto;">
-        <div class="modal-title" id="block-editor-title">Edit block</div>
-        <div id="block-editor-body" style="margin-bottom:16px;"></div>
-        <input type="hidden" id="block-editor-slide-idx">
-        <input type="hidden" id="block-editor-block-idx">
-        <div class="modal-actions">
-          <button class="btn-cancel" onclick="closeModal('block-editor-modal')">Cancel</button>
-          <button class="btn-confirm" onclick="saveBlockEditor()">Save</button>
+        <div>
+          <div class="field-label">Suggested strategy for future</div>
+          <textarea id="rpt-strategy" placeholder="e.g. For Heat 4, prioritise shorter episode introductions, maintain weekly Shorts cadence, and consider ambassador engagement on launch day..." style="width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.7;outline:none;resize:vertical;"></textarea>
         </div>
       </div>
     </div>
 
-    <!-- Meta editor (cover/divider) -->
-    <div class="modal-overlay" id="slide-meta-modal" style="z-index:800;">
-      <div class="modal" style="max-width:520px;">
-        <div class="modal-title" id="slide-meta-title">Edit slide</div>
-        <div id="slide-meta-fields"></div>
-        <input type="hidden" id="slide-meta-idx">
-        <div class="modal-actions" style="margin-top:12px;">
-          <button class="btn-cancel" onclick="closeModal('slide-meta-modal')">Cancel</button>
-          <button class="btn-confirm" onclick="saveSlideMetaModal()">Save</button>
+    <!-- Slide 6: End -->
+    <div class="rpt-slide-card" id="rpt-s6">
+      <div class="rpt-slide-header">
+        <span style="font-size:16px;">🏁</span>
+        <span>Slide 6 — End Slide</span>
+      </div>
+      <div class="rpt-slide-body">
+        <div style="background:var(--surface2);border-radius:8px;padding:16px;text-align:center;border:1px solid var(--border);">
+          <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:500;color:var(--text);letter-spacing:0.08em;margin-bottom:4px;">POKERSTARS</div>
+          <div style="font-size:11px;color:var(--muted);" id="rpt-s6-sub">Campaign · Period</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:8px;">End slide is auto-generated from your settings above</div>
         </div>
       </div>
     </div>
@@ -784,7 +907,7 @@ function showPage(name,btn){
   if(name==='live')renderCampaignTree();
   if(name==='vidcamps')renderVidCamps();
   if(name==='monthly')loadMonthlyPage();
-  if(name==='report')renderReportBuilder();
+  if(name==='report'){initReportBuilder();}
   if(name==='settings')populateSettingsPage();
 }
 
@@ -2869,836 +2992,595 @@ async function loadMonthlyPage(){
 // REPORT BUILDER v3 — canvas slides with multi-block rows
 // ═══════════════════════════════════════════════════════
 
-let rptSettings = { name:'PokerStars YouTube Report', campaign:'', primary:'#003087', accent:'#E8112D' };
-let reportSlides = [];
+// ═══════════════════════════════════════════════════════
+// REPORT BUILDER v4 — fixed 6-slide campaign report
+// ═══════════════════════════════════════════════════════
 
-// Fixed slide types (no blocks)
-const FIXED_SLIDE_TYPES = [
-  { id:'cover',        icon:'🎯', label:'Cover',             desc:'Title, campaign, date' },
-  { id:'divider',      icon:'📌', label:'Section Divider',   desc:'Numbered section separator' },
-  { id:'exec-summary', icon:'📊', label:'Executive Summary', desc:'4 KPIs from live data' },
-  { id:'end',          icon:'🏁', label:'End Slide',         desc:'PokerStars sign-off' },
-];
-
-// Block types (canvas slides)
-const BLOCK_TYPES = [
-  { id:'text',        icon:'✍️',  label:'Text / AI',         desc:'Free text or AI-generated',  group:'Content' },
-  { id:'kpi-row',     icon:'📊',  label:'KPI Row',           desc:'Inline metric callouts',     group:'Content' },
-  { id:'ep-table',    icon:'📋',  label:'Episode Table',     desc:'Campaign episode results',   group:'Data' },
-  { id:'comparison',  icon:'⚖️',  label:'Comparison Table', desc:'Two campaigns side by side',  group:'Data' },
-  { id:'live-event',  icon:'🏅',  label:'Live Event',        desc:'Tournament day data',        group:'Data' },
-  { id:'top-videos',  icon:'🏆',  label:'Top Videos',        desc:'Best performing videos',     group:'Data' },
-  { id:'ep-chart',    icon:'📈',  label:'Episode Chart',     desc:'Line chart per metric',      group:'Charts' },
-  { id:'image',       icon:'🖼️',  label:'Image / Screenshot',desc:'Upload image or screenshot', group:'Media' },
-  { id:'learnings',   icon:'💡',  label:'Learnings & Recs',  desc:'Numbered points + tags',    group:'Content' },
-  { id:'look-ahead',  icon:'🔭',  label:'Look Ahead',        desc:'Upcoming content + date',   group:'Monthly' },
-];
-
-const RPT_TEMPLATES = {
-  ept:   { name:'EPT Report',          campaign:'EPT',            primary:'#003087', accent:'#E8112D' },
-  bgot:  { name:'Big Game On Tour',    campaign:'Big Game On Tour', primary:'#C9A84C', accent:'#FFFFFF' },
-  irish: { name:'Irish Open Report',   campaign:'Irish Open',     primary:'#009A44', accent:'#FF6600' },
+// ── State ──
+const rptCfg = {
+  primary: '#003087', accent: '#E8112D',
+  campA: '', subA: '', campB: '', subB: '',
+  window: 'First 7 days', windowKey: 'w7',
 };
+const rptImages = {}; // cover, retention, sentiment
 
-function loadRptTemplate(key){
-  if(!key)return;
-  const t=RPT_TEMPLATES[key]; if(!t)return;
-  Object.assign(rptSettings,t);
-  document.getElementById('rpt-name').value=t.name;
-  document.getElementById('rpt-campaign').value=t.campaign;
-  document.getElementById('rpt-primary').value=t.primary;
-  document.getElementById('rpt-accent').value=t.accent;
-  document.getElementById('rpt-primary-hex').textContent=t.primary;
-  document.getElementById('rpt-accent-hex').textContent=t.accent;
-  renderReportBuilder();
-}
-function saveRptTemplate(){
-  const key=(prompt('Template name (no spaces):')||'').trim().replace(/\s+/g,'_');
-  if(!key)return;
-  RPT_TEMPLATES[key]={...rptSettings};
-  const sel=document.getElementById('rpt-template-select');
-  if(!sel.querySelector(`option[value="${key}"]`)){
-    const o=document.createElement('option');o.value=key;o.textContent=key;sel.appendChild(o);
-  }
-  sel.value=key; alert(`Saved "${key}"`);
+// ── Init: populate campaign dropdowns when tab opens ──
+function initReportBuilder() {
+  ['rpt-camp-a','rpt-camp-b'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const isB = id === 'rpt-camp-b';
+    sel.innerHTML = (isB ? '<option value="">— none —</option>' : '<option value="">— select —</option>') +
+      Object.keys(vidCampaigns).sort().map(c => `<option>${c}</option>`).join('');
+  });
+  syncRptPreview();
 }
 
-// ── Render slide list ──
-function renderReportBuilder(){
-  const P=rptSettings.primary, A=rptSettings.accent;
-  const container=document.getElementById('report-slides');
-  const empty=document.getElementById('report-empty');
-  if(!reportSlides.length){container.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  container.innerHTML=reportSlides.map((slide,si)=>{
-    const isFixed=FIXED_SLIDE_TYPES.find(t=>t.id===slide.type);
-    const stLabel=isFixed?.label||(slide.title||'Canvas slide');
-    const stIcon=isFixed?.icon||'🖼️';
-    return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
-      <!-- Slide header -->
-      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);">
-        <span style="font-size:15px;">${stIcon}</span>
-        <span style="font-weight:600;font-size:13px;">${stLabel}</span>
-        ${slide.subtitle?`<span style="font-size:11px;color:var(--muted);">· ${slide.subtitle}</span>`:''}
-        <span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--muted);background:var(--bg);padding:2px 7px;border-radius:4px;">${si+1}</span>
-        <div style="display:flex;gap:4px;">
-          ${si>0?`<button class="tag-btn" style="padding:2px 7px;font-size:10px;" onclick="moveSlide(${si},-1)">↑</button>`:''}
-          ${si<reportSlides.length-1?`<button class="tag-btn" style="padding:2px 7px;font-size:10px;" onclick="moveSlide(${si},1)">↓</button>`:''}
-          ${isFixed?`<button class="tag-btn" style="padding:2px 9px;font-size:10px;" onclick="editFixedSlide(${si})">Edit</button>`:''}
-          <button class="tag-btn" style="padding:2px 7px;font-size:10px;color:var(--accent);border-color:var(--accent);" onclick="removeSlide(${si})">✕</button>
-        </div>
-      </div>
-      <!-- Slide body: fixed preview OR canvas blocks -->
-      ${isFixed
-        ? `<div style="padding:14px;">${renderFixedThumb(slide,P,A)}</div>`
-        : `<div style="padding:12px;">
-            ${renderCanvasBlocks(slide,si,P,A)}
-            <button class="tag-btn" style="margin-top:8px;width:100%;justify-content:center;display:flex;padding:8px;font-size:12px;" onclick="openBlockPicker(${si})">+ Add block</button>
-           </div>`
-      }
-    </div>`;
-  }).join('');
+function populateRptSubA() {
+  const camp = document.getElementById('rpt-camp-a')?.value;
+  rptCfg.campA = camp;
+  const sel = document.getElementById('rpt-sub-a');
+  if (!sel) return;
+  const subs = camp && vidCampaigns[camp] ? Object.keys(vidCampaigns[camp].subs || {}).sort() : [];
+  sel.innerHTML = '<option value="">— select sub-campaign —</option>' + subs.map(s => `<option>${s}</option>`).join('');
+  rptCfg.subA = '';
 }
 
-// ── Fixed slide thumbnails ──
-function renderFixedThumb(slide,P,A){
-  const name=rptSettings.name;
-  switch(slide.type){
-    case 'cover':
-      return`<div style="background:#000;border-radius:6px;padding:20px 24px;border-left:4px solid ${P};min-height:72px;">
-        <div style="font-size:10px;color:${P};text-transform:uppercase;letter-spacing:0.12em;margin-bottom:6px;">POKERSTARS</div>
-        <div style="font-size:18px;font-weight:700;color:#fff;">${name}</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">${rptSettings.campaign||''} · ${slide.date||''}</div>
-      </div>`;
-    case 'divider':
-      return`<div style="background:#000;border-radius:6px;padding:16px 20px;display:flex;align-items:center;gap:16px;min-height:60px;">
-        <div style="font-size:40px;font-weight:900;color:${P};opacity:0.25;">${slide.sectionNum||'1'}</div>
-        <div style="border-left:3px solid ${A};padding-left:14px;">
-          <div style="font-size:15px;font-weight:700;color:#fff;">${slide.title||'Section'}</div>
-        </div>
-      </div>`;
-    case 'exec-summary':{
-      const t=ytData.totals||{};
-      const kpis=[['Views',fmt(t.views),P],['Watch hrs',t.mins?fmt(Math.round(t.mins/60)):'—','9966FF'],['Revenue',t.rev!=null?fmtEur(t.rev):'—','22CC88'],['Subscribers',fmt(t.subs),A]];
-      return`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">${kpis.map(([l,v,c])=>`
-        <div style="background:#000;border-radius:6px;padding:10px 12px;border-top:2px solid ${c};">
-          <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">${l}</div>
-          <div style="font-size:18px;font-weight:700;color:#fff;">${v}</div>
-        </div>`).join('')}</div>`;}
-    case 'end':
-      return`<div style="background:#000;border-radius:6px;padding:18px 24px;text-align:center;border:1px solid ${P}33;">
-        <div style="font-size:16px;font-weight:700;color:#fff;letter-spacing:0.06em;">POKERSTARS</div>
-      </div>`;
-    default: return '';
-  }
+function populateRptSubB() {
+  const camp = document.getElementById('rpt-camp-b')?.value;
+  rptCfg.campB = camp;
+  const sel = document.getElementById('rpt-sub-b');
+  if (!sel) return;
+  const subs = camp && vidCampaigns[camp] ? Object.keys(vidCampaigns[camp].subs || {}).sort() : [];
+  sel.innerHTML = '<option value="">— all sub-campaigns —</option>' + subs.map(s => `<option>${s}</option>`).join('');
+  rptCfg.subB = '';
 }
 
-// ── Canvas blocks renderer ──
-function renderCanvasBlocks(slide,si,P,A){
-  if(!slide.blocks||!slide.blocks.length){
-    return`<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--border2);border-radius:8px;">No blocks yet — click "+ Add block" below</div>`;
-  }
-  // Group consecutive blocks into rows by their col setting
-  // full = own row; half/third = share row with adjacent same-type
-  const rows=[];
-  let currentRow=[];
-  slide.blocks.forEach((blk,bi)=>{
-    if(blk.col==='full'){
-      if(currentRow.length)rows.push(currentRow);
-      rows.push([{blk,bi}]);
-      currentRow=[];
-    } else {
-      currentRow.push({blk,bi});
-      const maxInRow=blk.col==='third'?3:2;
-      if(currentRow.length>=maxInRow){rows.push(currentRow);currentRow=[];}
+function syncRptPreview() {
+  const title = document.getElementById('rpt-title')?.value || '—';
+  const period = document.getElementById('rpt-period')?.value || '—';
+  const el1 = document.getElementById('rpt-s1-title-preview');
+  const el2 = document.getElementById('rpt-s1-sub-preview');
+  const el6 = document.getElementById('rpt-s6-sub');
+  if (el1) el1.textContent = title;
+  if (el2) el2.textContent = period + ' — YouTube Report';
+  if (el6) el6.textContent = (document.getElementById('rpt-sub-a')?.value || '') + ' · ' + period;
+}
+
+// ── Image uploads ──
+function handleRptImg(key, input) {
+  const file = input.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    rptImages[key] = e.target.result;
+    const preview = document.getElementById(`rpt-${key}-preview`) ||
+                    document.getElementById(`rpt-${key}-img-preview`);
+    if (preview) preview.innerHTML = `<img src="${e.target.result}" style="max-height:100%;max-width:100%;border-radius:6px;object-fit:contain;">`;
+  };
+  r.readAsDataURL(file);
+}
+
+// ── Slide 2: Load scorecards ──
+function loadRptScorecards() {
+  const camp = document.getElementById('rpt-camp-a')?.value;
+  const sub  = document.getElementById('rpt-sub-a')?.value;
+  const wk   = rptCfg.windowKey || 'w7';
+  if (!camp || !sub) { alert('Select a campaign and sub-campaign first.'); return; }
+  const eps = vidCampaigns[camp]?.subs[sub]?.episodes || [];
+  if (!eps.length) { alert('No episodes in this sub-campaign.'); return; }
+  let totalViews = 0, totalHrs = 0, totalRev = 0, totalSubs = 0, found = 0;
+  eps.forEach(ep => {
+    const ac = ytVideoCache[ep.videoId];
+    const imp = ytImportedRows.find(r => r.id === ep.videoId);
+    const d = ac?.[wk] || imp;
+    if (d) {
+      totalViews += d.views || 0;
+      totalHrs   += d.watchHrs || 0;
+      totalRev   += d.revenue || 0;
+      found++;
     }
   });
-  if(currentRow.length)rows.push(currentRow);
-
-  return rows.map(row=>{
-    const cols=row.length;
-    return`<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px;margin-bottom:8px;">
-      ${row.map(({blk,bi})=>`
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;position:relative;min-height:60px;">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-            <span style="font-size:13px;">${BLOCK_TYPES.find(t=>t.id===blk.type)?.icon||'📄'}</span>
-            <span style="font-size:11px;font-weight:600;color:var(--text);">${BLOCK_TYPES.find(t=>t.id===blk.type)?.label||blk.type}</span>
-            <span style="font-size:10px;color:var(--muted);margin-left:2px;">(${blk.col||'full'})</span>
-            <div style="margin-left:auto;display:flex;gap:3px;">
-              <button class="tag-btn" style="padding:1px 6px;font-size:9px;" onclick="editBlock(${si},${bi})">Edit</button>
-              ${bi>0?`<button class="tag-btn" style="padding:1px 5px;font-size:9px;" onclick="moveBlock(${si},${bi},-1)">↑</button>`:''}
-              ${bi<slide.blocks.length-1?`<button class="tag-btn" style="padding:1px 5px;font-size:9px;" onclick="moveBlock(${si},${bi},1)">↓</button>`:''}
-              <button class="tag-btn" style="padding:1px 5px;font-size:9px;color:var(--accent);border-color:var(--accent);" onclick="removeBlock(${si},${bi})">✕</button>
-            </div>
-          </div>
-          <div style="font-size:11px;color:var(--muted);">${renderBlockThumb(blk)}</div>
-        </div>`).join('')}
-    </div>`;
-  }).join('');
-}
-
-function renderBlockThumb(blk){
-  switch(blk.type){
-    case 'text': return blk.content?blk.content.slice(0,100)+'…':'<em>Click Edit to add text</em>';
-    case 'kpi-row':{const t=ytData.totals||{};return `Views: ${fmt(t.views)} · Watch hrs: ${t.mins?fmt(Math.round(t.mins/60)):'—'} · Rev: ${t.rev!=null?fmtEur(t.rev):'—'}`;}
-    case 'ep-table': return blk.campName?`${blk.campName} / ${blk.subName||'—'} · ${blk.window||'28 days'}`:'<em>Click Edit to select campaign</em>';
-    case 'comparison': return blk.campA&&blk.campB?`${blk.campA} vs ${blk.campB}`:'<em>Click Edit to select campaigns</em>';
-    case 'live-event': return blk.stopKey&&campaigns[blk.stopKey]?`${campaigns[blk.stopKey].stop} ${campaigns[blk.stopKey].year}`:'<em>Click Edit to select stop</em>';
-    case 'top-videos': return `Top videos · ${S}–${E}`;
-    case 'ep-chart':{
-      const labelA=blk.subA||blk.campA||'';
-      const labelB=blk.subB||blk.campB||'';
-      return blk.campA?`${blk.metric||'Views'} · ${labelA}${blk.campB?' vs '+labelB:''}`:'<em>Click Edit to configure</em>';}
-    case 'image': return blk.imageData?`<img src="${blk.imageData}" style="max-height:60px;border-radius:4px;">`:'<em>Click Edit to upload image</em>';
-    case 'learnings': return blk.points?.length?blk.points.slice(0,2).map(p=>`• ${p.heading}`).join('<br>'):'<em>Click Edit to add points</em>';
-    case 'look-ahead': return blk.title?`${blk.title} · ${blk.date||'TBC'}`:'<em>Click Edit to add content</em>';
-    default: return '';
+  document.getElementById('rsc-views').textContent = fmt(totalViews);
+  document.getElementById('rsc-watch').textContent = fmt(Math.round(totalHrs));
+  document.getElementById('rsc-rev').textContent   = totalRev ? fmtEur(totalRev) : '—';
+  document.getElementById('rsc-subs').textContent  = '—'; // not available per-video
+  if (found < eps.length) {
+    alert(`Data loaded for ${found}/${eps.length} episodes. Click ↺ Refresh data in Video Campaigns to fetch missing windows.`);
   }
 }
 
-// ── Slide management ──
-function addReportSlide(){
-  const all=[...FIXED_SLIDE_TYPES,{id:'canvas',icon:'🖼️',label:'Canvas slide',desc:'Add blocks freely — tables, charts, text, images'}];
-  const grid=document.getElementById('slide-picker-grid');
-  const groups={'Fixed':FIXED_SLIDE_TYPES,'Free canvas':[{id:'canvas',icon:'🖼️',label:'Canvas slide',desc:'Add blocks freely — tables, charts, text, images'}]};
-  grid.innerHTML=Object.entries(groups).map(([g,types])=>`
-    <div style="margin-bottom:14px;">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">${g}</div>
-      <div style="display:grid;grid-template-columns:repeat(${g==='Fixed'?4:1},1fr);gap:8px;">
-        ${types.map(t=>`
-          <button onclick="pickSlideType('${t.id}');closeModal('slide-picker-modal');"
-            style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px 10px;text-align:left;cursor:pointer;"
-            onmouseover="this.style.borderColor='${rptSettings.primary}'"
-            onmouseout="this.style.borderColor='var(--border2)'">
-            <div style="font-size:16px;margin-bottom:5px;">${t.icon}</div>
-            <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px;">${t.label}</div>
-            <div style="font-size:10px;color:var(--muted);">${t.desc}</div>
-          </button>`).join('')}
-      </div>
-    </div>`).join('');
-  document.getElementById('slide-picker-modal').classList.add('open');
-}
+// ── Slide 2: AI executive summary ──
+async function generateRptExecSummary() {
+  if (!CLAUDE) { alert('Add your Claude API key in Settings.'); return; }
+  const camp  = document.getElementById('rpt-camp-a')?.value;
+  const sub   = document.getElementById('rpt-sub-a')?.value;
+  const campB = document.getElementById('rpt-camp-b')?.value;
+  const subB  = document.getElementById('rpt-sub-b')?.value;
+  const wk    = rptCfg.windowKey || 'w7';
+  const winLabel = document.getElementById('rpt-window')?.value || 'First 7 days';
 
-function pickSlideType(typeId){
-  const slide={type:typeId};
-  if(typeId==='canvas'){slide.title='Slide';slide.blocks=[];}
-  if(typeId==='divider'){slide.title='Section';slide.sectionNum=String(reportSlides.filter(s=>s.type==='divider').length+1);}
-  if(typeId==='cover'){slide.date=new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'});}
-  reportSlides.push(slide);
-  renderReportBuilder();
-  const si=reportSlides.length-1;
-  setTimeout(()=>{
-    if(FIXED_SLIDE_TYPES.find(t=>t.id!=='exec-summary'&&t.id!=='end'&&t.id===typeId))editFixedSlide(si);
-  },60);
-}
-
-function removeSlide(i){if(!confirm('Remove this slide?'))return;reportSlides.splice(i,1);renderReportBuilder();}
-function moveSlide(i,dir){const j=i+dir;if(j<0||j>=reportSlides.length)return;[reportSlides[i],reportSlides[j]]=[reportSlides[j],reportSlides[i]];renderReportBuilder();}
-
-// ── Fixed slide editor ──
-function editFixedSlide(si){
-  const slide=reportSlides[si];
-  document.getElementById('slide-meta-idx').value=si;
-  document.getElementById('slide-meta-title').textContent=`Edit: ${FIXED_SLIDE_TYPES.find(t=>t.id===slide.type)?.label||slide.type}`;
-  const f=document.getElementById('slide-meta-fields');
-  if(slide.type==='cover'){
-    f.innerHTML=`<div class="field-label">Date / subtitle line</div>
-      <input type="text" id="meta-date" value="${slide.date||''}" placeholder="e.g. April 2026" style="width:100%;margin-bottom:4px;">`;
-  } else if(slide.type==='divider'){
-    f.innerHTML=`<div class="field-label">Section number</div>
-      <input type="text" id="meta-num" value="${slide.sectionNum||'1'}" style="width:80px;margin-bottom:12px;">
-      <div class="field-label">Section title</div>
-      <input type="text" id="meta-title" value="${slide.title||''}" style="width:100%;margin-bottom:4px;">`;
-  } else {
-    f.innerHTML=`<p style="font-size:13px;color:var(--muted);">This slide uses live dashboard data automatically.</p>`;
-  }
-  document.getElementById('slide-meta-modal').classList.add('open');
-}
-function saveSlideMetaModal(){
-  const si=parseInt(document.getElementById('slide-meta-idx').value);
-  if(isNaN(si)||!reportSlides[si]){closeModal('slide-meta-modal');return;}
-  const s=reportSlides[si];
-  if(s.type==='cover'){s.date=document.getElementById('meta-date')?.value||'';}
-  if(s.type==='divider'){
-    s.sectionNum=document.getElementById('meta-num')?.value||'1';
-    s.title=document.getElementById('meta-title')?.value||'Section';
-    s.subtitle=s.sectionNum+'. '+s.title;
-  }
-  closeModal('slide-meta-modal');renderReportBuilder();
-}
-
-// ── Block picker ──
-function openBlockPicker(si){
-  document.getElementById('block-picker-slide-idx').value=si;
-  const grid=document.getElementById('block-picker-grid');
-  const groups={};
-  BLOCK_TYPES.forEach(t=>{if(!groups[t.group])groups[t.group]=[];groups[t.group].push(t);});
-  grid.innerHTML='';
-  // Group headers + buttons
-  const container=document.getElementById('block-picker-grid');
-  container.style.display='block';
-  container.innerHTML=Object.entries(groups).map(([g,types])=>`
-    <div style="margin-bottom:14px;">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">${g}</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
-        ${types.map(t=>`
-          <button onclick="pickBlock('${t.id}')"
-            style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 8px;text-align:left;cursor:pointer;"
-            onmouseover="this.style.borderColor='${rptSettings.primary}'"
-            onmouseout="this.style.borderColor='var(--border2)'">
-            <div style="font-size:14px;margin-bottom:4px;">${t.icon}</div>
-            <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:1px;">${t.label}</div>
-            <div style="font-size:10px;color:var(--muted);">${t.desc}</div>
-          </button>`).join('')}
-      </div>
-    </div>`).join('');
-  document.getElementById('block-picker-modal').classList.add('open');
-}
-
-function pickBlock(typeId){
-  const si=parseInt(document.getElementById('block-picker-slide-idx').value);
-  const col=document.querySelector('input[name="block-col"]:checked')?.value||'full';
-  closeModal('block-picker-modal');
-  const blk={type:typeId,col};
-  if(typeId==='learnings')blk.points=[];
-  if(!reportSlides[si].blocks)reportSlides[si].blocks=[];
-  reportSlides[si].blocks.push(blk);
-  const bi=reportSlides[si].blocks.length-1;
-  renderReportBuilder();
-  setTimeout(()=>editBlock(si,bi),60);
-}
-
-function removeBlock(si,bi){reportSlides[si].blocks.splice(bi,1);renderReportBuilder();}
-function moveBlock(si,bi,dir){
-  const blocks=reportSlides[si].blocks;
-  const j=bi+dir;if(j<0||j>=blocks.length)return;
-  [blocks[bi],blocks[j]]=[blocks[j],blocks[bi]];renderReportBuilder();
-}
-
-// ── Block editor ──
-async function editBlock(si,bi){
-  const blk=reportSlides[si].blocks[bi];
-  document.getElementById('block-editor-slide-idx').value=si;
-  document.getElementById('block-editor-block-idx').value=bi;
-  const t=BLOCK_TYPES.find(x=>x.id===blk.type)||{label:blk.type};
-  document.getElementById('block-editor-title').textContent='Edit: '+t.label;
-
-  const body=document.getElementById('block-editor-body');
-  switch(blk.type){
-    case 'text':
-      body.innerHTML=`
-        <div style="display:flex;gap:8px;margin-bottom:10px;">
-          <button class="btn-sm" id="be-ai-btn" onclick="generateBlockAI(${si},${bi})" style="background:var(--accent);border-color:var(--accent);color:white;">⚡ Generate with AI</button>
-        </div>
-        <textarea id="be-text" style="width:100%;min-height:200px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.7;outline:none;resize:vertical;">${blk.content||''}</textarea>`;
-      break;
-    case 'image':
-      body.innerHTML=`
-        <div id="be-img-preview" style="margin-bottom:10px;min-height:80px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('be-img-input').click()">
-          ${blk.imageData?`<img src="${blk.imageData}" style="max-height:160px;border-radius:6px;">`:`<span style="font-size:12px;color:var(--muted);">Click to upload image</span>`}
-        </div>
-        <input type="file" id="be-img-input" accept="image/*" style="display:none;" onchange="handleBeImage(this,${si},${bi})">
-        <div class="field-label" style="margin-bottom:4px;">Caption (optional)</div>
-        <input type="text" id="be-caption" value="${blk.caption||''}" placeholder="Caption text" style="width:100%;">`;
-      break;
-    case 'ep-table':{
-      const camps=Object.keys(vidCampaigns);
-      const initSubs=blk.campName&&vidCampaigns[blk.campName]?Object.keys(vidCampaigns[blk.campName].subs||{}).sort():[];
-      body.innerHTML=`
-        <div class="field-label" style="margin-bottom:4px;">Campaign</div>
-        <select id="be-camp" onchange="updateBeSubOptions()" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);margin-bottom:10px;">
-          <option value="">— select campaign —</option>
-          ${camps.map(c=>`<option${blk.campName===c?' selected':''}>${c}</option>`).join('')}
-        </select>
-        <div class="field-label" style="margin-bottom:4px;">Sub-campaign</div>
-        <select id="be-sub" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);margin-bottom:10px;">
-          <option value="">— select sub-campaign —</option>
-          ${initSubs.map(s=>`<option${blk.subName===s?' selected':''}>${s}</option>`).join('')}
-        </select>
-        <div class="field-label" style="margin-bottom:4px;">Window</div>
-        <select id="be-window" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);">
-          ${['First 7 days','First 28 days','All-time'].map(w=>`<option${blk.window===w?' selected':''}>${w}</option>`).join('')}
-        </select>`;
-      break;}
-    case 'ep-chart':{
-      const camps=Object.keys(vidCampaigns);
-      const ss='width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);margin-bottom:10px;';
-      const subsA=blk.campA&&vidCampaigns[blk.campA]?Object.keys(vidCampaigns[blk.campA].subs||{}).sort():[];
-      const subsB=blk.campB&&vidCampaigns[blk.campB]?Object.keys(vidCampaigns[blk.campB].subs||{}).sort():[];
-      body.innerHTML=`
-        <div class="field-label" style="margin-bottom:4px;">Metric</div>
-        <select id="be-metric" style="${ss}">
-          ${['Views','Watch Hours','Revenue'].map(m=>`<option${blk.metric===m?' selected':''}>${m}</option>`).join('')}
-        </select>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div>
-            <div class="field-label" style="margin-bottom:4px;">Campaign A</div>
-            <select id="be-campa" onchange="updateBeChartSubs('a')" style="${ss}">
-              <option value="">— select —</option>
-              ${camps.map(c=>`<option${blk.campA===c?' selected':''}>${c}</option>`).join('')}
-            </select>
-            <div class="field-label" style="margin-bottom:4px;">Sub-campaign A</div>
-            <select id="be-suba" style="${ss}">
-              <option value="">— all —</option>
-              ${subsA.map(s=>`<option${blk.subA===s?' selected':''}>${s}</option>`).join('')}
-            </select>
-          </div>
-          <div>
-            <div class="field-label" style="margin-bottom:4px;">Campaign B (optional)</div>
-            <select id="be-campb" onchange="updateBeChartSubs('b')" style="${ss}">
-              <option value="">— none —</option>
-              ${camps.map(c=>`<option${blk.campB===c?' selected':''}>${c}</option>`).join('')}
-            </select>
-            <div class="field-label" style="margin-bottom:4px;">Sub-campaign B</div>
-            <select id="be-subb" style="${ss}">
-              <option value="">— all —</option>
-              ${subsB.map(s=>`<option${blk.subB===s?' selected':''}>${s}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-        <div class="field-label" style="margin-bottom:4px;">Window</div>
-        <select id="be-window" style="${ss}">
-          ${['First 7 days','First 28 days','All-time'].map(w=>`<option${blk.window===w?' selected':''}>${w}</option>`).join('')}
-        </select>`;
-      break;}
-    case 'comparison':{
-      const camps=Object.keys(vidCampaigns);
-      const subsA=blk.campA&&vidCampaigns[blk.campA]?Object.keys(vidCampaigns[blk.campA].subs||{}).sort():[];
-      const subsB=blk.campB&&vidCampaigns[blk.campB]?Object.keys(vidCampaigns[blk.campB].subs||{}).sort():[];
-      const selStyle='width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);margin-bottom:10px;';
-      body.innerHTML=`
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div>
-            <div class="field-label" style="margin-bottom:4px;">Campaign A</div>
-            <select id="be-campa" onchange="updateBeSubOptionsComp('a')" style="${selStyle}">
-              <option value="">— select —</option>${camps.map(c=>`<option${blk.campA===c?' selected':''}>${c}</option>`).join('')}
-            </select>
-            <div class="field-label" style="margin-bottom:4px;">Sub-campaign A</div>
-            <select id="be-suba" style="${selStyle}">
-              <option value="">— all sub-campaigns —</option>${subsA.map(s=>`<option${blk.subA===s?' selected':''}>${s}</option>`).join('')}
-            </select>
-          </div>
-          <div>
-            <div class="field-label" style="margin-bottom:4px;">Campaign B</div>
-            <select id="be-campb" onchange="updateBeSubOptionsComp('b')" style="${selStyle}">
-              <option value="">— select —</option>${camps.map(c=>`<option${blk.campB===c?' selected':''}>${c}</option>`).join('')}
-            </select>
-            <div class="field-label" style="margin-bottom:4px;">Sub-campaign B</div>
-            <select id="be-subb" style="${selStyle}">
-              <option value="">— all sub-campaigns —</option>${subsB.map(s=>`<option${blk.subB===s?' selected':''}>${s}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-        <div class="field-label" style="margin-bottom:4px;">Window</div>
-        <select id="be-window" style="${selStyle}">
-          ${['First 7 days','First 28 days','All-time'].map(w=>`<option${blk.window===w?' selected':''}>${w}</option>`).join('')}
-        </select>`;
-      break;}
-    case 'live-event':{
-      const stops=Object.keys(campaigns);
-      body.innerHTML=`
-        <div class="field-label" style="margin-bottom:4px;">Stop</div>
-        <select id="be-stop" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;">
-          <option value="">— select —</option>
-          ${stops.map(k=>`<option value="${k}"${blk.stopKey===k?' selected':''}>${campaigns[k].stop} ${campaigns[k].year}</option>`).join('')}
-        </select>`;
-      break;}
-    case 'learnings':
-      body.innerHTML=`
-        <div id="be-learnings-list" style="display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto;margin-bottom:10px;">
-          ${(blk.points||[]).map((p,i)=>learningRowHTML(i,p)).join('')}
-        </div>
-        <button class="btn-sm" onclick="addLearningRow()">+ Add point</button>`;
-      break;
-    case 'look-ahead':
-      body.innerHTML=`
-        <div class="field-label" style="margin-bottom:4px;">Title</div>
-        <input type="text" id="be-la-title" value="${blk.title||''}" placeholder="Content title" style="width:100%;margin-bottom:10px;">
-        <div class="field-label" style="margin-bottom:4px;">Expected date</div>
-        <input type="date" id="be-la-date" value="${blk.date||''}" style="width:100%;margin-bottom:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;">
-        <div class="field-label" style="margin-bottom:4px;">Thumbnail</div>
-        <div id="be-la-img-preview" style="margin-bottom:8px;min-height:60px;background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('be-la-img-input').click()">
-          ${blk.imageData?`<img src="${blk.imageData}" style="max-height:80px;border-radius:4px;">`:`<span style="font-size:12px;color:var(--muted);">Click to upload thumbnail</span>`}
-        </div>
-        <input type="file" id="be-la-img-input" accept="image/*" style="display:none;" onchange="handleBeLaImage(this,${si},${bi})">
-        <div class="field-label" style="margin-bottom:4px;">Notes</div>
-        <textarea id="be-la-notes" style="width:100%;min-height:80px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;resize:vertical;">${blk.notes||''}</textarea>`;
-      break;
-    default:
-      body.innerHTML=`<p style="color:var(--muted);font-size:13px;">This block uses live dashboard data automatically.</p>`;
-  }
-  document.getElementById('block-editor-modal').classList.add('open');
-}
-
-function updateBeSubOptions(){
-  const camp=document.getElementById('be-camp')?.value;
-  const subSel=document.getElementById('be-sub');
-  if(!subSel)return;
-  const subs=camp&&vidCampaigns[camp]?Object.keys(vidCampaigns[camp].subs||{}).sort():[];
-  subSel.innerHTML='<option value="">— select sub-campaign —</option>'+subs.map(s=>`<option>${s}</option>`).join('');
-}
-function updateBeSubOptionsComp(side){
-  const campSel=document.getElementById('be-camp'+side);
-  const subSel=document.getElementById('be-sub'+side);
-  if(!campSel||!subSel)return;
-  const camp=campSel.value;
-  const subs=camp&&vidCampaigns[camp]?Object.keys(vidCampaigns[camp].subs||{}).sort():[];
-  subSel.innerHTML='<option value="">— all sub-campaigns —</option>'+subs.map(s=>`<option>${s}</option>`).join('');
-}
-function updateBeChartSubs(side){
-  const campSel=document.getElementById('be-camp'+side);
-  const subSel=document.getElementById('be-sub'+side);
-  if(!campSel||!subSel)return;
-  const camp=campSel.value;
-  const subs=camp&&vidCampaigns[camp]?Object.keys(vidCampaigns[camp].subs||{}).sort():[];
-  subSel.innerHTML='<option value="">— all —</option>'+subs.map(s=>`<option>${s}</option>`).join('');
-}
-
-function handleBeImage(input,si,bi){
-  const file=input.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=e=>{
-    reportSlides[si].blocks[bi].imageData=e.target.result;
-    document.getElementById('be-img-preview').innerHTML=`<img src="${e.target.result}" style="max-height:160px;border-radius:6px;">`;
-  };r.readAsDataURL(file);
-}
-function handleBeLaImage(input,si,bi){
-  const file=input.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=e=>{
-    reportSlides[si].blocks[bi].imageData=e.target.result;
-    document.getElementById('be-la-img-preview').innerHTML=`<img src="${e.target.result}" style="max-height:80px;border-radius:4px;">`;
-  };r.readAsDataURL(file);
-}
-
-async function generateBlockAI(si,bi){
-  const btn=document.getElementById('be-ai-btn');
-  if(btn){btn.disabled=true;btn.textContent='Generating…';}
-  const t=ytData.totals||{};
-  const ctx=`Channel: ${rptSettings.campaign||'PokerStars'}\nPeriod: ${S}–${E}\nViews: ${fmt(t.views)}, Watch hrs: ${fmt(t.mins?Math.round(t.mins/60):null)}, Revenue: ${t.rev!=null?fmtEur(t.rev):'N/A'}, Subscribers: ${fmt(t.subs)}`;
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:'Write 2-3 short analytical paragraphs for a YouTube performance report slide. Be specific with numbers and insights. Data:\n\n'+ctx}]})});
-    const d=await r.json();if(d.error)throw new Error(d.error.message);
-    const el=document.getElementById('be-text');
-    if(el)el.value=d.content?.[0]?.text||'';
-  }catch(e){alert('AI error: '+e.message);}
-  if(btn){btn.disabled=false;btn.textContent='⚡ Generate with AI';}
-}
-
-function saveBlockEditor(){
-  const si=parseInt(document.getElementById('block-editor-slide-idx').value);
-  const bi=parseInt(document.getElementById('block-editor-block-idx').value);
-  if(isNaN(si)||isNaN(bi)){closeModal('block-editor-modal');return;}
-  const blk=reportSlides[si].blocks[bi];
-  switch(blk.type){
-    case 'text':
-      blk.content=document.getElementById('be-text')?.value||'';break;
-    case 'image':
-      blk.caption=document.getElementById('be-caption')?.value||'';break;
-    case 'ep-table':{
-      blk.campName=document.getElementById('be-camp')?.value||'';
-      blk.subName=document.getElementById('be-sub')?.value||'';
-      blk.window=document.getElementById('be-window')?.value||'First 28 days';
-      blk.windowKey=blk.window==='First 7 days'?'w7':blk.window==='All-time'?'wall':'w28';
-      break;}
-    case 'ep-chart':{
-      blk.metric=document.getElementById('be-metric')?.value||'Views';
-      blk.campA=document.getElementById('be-campa')?.value||'';
-      blk.subA=document.getElementById('be-suba')?.value||'';
-      blk.campB=document.getElementById('be-campb')?.value||'';
-      blk.subB=document.getElementById('be-subb')?.value||'';
-      blk.window=document.getElementById('be-window')?.value||'First 28 days';
-      blk.windowKey=blk.window==='First 7 days'?'w7':blk.window==='All-time'?'wall':'w28';
-      break;}
-    case 'comparison':{
-      blk.campA=document.getElementById('be-campa')?.value||'';
-      blk.subA=document.getElementById('be-suba')?.value||'';
-      blk.campB=document.getElementById('be-campb')?.value||'';
-      blk.subB=document.getElementById('be-subb')?.value||'';
-      blk.window=document.getElementById('be-window')?.value||'First 28 days';
-      blk.windowKey=blk.window==='First 7 days'?'w7':blk.window==='All-time'?'wall':'w28';
-      break;}
-    case 'live-event':
-      blk.stopKey=document.getElementById('be-stop')?.value||'';break;
-    case 'learnings':{
-      const pts=[];
-      document.querySelectorAll('#be-learnings-list .learning-row').forEach((row,i)=>{
-        const h=row.querySelector('.lh')?.value?.trim();
-        if(h)pts.push({heading:h,body:row.querySelector('.lb')?.value||'',tag:row.querySelector('.lt')?.value||''});
+  const getStats = (c, s) => {
+    if (!c) return null;
+    const subs = vidCampaigns[c]?.subs || {};
+    const subsToUse = s && subs[s] ? { [s]: subs[s] } : subs;
+    let v = 0, hr = 0, rv = 0, eps = 0;
+    Object.values(subsToUse).forEach(sub => {
+      (sub.episodes || []).forEach(ep => {
+        const ac = ytVideoCache[ep.videoId];
+        const imp = ytImportedRows.find(r => r.id === ep.videoId);
+        const d = ac?.[wk] || imp;
+        if (d) { v += d.views || 0; hr += d.watchHrs || 0; rv += d.revenue || 0; }
+        eps++;
       });
-      blk.points=pts;break;}
-    case 'look-ahead':
-      blk.title=document.getElementById('be-la-title')?.value||'';
-      blk.date=document.getElementById('be-la-date')?.value||'';
-      blk.notes=document.getElementById('be-la-notes')?.value||'';
-      break;
-  }
-  closeModal('block-editor-modal');renderReportBuilder();
+    });
+    return { name: s || c, views: v, hrs: Math.round(hr), revenue: rv.toFixed(2), episodes: eps };
+  };
+
+  const stA = getStats(camp, sub);
+  const stB = campB ? getStats(campB, subB) : null;
+  if (!stA) { alert('Select a campaign and sub-campaign first.'); return; }
+
+  const prompt = `Write a concise 3-paragraph executive summary for a YouTube campaign report for PokerStars.
+
+This campaign: ${stA.name}
+- ${stA.episodes} episodes, ${winLabel} window
+- Total views: ${fmt(stA.views)}
+- Watch hours: ${fmt(stA.hrs)}
+- Revenue: €${stA.revenue}
+
+${stB ? `Previous campaign (comparison): ${stB.name}
+- ${stB.episodes} episodes
+- Total views: ${fmt(stB.views)}
+- Watch hours: ${fmt(stB.hrs)}
+- Revenue: €${stB.revenue}` : 'No comparison series provided.'}
+
+Write in a professional but direct tone for senior stakeholders. Be specific about the numbers. Note what performed well and what didn't. Keep each paragraph to 2-3 sentences.`;
+
+  const btn = document.querySelector('#rpt-s2 .btn-sm[onclick*="generateRptExecSummary"]') ||
+              document.querySelector('#rpt-s2 button[onclick*="generateRptExecSummary"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': CLAUDE, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 600, messages: [{ role: 'user', content: prompt }] })
+    });
+    const d = await r.json(); if (d.error) throw new Error(d.error.message);
+    document.getElementById('rpt-exec-summary').value = d.content?.[0]?.text || '';
+  } catch (e) { alert('AI error: ' + e.message); }
+  if (btn) { btn.disabled = false; btn.textContent = '⚡ Generate AI summary'; }
 }
 
-// Learnings row helpers
-function learningRowHTML(i,p){
-  p=p||{};
-  return`<div class="learning-row" style="background:var(--surface2);border-radius:8px;padding:10px;border:1px solid var(--border);">
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
-      <span style="background:${rptSettings.accent};color:#000;font-size:9px;font-weight:700;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;">${i+1}</span>
-      <input type="text" class="lh" value="${p.heading||''}" placeholder="Heading" style="flex:1;padding:4px 8px;font-size:12px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);">
-      <select class="lt" style="background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:3px 6px;font-size:11px;color:var(--muted);">
-        ${['Production','Content','Strategy','Advertising','Engagement','Reach','Awareness','Retention'].map(c=>`<option${p.tag===c?' selected':''}>${c}</option>`).join('')}
-      </select>
-      <button onclick="this.closest('.learning-row').remove();" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;padding:0;">✕</button>
-    </div>
-    <textarea class="lb" placeholder="Detail..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:11px;color:var(--text);resize:none;height:48px;font-family:var(--font-body);">${p.body||''}</textarea>
-  </div>`;
+// ── Slide 3: Load episode table preview ──
+function loadRptEpisodeData() {
+  const camp = document.getElementById('rpt-camp-a')?.value;
+  const sub  = document.getElementById('rpt-sub-a')?.value;
+  const wk   = rptCfg.windowKey || 'w7';
+  const win  = document.getElementById('rpt-window')?.value || 'First 7 days';
+  if (!camp || !sub) { alert('Select a campaign and sub-campaign first.'); return; }
+  const eps = vidCampaigns[camp]?.subs[sub]?.episodes || [];
+  if (!eps.length) { document.getElementById('rpt-ep-table-preview').innerHTML = '<em style="color:var(--muted)">No episodes found.</em>'; return; }
+
+  const rows = eps.map((ep, i) => {
+    const ac = ytVideoCache[ep.videoId];
+    const imp = ytImportedRows.find(r => r.id === ep.videoId);
+    const d = ac?.[wk] || imp;
+    const title = ep.label || imp?.title || ac?.title || ep.videoId;
+    const pub = imp?.publishDate || ac?.publishDate;
+    return `<tr>
+      <td class="mono" style="padding:6px 10px;border-bottom:1px solid var(--border);font-weight:500;">Ep.${i+1}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title}</td>
+      <td class="mono" style="padding:6px 10px;border-bottom:1px solid var(--border);">${pub ? new Date(pub).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '—'}</td>
+      <td class="mono hi" style="padding:6px 10px;border-bottom:1px solid var(--border);">${d?.views != null ? fmt(d.views) : '—'}</td>
+      <td class="mono" style="padding:6px 10px;border-bottom:1px solid var(--border);color:var(--purple);">${d?.watchHrs != null ? fmt(Math.round(d.watchHrs)) : '—'}</td>
+      <td class="mono" style="padding:6px 10px;border-bottom:1px solid var(--border);color:var(--green);">${d?.revenue != null ? '€' + d.revenue.toFixed(2) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('rpt-ep-table-preview').innerHTML = `
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">${sub} · ${win}</div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">
+        <th style="padding:4px 10px;text-align:left;">Ep.</th>
+        <th style="padding:4px 10px;text-align:left;">Title</th>
+        <th style="padding:4px 10px;text-align:left;">Published</th>
+        <th style="padding:4px 10px;text-align:left;color:var(--blue);">Views</th>
+        <th style="padding:4px 10px;text-align:left;color:var(--purple);">Watch Hrs</th>
+        <th style="padding:4px 10px;text-align:left;color:var(--green);">Revenue</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
-function addLearningRow(){
-  const list=document.getElementById('be-learnings-list');
-  const i=list.querySelectorAll('.learning-row').length;
-  const div=document.createElement('div');
-  div.innerHTML=learningRowHTML(i,{});
-  list.appendChild(div.firstElementChild);
+
+// ── Slide 4: AI retention analysis ──
+async function generateRptRetention() {
+  if (!CLAUDE) { alert('Add your Claude API key in Settings.'); return; }
+  const text = document.getElementById('rpt-retention-text');
+  const hasImage = !!rptImages.retention;
+  const prompt = hasImage
+    ? 'Analyse this YouTube audience retention graph screenshot. Identify and describe the key peaks and drops, what they indicate about viewer behaviour, and what the creator should do differently. Write 3-4 concise sentences suitable for a stakeholder report.'
+    : 'Write a placeholder retention analysis paragraph for a YouTube campaign report, noting that the retention graph showed typical patterns with a drop at the intro and stable mid-video retention. 2-3 sentences.';
+
+  const messages = hasImage
+    ? [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: rptImages.retention.split(',')[1] } }, { type: 'text', text: prompt }] }]
+    : [{ role: 'user', content: prompt }];
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': CLAUDE, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 400, messages })
+    });
+    const d = await r.json(); if (d.error) throw new Error(d.error.message);
+    if (text) text.value = d.content?.[0]?.text || '';
+  } catch (e) { alert('AI error: ' + e.message); }
+}
+
+// ── Slide 4: AI sentiment analysis ──
+async function generateRptSentiment() {
+  if (!CLAUDE) { alert('Add your Claude API key in Settings.'); return; }
+  const text = document.getElementById('rpt-sentiment-text');
+  const hasImage = !!rptImages.sentiment;
+  const prompt = hasImage
+    ? 'Analyse this screenshot of YouTube comments for a PokerStars video series. Summarise the overall viewer sentiment, note any recurring themes or specific praise/criticism, and highlight anything actionable for the content team. Write 3-4 concise sentences suitable for a stakeholder report.'
+    : 'Write a placeholder sentiment analysis for a YouTube campaign report noting generally positive reception. 2-3 sentences.';
+
+  const messages = hasImage
+    ? [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: rptImages.sentiment.split(',')[1] } }, { type: 'text', text: prompt }] }]
+    : [{ role: 'user', content: prompt }];
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': CLAUDE, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 400, messages })
+    });
+    const d = await r.json(); if (d.error) throw new Error(d.error.message);
+    if (text) text.value = d.content?.[0]?.text || '';
+  } catch (e) { alert('AI error: ' + e.message); }
+}
+
+// ── Slide 5: AI learnings ──
+async function generateRptLearnings() {
+  if (!CLAUDE) { alert('Add your Claude API key in Settings.'); return; }
+  const summary = document.getElementById('rpt-exec-summary')?.value || '';
+  const retention = document.getElementById('rpt-retention-text')?.value || '';
+  const sentiment = document.getElementById('rpt-sentiment-text')?.value || '';
+  const camp = document.getElementById('rpt-sub-a')?.value || document.getElementById('rpt-camp-a')?.value || 'this campaign';
+
+  const prompt = `Based on the following YouTube campaign report data for ${camp}, generate:
+1. Three key learnings (one sentence each, specific and actionable)
+2. A suggested strategy for the next series (2-3 sentences)
+
+Executive summary: ${summary || 'Not provided'}
+Retention analysis: ${retention || 'Not provided'}
+Sentiment: ${sentiment || 'Not provided'}
+
+Format your response exactly as:
+LEARNING 1: [text]
+LEARNING 2: [text]
+LEARNING 3: [text]
+STRATEGY: [text]`;
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': CLAUDE, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 500, messages: [{ role: 'user', content: prompt }] })
+    });
+    const d = await r.json(); if (d.error) throw new Error(d.error.message);
+    const txt = d.content?.[0]?.text || '';
+    const l1 = txt.match(/LEARNING 1:\s*(.+)/)?.[1]?.trim() || '';
+    const l2 = txt.match(/LEARNING 2:\s*(.+)/)?.[1]?.trim() || '';
+    const l3 = txt.match(/LEARNING 3:\s*(.+)/)?.[1]?.trim() || '';
+    const st = txt.match(/STRATEGY:\s*([\s\S]+)/)?.[1]?.trim() || '';
+    if (l1) document.getElementById('rpt-l1').value = l1;
+    if (l2) document.getElementById('rpt-l2').value = l2;
+    if (l3) document.getElementById('rpt-l3').value = l3;
+    if (st) document.getElementById('rpt-strategy').value = st;
+  } catch (e) { alert('AI error: ' + e.message); }
 }
 
 // ── Preview ──
-function previewReport(){
-  const P=rptSettings.primary,A=rptSettings.accent;
-  document.getElementById('report-preview-body').innerHTML=reportSlides.map((slide,si)=>`
-    <div style="margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
-      <div style="background:var(--surface2);padding:6px 12px;font-size:10px;color:var(--muted);font-family:var(--font-mono);">
-        SLIDE ${si+1} — ${(FIXED_SLIDE_TYPES.find(t=>t.id===slide.type)?.label||'CANVAS').toUpperCase()}
+function previewReport() {
+  const title = document.getElementById('rpt-title')?.value || 'Report';
+  const period = document.getElementById('rpt-period')?.value || '';
+  const sub = document.getElementById('rpt-sub-a')?.value || '';
+  const summary = document.getElementById('rpt-exec-summary')?.value || '';
+  const comment = document.getElementById('rpt-s3-comment')?.value || '';
+  const retText = document.getElementById('rpt-retention-text')?.value || '';
+  const sentText = document.getElementById('rpt-sentiment-text')?.value || '';
+  const l1 = document.getElementById('rpt-l1')?.value || '';
+  const l2 = document.getElementById('rpt-l2')?.value || '';
+  const l3 = document.getElementById('rpt-l3')?.value || '';
+  const strategy = document.getElementById('rpt-strategy')?.value || '';
+  const P = rptCfg.primary; const A = rptCfg.accent;
+
+  document.getElementById('report-preview-body').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <!-- S1 -->
+      <div style="background:#000;border-radius:8px;padding:20px 24px;border-left:4px solid ${P};min-height:80px;${rptImages.cover?`background-image:url(${rptImages.cover});background-size:cover;background-position:center;`:''}">
+        <div style="font-family:'Oswald',sans-serif;font-size:22px;font-weight:500;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.8);">${title}</div>
+        <div style="font-family:'Roboto',sans-serif;font-size:13px;color:rgba(255,255,255,0.7);margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,0.8);">${period} — YouTube Report</div>
       </div>
-      <div style="padding:14px;">
-        ${FIXED_SLIDE_TYPES.find(t=>t.id===slide.type)?renderFixedThumb(slide,P,A):renderCanvasBlocks(slide,si,P,A)}
+      <!-- S2 -->
+      <div style="background:var(--surface);border-radius:8px;padding:16px;border:1px solid var(--border);">
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Executive Summary</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
+          ${['rsc-views','rsc-watch','rsc-rev','rsc-subs'].map((id,i)=>{
+            const labels=['Views','Watch Hrs','Revenue','Subscribers'];
+            const val=document.getElementById(id)?.textContent||'—';
+            return`<div style="background:#000;border-radius:6px;padding:10px;border-top:2px solid ${P};"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">${labels[i]}</div><div style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:500;color:#fff;">${val}</div></div>`;
+          }).join('')}
+        </div>
+        <div style="font-size:12px;color:var(--text);line-height:1.7;white-space:pre-wrap;">${summary}</div>
       </div>
-    </div>`).join('');
+      <!-- S3 -->
+      <div style="background:var(--surface);border-radius:8px;padding:16px;border:1px solid var(--border);">
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Data · ${sub}</div>
+        ${document.getElementById('rpt-ep-table-preview')?.innerHTML||'<em style="color:var(--muted)">No data loaded</em>'}
+        ${comment?`<div style="font-size:11px;color:var(--muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">${comment}</div>`:''}
+      </div>
+      <!-- S4 -->
+      <div style="background:var(--surface);border-radius:8px;padding:16px;border:1px solid var(--border);">
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Deep Dive</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>${rptImages.retention?`<img src="${rptImages.retention}" style="width:100%;border-radius:6px;margin-bottom:8px;">`:''}
+            <div style="font-size:12px;color:var(--text);line-height:1.6;">${retText}</div></div>
+          <div>${rptImages.sentiment?`<img src="${rptImages.sentiment}" style="width:100%;border-radius:6px;margin-bottom:8px;">`:''}
+            <div style="font-size:12px;color:var(--text);line-height:1.6;">${sentText}</div></div>
+        </div>
+      </div>
+      <!-- S5 -->
+      <div style="background:var(--surface);border-radius:8px;padding:16px;border:1px solid var(--border);">
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Learnings &amp; Takeaways</div>
+        ${[l1,l2,l3].filter(Boolean).map((l,i)=>`<div style="display:flex;gap:10px;margin-bottom:8px;"><span style="background:${A};color:#000;font-size:10px;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</span><div style="font-size:12px;color:var(--text);">${l}</div></div>`).join('')}
+        ${strategy?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);"><strong style="color:var(--text);">Strategy:</strong> ${strategy}</div>`:''}
+      </div>
+      <!-- S6 -->
+      <div style="background:#000;border-radius:8px;padding:24px;text-align:center;border:1px solid ${P}44;">
+        <div style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:500;color:#fff;letter-spacing:0.1em;">POKERSTARS</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;">${sub} · ${period}</div>
+      </div>
+    </div>`;
   document.getElementById('report-preview-modal').classList.add('open');
 }
 
 // ── PPTX Export ──
-async function exportReportPptx(){
-  if(!window.PptxGenJS){
-    const script=document.createElement('script');
-    script.src='https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+async function exportReportPptx() {
+  if (!window.PptxGenJS) {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
     document.head.appendChild(script);
-    await new Promise(resolve=>script.onload=resolve);
+    await new Promise(resolve => script.onload = resolve);
   }
-  const pptx=new PptxGenJS();
-  pptx.layout='LAYOUT_WIDE';
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE'; // 13.33" × 7.5"
 
-  const BG='000000',TEXT='FFFFFF',MUTED='777788';
-  const P=rptSettings.primary.replace('#','');
-  const A=rptSettings.accent.replace('#','');
-  const W=13.33,H=7.5;
-  const name=rptSettings.name||'Report';
-  const campaign=rptSettings.campaign||'';
+  const BG = '000000', TEXT = 'FFFFFF', MUTED = '777788';
+  const P = rptCfg.primary.replace('#', '');
+  const A = rptCfg.accent.replace('#', '');
+  const W = 13.33, H = 7.5;
 
-  const addHeader=(s)=>{
-    s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:0.52,fill:{color:'080808'}});
-    s.addShape(pptx.ShapeType.rect,{x:0,y:0.52,w:W,h:0.03,fill:{color:P}});
-    s.addText('POKERSTARS',{x:0.35,y:0.12,w:3,h:0.3,fontSize:8,bold:true,color:P,fontFace:'Arial',charSpacing:2});
-    s.addText(name,{x:0.35,y:0.12,w:W-0.7,h:0.3,fontSize:8,color:'333344',fontFace:'Arial',align:'right'});
+  const title   = document.getElementById('rpt-title')?.value  || 'Report';
+  const period  = document.getElementById('rpt-period')?.value || '';
+  const sub     = document.getElementById('rpt-sub-a')?.value  || '';
+  const camp    = document.getElementById('rpt-camp-a')?.value || '';
+  const campB   = document.getElementById('rpt-camp-b')?.value || '';
+  const subB    = document.getElementById('rpt-sub-b')?.value  || '';
+  const summary = document.getElementById('rpt-exec-summary')?.value || '';
+  const comment = document.getElementById('rpt-s3-comment')?.value   || '';
+  const retText = document.getElementById('rpt-retention-text')?.value  || '';
+  const sentText= document.getElementById('rpt-sentiment-text')?.value  || '';
+  const l1 = document.getElementById('rpt-l1')?.value || '';
+  const l2 = document.getElementById('rpt-l2')?.value || '';
+  const l3 = document.getElementById('rpt-l3')?.value || '';
+  const strategy= document.getElementById('rpt-strategy')?.value || '';
+  const wk      = rptCfg.windowKey || 'w7';
+  const winLabel= document.getElementById('rpt-window')?.value || 'First 7 days';
+  const metric1 = document.getElementById('rpt-metric-1')?.value || 'Views';
+  const metric2 = document.getElementById('rpt-metric-2')?.value || 'Watch Hours';
+
+  const addHeader = (s) => {
+    s.addShape(pptx.ShapeType.rect, {x:0,y:0,w:W,h:0.52,fill:{color:'080808'}});
+    s.addShape(pptx.ShapeType.rect, {x:0,y:0.52,w:W,h:0.03,fill:{color:P}});
+    s.addText('POKERSTARS', {x:0.35,y:0.12,w:3,h:0.3,fontSize:8,bold:true,color:P,fontFace:'Arial',charSpacing:2});
+    s.addText(title, {x:0.35,y:0.12,w:W-0.7,h:0.3,fontSize:8,color:'333344',fontFace:'Arial',align:'right'});
   };
-  const addFooter=(s,n)=>{
-    s.addShape(pptx.ShapeType.rect,{x:0,y:H-0.35,w:W,h:0.35,fill:{color:'060606'}});
-    s.addText(campaign,{x:0.35,y:H-0.27,w:6,h:0.2,fontSize:7,color:'333344',fontFace:'Arial'});
-    s.addText(String(n),{x:W-0.5,y:H-0.27,w:0.3,h:0.2,fontSize:7,color:'333344',fontFace:'Arial',align:'right'});
+  const addFooter = (s, n) => {
+    s.addShape(pptx.ShapeType.rect, {x:0,y:H-0.35,w:W,h:0.35,fill:{color:'060606'}});
+    s.addText(sub+' · '+period, {x:0.35,y:H-0.27,w:8,h:0.2,fontSize:7,color:'333344',fontFace:'Arial'});
+    s.addText(String(n), {x:W-0.5,y:H-0.27,w:0.3,h:0.2,fontSize:7,color:'333344',fontFace:'Arial',align:'right'});
   };
 
-  // Helper: render a single block into a pptx slide at given x,y,w,h
-  const renderBlock=(s,blk,x,y,w,h)=>{
-    const wk=blk.windowKey||'w28';
-    switch(blk.type){
-      case 'text':
-        if(blk.content)s.addText(blk.content,{x,y,w,h,fontSize:11,color:'CCCCDD',fontFace:'Arial',valign:'top',wrap:true,lineSpacingMultiple:1.5});
-        break;
-      case 'kpi-row':{
-        const t=ytData.totals||{};
-        const kpis=[['Views',fmt(t.views),P],['Watch Hrs',t.mins?fmt(Math.round(t.mins/60)):'—','9966FF'],['Revenue',t.rev!=null?fmtEur(t.rev):'—','22CC88'],['Subscribers',fmt(t.subs),A]];
-        const kw=(w-0.1*(kpis.length-1))/kpis.length;
-        kpis.forEach(([l,v,c],i)=>{
-          const kx=x+i*(kw+0.1);
-          s.addShape(pptx.ShapeType.rect,{x:kx,y,w:kw,h,fill:{color:'0A0A0A'},line:{color:c,w:1}});
-          s.addShape(pptx.ShapeType.rect,{x:kx,y,w:kw,h:0.06,fill:{color:c}});
-          s.addText(l.toUpperCase(),{x:kx+0.12,y:y+0.12,w:kw-0.24,h:0.22,fontSize:8,color:MUTED,fontFace:'Arial',bold:true,charSpacing:1.2});
-          s.addText(v,{x:kx+0.12,y:y+0.38,w:kw-0.24,h:h-0.5,fontSize:22,bold:true,color:TEXT,fontFace:'Arial'});
-        });
-        break;}
-      case 'image':
-        if(blk.imageData){
-          s.addImage({data:blk.imageData,x,y,w,h:h-0.3,sizing:{type:'contain',w,h:h-0.3}});
-          if(blk.caption)s.addText(blk.caption,{x,y:y+h-0.28,w,h:0.25,fontSize:8,color:MUTED,fontFace:'Arial',align:'center',italic:true});
-        } else {
-          s.addShape(pptx.ShapeType.rect,{x,y,w,h,fill:{color:'0A0A0A'},line:{color:'1A1A1A',w:0.5}});
-          s.addText('[Image]',{x,y:y+h/2-0.2,w,h:0.4,fontSize:10,color:'222233',fontFace:'Arial',align:'center',italic:true});
-        }
-        break;
-      case 'ep-table':{
-        const eps=blk.campName&&blk.subName?vidCampaigns[blk.campName]?.subs[blk.subName]?.episodes||[]:[];
-        s.addText((blk.campName||'')+(blk.subName?' / '+blk.subName:''),{x,y,w,h:0.3,fontSize:10,bold:true,color:TEXT,fontFace:'Arial'});
-        s.addText(blk.window||'First 28 days',{x,y:y+0.3,w,h:0.2,fontSize:8,color:MUTED,fontFace:'Arial'});
-        if(eps.length){
-          const rows=[['Ep.','Title','Published','Views','Watch Hrs','Rev']];
-          eps.forEach((ep,i)=>{
-            const imp=ytImportedRows.find(r=>r.id===ep.videoId);const ac=ytVideoCache[ep.videoId];const d=ac?.[wk]||imp;
-            rows.push(['Ep.'+(i+1),(ep.label||imp?.title||ac?.title||ep.videoId).slice(0,28),
-              (imp?.publishDate||ac?.publishDate)?new Date(imp?.publishDate||ac?.publishDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'—',
-              d?.views!=null?fmt(d.views):'—',d?.watchHrs!=null?fmt(Math.round(d.watchHrs)):'—',d?.revenue!=null?'€'+d.revenue.toFixed(0):'—']);
-          });
-          const cw=w/(rows[0].length);
-          s.addTable(rows,{x,y:y+0.55,w,colW:rows[0].map((_,i)=>i===1?cw*2.2:cw*0.76),
-            color:MUTED,fontSize:9,fontFace:'Arial',border:{type:'solid',color:'1A1A1A',pt:0.5},
-            fill:{color:'080808'},headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
-        }
-        break;}
-      case 'comparison':{
-        const sumC=(cn,sn)=>{let v=0,hr=0,rv=0,ep=0;const subsObj=vidCampaigns[cn]?.subs||{};const subsToSum=sn?{[sn]:subsObj[sn]}:subsObj;Object.values(subsToSum).forEach(sub=>{if(!sub)return;(sub.episodes||[]).forEach(e=>{const ac=ytVideoCache[e.videoId];const imp=ytImportedRows.find(r=>r.id===e.videoId);const d=ac?.[wk]||imp;if(d){v+=d.views||0;hr+=d.watchHrs||0;rv+=d.revenue||0;}ep++;});});return{v,hr,rv,ep};};
-        const dA=blk.campA?sumC(blk.campA,blk.subA||''):{v:0,hr:0,rv:0,ep:0};
-        const dB=blk.campB?sumC(blk.campB,blk.subB||''):{v:0,hr:0,rv:0,ep:0};
-        s.addText((blk.campA||'A')+' vs '+(blk.campB||'B'),{x,y,w,h:0.28,fontSize:10,bold:true,color:TEXT,fontFace:'Arial'});
-        s.addText(blk.window||'',{x,y:y+0.28,w,h:0.2,fontSize:8,color:MUTED,fontFace:'Arial'});
-        const rows=[['Metric',blk.campA||'A',blk.campB||'B'],['Episodes',String(dA.ep),String(dB.ep)],['Views',fmt(dA.v),fmt(dB.v)],['Watch Hrs',fmt(Math.round(dA.hr)),fmt(Math.round(dB.hr))],['Revenue','€'+dA.rv.toFixed(0),'€'+dB.rv.toFixed(0)],['Avg/Ep',dA.ep?fmt(Math.round(dA.v/dA.ep)):'—',dB.ep?fmt(Math.round(dB.v/dB.ep)):'—']];
-        s.addTable(rows,{x,y:y+0.53,w,colW:[w*0.35,w*0.325,w*0.325],color:MUTED,fontSize:9,fontFace:'Arial',border:{type:'solid',color:'1A1A1A',pt:0.5},fill:{color:'080808'},headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
-        break;}
-      case 'live-event':{
-        const stop=blk.stopKey&&campaigns[blk.stopKey];
-        if(!stop)break;
-        s.addText(stop.stop+' '+stop.year,{x,y,w,h:0.3,fontSize:11,bold:true,color:TEXT,fontFace:'Arial'});
-        const rows=[['Tournament','Day','Avg Viewers','Peak','Views','Hrs']];
-        Object.keys(stop.tournaments).forEach(tn=>{Object.keys(stop.tournaments[tn].days).sort((a,b)=>dayOrder(a)-dayOrder(b)).forEach(day=>{const m=getDayMetrics(blk.stopKey,tn,day);rows.push([tn,day,m.twAvgV!=null?fmt(m.twAvgV):'—',m.twPeak!=null?fmt(m.twPeak):'—',mergeSum([m.twViews,m.ythViews,m.ytvViews])!=null?fmt(mergeSum([m.twViews,m.ythViews,m.ytvViews])):'—',mergeSum([m.twHrs,m.ythHrs,m.ytvHrs])!=null?fmt(Math.round(mergeSum([m.twHrs,m.ythHrs,m.ytvHrs]))):'—']);});});
-        if(rows.length>1)s.addTable(rows,{x,y:y+0.38,w,colW:[w*0.3,w*0.12,w*0.16,w*0.14,w*0.14,w*0.14],color:MUTED,fontSize:9,fontFace:'Arial',border:{type:'solid',color:'1A1A1A',pt:0.5},fill:{color:'080808'},headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
-        break;}
-      case 'top-videos':{
-        const vids=(ytData.topEnriched||[]).slice(0,6);
-        s.addText('Top Videos · '+S+'–'+E,{x,y,w,h:0.28,fontSize:10,bold:true,color:TEXT,fontFace:'Arial'});
-        if(vids.length){
-          const rows=[['#','Title','Views','Hrs','Rev']];
-          vids.forEach((v,i)=>rows.push([String(i+1),(v.sn?.title||v.id).slice(0,30),fmt(v.m[0]),v.m[1]?fmt(Math.round(v.m[1]/60)):'—',v.m[2]!=null?fmtEur(v.m[2]):'—']));
-          s.addTable(rows,{x,y:y+0.33,w,colW:[w*0.05,w*0.5,w*0.16,w*0.13,w*0.16],color:MUTED,fontSize:9,fontFace:'Arial',border:{type:'solid',color:'1A1A1A',pt:0.5},fill:{color:'080808'},headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
-        }
-        break;}
-      case 'ep-chart':{
-        const getEpVals=(cn,sn)=>{
-          const eps=[];
-          const subsObj=vidCampaigns[cn]?.subs||{};
-          const subsToUse=sn&&subsObj[sn]?{[sn]:subsObj[sn]}:subsObj;
-          Object.values(subsToUse).forEach(sub=>(sub.episodes||[]).forEach(ep=>eps.push(ep)));
-          return eps.map(ep=>{const ac=ytVideoCache[ep.videoId];const imp=ytImportedRows.find(r=>r.id===ep.videoId);const d=ac?.[wk]||imp;const mk=blk.metric==='Watch Hours'?'watchHrs':blk.metric==='Revenue'?'revenue':'views';return d?.[mk]??null;});
-        };
-        const vA=blk.campA?getEpVals(blk.campA,blk.subA||''):[];
-        const vB=blk.campB?getEpVals(blk.campB,blk.subB||''):[];
-        const maxEp=Math.max(vA.length,vB.length,1);
-        const allV=[...vA,...vB].filter(v=>v!=null);
-        const maxV=allV.length?Math.max(...allV)*1.15:1;
-        s.addText((blk.metric||'Views')+' by episode · '+(blk.window||''),{x,y,w,h:0.25,fontSize:9,bold:true,color:TEXT,fontFace:'Arial'});
-        const cx=x,cy=y+0.32,cw=w,ch=h-0.4;
-        s.addShape(pptx.ShapeType.rect,{x:cx,y:cy,w:cw,h:ch,fill:{color:'080808'},line:{color:'1A1A1A',w:0.5}});
-        const labelA=(blk.subA||blk.campA||'').slice(0,20);
-        const labelB=(blk.subB||blk.campB||'').slice(0,20);
-        [[vA,P,labelA],[vB,A,labelB]].forEach(([vals,col,label])=>{
-          if(!vals.length||!col||!label)return;
-          const pts=vals.map((v,i)=>({x:cx+0.2+i*(cw-0.4)/(maxEp-1||1),y:cy+ch-0.15-(v!=null?(v/maxV)*(ch-0.25):0)}));
-          for(let i=0;i<pts.length-1;i++){if(vals[i]!=null&&vals[i+1]!=null){const dx=pts[i+1].x-pts[i].x,dy=pts[i+1].y-pts[i].y;const len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;s.addShape(pptx.ShapeType.rect,{x:pts[i].x,y:pts[i].y-0.012,w:len,h:0.024,fill:{color:col},rotate:ang});}}
-          pts.forEach((pt,i)=>{if(vals[i]!=null)s.addShape(pptx.ShapeType.ellipse,{x:pt.x-0.05,y:pt.y-0.05,w:0.1,h:0.1,fill:{color:col}});});
-          if(pts.length)s.addText((label||'').slice(0,18),{x:pts[pts.length-1].x+0.08,y:pts[pts.length-1].y-0.12,w:1.8,h:0.22,fontSize:7,color:col,fontFace:'Arial'});
-        });
-        Array.from({length:maxEp}).forEach((_,i)=>{const px=cx+0.2+i*(cw-0.4)/(maxEp-1||1);s.addText('E'+(i+1),{x:px-0.18,y:cy+ch+0.02,w:0.36,h:0.16,fontSize:6,color:MUTED,fontFace:'Arial',align:'center'});});
-        break;}
-      case 'learnings':
-        (blk.points||[]).slice(0,4).forEach((p,i)=>{
-          const py=y+i*(h/Math.min(blk.points.length,4));
-          const rowH=h/Math.min(blk.points.length,4)-0.05;
-          s.addShape(pptx.ShapeType.rect,{x,y:py,w:0.22,h:0.22,fill:{color:A},rounding:true});
-          s.addText(String(i+1),{x,y:py,w:0.22,h:0.22,fontSize:8,bold:true,color:'000000',fontFace:'Arial',align:'center',valign:'middle'});
-          s.addText(p.heading,{x:x+0.28,y:py,w:w-0.28,h:0.25,fontSize:10,bold:true,color:TEXT,fontFace:'Arial'});
-          if(p.tag){s.addShape(pptx.ShapeType.rect,{x:x+0.28,y:py+0.27,w:Math.min(p.tag.length*0.08+0.25,1.8),h:0.18,fill:{color:P+'44'},rounding:true});s.addText(p.tag,{x:x+0.28,y:py+0.27,w:Math.min(p.tag.length*0.08+0.25,1.8),h:0.18,fontSize:7,color:'#'+P,fontFace:'Arial',align:'center'});}
-          if(p.body)s.addText(p.body.slice(0,120),{x:x+0.28,y:py+0.48,w:w-0.28,h:rowH-0.55,fontSize:9,color:MUTED,fontFace:'Arial',wrap:true});
-        });
-        break;
-      case 'look-ahead':
-        if(blk.imageData)s.addImage({data:blk.imageData,x,y,w:w*0.45,h:h*0.6,sizing:{type:'contain',w:w*0.45,h:h*0.6}});
-        s.addText(blk.title||'',{x:x+w*0.5,y,w:w*0.5,h:0.4,fontSize:13,bold:true,color:TEXT,fontFace:'Arial'});
-        if(blk.date)s.addText(new Date(blk.date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),{x:x+w*0.5,y:y+0.42,w:w*0.5,h:0.25,fontSize:10,color:'#'+P,fontFace:'Arial',bold:true});
-        if(blk.notes)s.addText(blk.notes,{x:x+w*0.5,y:y+0.72,w:w*0.5,h:h-0.8,fontSize:10,color:MUTED,fontFace:'Arial',wrap:true,lineSpacingMultiple:1.4});
-        break;
+  // ── Slide 1: Cover ──
+  {
+    const s = pptx.addSlide();
+    s.background = {color: BG};
+    if (rptImages.cover) s.addImage({data:rptImages.cover,x:0,y:0,w:W,h:H,sizing:{type:'cover',w:W,h:H}});
+    // Dark overlay
+    s.addShape(pptx.ShapeType.rect, {x:0,y:0,w:W,h:H,fill:{color:'00000077'}});
+    s.addShape(pptx.ShapeType.rect, {x:0,y:0,w:0.1,h:H,fill:{color:P}});
+    s.addText('POKERSTARS', {x:0.3,y:1.8,w:10,h:0.45,fontSize:10,bold:true,color:P,fontFace:'Arial',charSpacing:3});
+    s.addText(title, {x:0.3,y:2.3,w:10,h:1.2,fontSize:38,bold:true,color:TEXT,fontFace:'Arial'});
+    s.addShape(pptx.ShapeType.rect, {x:0.3,y:3.65,w:1.4,h:0.05,fill:{color:A}});
+    s.addText(period+' — YouTube Report', {x:0.3,y:3.82,w:8,h:0.35,fontSize:13,color:'CCCCCC',fontFace:'Arial'});
+  }
+
+  // ── Slide 2: Executive Summary ──
+  {
+    const s = pptx.addSlide();
+    s.background = {color: BG};
+    addHeader(s); addFooter(s, 2);
+    s.addText('EXECUTIVE SUMMARY', {x:0.35,y:0.72,w:12,h:0.42,fontSize:22,bold:true,color:TEXT,fontFace:'Arial'});
+    s.addText(winLabel+' · '+sub, {x:0.35,y:1.2,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
+    // 4 scorecards
+    const scVals = [
+      document.getElementById('rsc-views')?.textContent || '—',
+      document.getElementById('rsc-watch')?.textContent || '—',
+      document.getElementById('rsc-rev')?.textContent   || '—',
+      document.getElementById('rsc-subs')?.textContent  || '—',
+    ];
+    const scLabels = ['Combined Views','Watch Hours','Est. Revenue','Subscribers'];
+    const scColors = [P, '9966FF', '22CC88', A];
+    scVals.forEach((v, i) => {
+      const kx = 0.35 + i * 3.2, ky = 1.55;
+      s.addShape(pptx.ShapeType.rect, {x:kx,y:ky,w:3.0,h:1.6,fill:{color:'090909'},line:{color:scColors[i],w:1}});
+      s.addShape(pptx.ShapeType.rect, {x:kx,y:ky,w:3.0,h:0.06,fill:{color:scColors[i]}});
+      s.addText(scLabels[i].toUpperCase(), {x:kx+0.15,y:ky+0.15,w:2.7,h:0.25,fontSize:8,color:MUTED,fontFace:'Arial',bold:true,charSpacing:1.2});
+      s.addText(v, {x:kx+0.15,y:ky+0.45,w:2.7,h:0.9,fontSize:28,bold:true,color:TEXT,fontFace:'Arial'});
+    });
+    // AI summary text
+    if (summary) s.addText(summary, {x:0.35,y:3.3,w:12.3,h:3.0,fontSize:12,color:'CCCCDD',fontFace:'Arial',valign:'top',wrap:true,lineSpacingMultiple:1.5});
+  }
+
+  // ── Slide 3: Data ──
+  {
+    const s = pptx.addSlide();
+    s.background = {color: BG};
+    addHeader(s); addFooter(s, 3);
+    s.addText('DATA', {x:0.35,y:0.72,w:6,h:0.42,fontSize:22,bold:true,color:TEXT,fontFace:'Arial'});
+    s.addText(sub+' · '+winLabel, {x:0.35,y:1.2,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
+
+    const eps = (camp && sub) ? (vidCampaigns[camp]?.subs[sub]?.episodes || []) : [];
+    const epsB = (campB && subB) ? (vidCampaigns[campB]?.subs[subB]?.episodes || []) : [];
+
+    const getMetricKey = m => m === 'Watch Hours' ? 'watchHrs' : m === 'Revenue' ? 'revenue' : 'views';
+    const getVal = (ep, mk) => {
+      const ac = ytVideoCache[ep.videoId];
+      const imp = ytImportedRows.find(r => r.id === ep.videoId);
+      const d = ac?.[wk] || imp;
+      return d?.[mk] ?? null;
+    };
+
+    // Episode table (left half)
+    if (eps.length) {
+      const rows = [['Ep.','Title','Views','Watch Hrs','Rev']];
+      eps.forEach((ep,i) => {
+        const ac = ytVideoCache[ep.videoId];
+        const imp = ytImportedRows.find(r => r.id === ep.videoId);
+        const d = ac?.[wk] || imp;
+        rows.push([
+          'Ep.'+(i+1),
+          (ep.label||imp?.title||ac?.title||ep.videoId).slice(0,22),
+          d?.views!=null?fmt(d.views):'—',
+          d?.watchHrs!=null?fmt(Math.round(d.watchHrs)):'—',
+          d?.revenue!=null?'€'+d.revenue.toFixed(0):'—',
+        ]);
+      });
+      s.addTable(rows, {x:0.35,y:1.55,w:6.3,
+        colW:[0.55,2.5,1.1,1.1,0.95],
+        color:MUTED,fontSize:9,fontFace:'Arial',
+        border:{type:'solid',color:'1A1A1A',pt:0.5},
+        fill:{color:'080808'},
+        headerRow:{fill:{color:'0D0D0D'},color:TEXT,bold:true}});
     }
-  };
 
-  const CONTENT_Y=0.62, CONTENT_H=H-1.05, GUTTER=0.15;
+    // Two line charts (right half) stacked
+    const drawChart = (s, metric, cx, cy, cw, ch, valsA, valsB, labelA, labelB) => {
+      const allV = [...valsA,...valsB].filter(v=>v!=null);
+      const maxV = allV.length ? Math.max(...allV)*1.15 : 1;
+      const maxEp = Math.max(valsA.length, valsB.length, 1);
+      s.addText(metric.toUpperCase(), {x:cx,y:cy-0.22,w:cw,h:0.2,fontSize:8,bold:true,color:MUTED,fontFace:'Arial',charSpacing:1.2});
+      s.addShape(pptx.ShapeType.rect, {x:cx,y:cy,w:cw,h:ch,fill:{color:'080808'},line:{color:'1A1A1A',w:0.5}});
+      [[valsA,P,labelA],[valsB,A,labelB]].forEach(([vals,col,lbl]) => {
+        if (!vals.length || !col || !lbl) return;
+        const pts = vals.map((v,i) => ({
+          x: cx+0.15+i*(cw-0.3)/(maxEp-1||1),
+          y: cy+ch-0.1-(v!=null?(v/maxV)*(ch-0.18):0)
+        }));
+        for (let i=0;i<pts.length-1;i++) {
+          if (vals[i]!=null && vals[i+1]!=null) {
+            const dx=pts[i+1].x-pts[i].x, dy=pts[i+1].y-pts[i].y;
+            const len=Math.sqrt(dx*dx+dy*dy), ang=Math.atan2(dy,dx)*180/Math.PI;
+            s.addShape(pptx.ShapeType.rect, {x:pts[i].x,y:pts[i].y-0.01,w:len,h:0.02,fill:{color:col},rotate:ang});
+          }
+        }
+        pts.forEach((pt,i) => { if(vals[i]!=null) s.addShape(pptx.ShapeType.ellipse, {x:pt.x-0.04,y:pt.y-0.04,w:0.08,h:0.08,fill:{color:col}}); });
+        if (pts.length) s.addText(lbl.slice(0,14), {x:pts[pts.length-1].x+0.06,y:pts[pts.length-1].y-0.1,w:1.5,h:0.18,fontSize:6.5,color:col,fontFace:'Arial'});
+      });
+      Array.from({length:maxEp}).forEach((_,i) => {
+        const px = cx+0.15+i*(cw-0.3)/(maxEp-1||1);
+        s.addText('E'+(i+1), {x:px-0.15,y:cy+ch+0.01,w:0.3,h:0.14,fontSize:5.5,color:MUTED,fontFace:'Arial',align:'center'});
+      });
+    };
 
-  let slideNum=1;
-  for(const slide of reportSlides){
-    const s=pptx.addSlide();
-    s.background={color:BG};
-    const isFixed=FIXED_SLIDE_TYPES.find(t=>t.id===slide.type);
+    const mk1 = getMetricKey(metric1);
+    const mk2 = getMetricKey(metric2);
+    const vA1 = eps.map(ep=>getVal(ep,mk1));
+    const vB1 = epsB.map(ep=>getVal(ep,mk1));
+    const vA2 = eps.map(ep=>getVal(ep,mk2));
+    const vB2 = epsB.map(ep=>getVal(ep,mk2));
+    const lA = sub.slice(0,16), lB = subB.slice(0,16)||campB.slice(0,16);
 
-    if(isFixed){
-      switch(slide.type){
-        case 'cover':
-          s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:0.1,h:H,fill:{color:P}});
-          s.addText('POKERSTARS',{x:0.3,y:1.6,w:10,h:0.4,fontSize:10,bold:true,color:P,fontFace:'Arial',charSpacing:3});
-          s.addText(name,{x:0.3,y:2.1,w:10,h:1.0,fontSize:34,bold:true,color:TEXT,fontFace:'Arial'});
-          s.addText(campaign,{x:0.3,y:3.2,w:8,h:0.4,fontSize:14,color:MUTED,fontFace:'Arial'});
-          s.addShape(pptx.ShapeType.rect,{x:0.3,y:3.72,w:1.0,h:0.04,fill:{color:A}});
-          s.addText(slide.date||'',{x:0.3,y:3.85,w:6,h:0.3,fontSize:11,color:MUTED,fontFace:'Arial'});
-          break;
-        case 'divider':
-          s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:H,fill:{color:'030303'}});
-          s.addText(slide.sectionNum||'1',{x:0.2,y:0.1,w:5,h:6,fontSize:220,bold:true,color:'0E0E0E',fontFace:'Arial',valign:'top'});
-          s.addShape(pptx.ShapeType.rect,{x:0.3,y:H-2.1,w:0.06,h:1.4,fill:{color:P}});
-          s.addText(slide.title||'Section',{x:0.55,y:H-2.0,w:11,h:0.75,fontSize:28,bold:true,color:TEXT,fontFace:'Arial',valign:'middle'});
-          s.addText(name,{x:0.55,y:H-1.15,w:8,h:0.28,fontSize:9,color:'222233',fontFace:'Arial'});
-          break;
-        case 'exec-summary':{
-          addHeader(s);addFooter(s,slideNum++);
-          s.addText('EXECUTIVE SUMMARY',{x:0.35,y:0.72,w:12,h:0.42,fontSize:20,bold:true,color:TEXT,fontFace:'Arial'});
-          s.addText(S+' — '+E,{x:0.35,y:1.2,w:12,h:0.25,fontSize:10,color:MUTED,fontFace:'Arial'});
-          const t=ytData.totals||{};
-          const kpis=[['Views',fmt(t.views),P],['Watch Hours',t.mins?fmt(Math.round(t.mins/60)):'—','9966FF'],['Est. Revenue',t.rev!=null?fmtEur(t.rev):'—','22CC88'],['Subscribers',fmt(t.subs),A]];
-          kpis.forEach(([l,v,c],i)=>{
-            const kx=0.35+(i%2)*6.4,ky=1.6+Math.floor(i/2)*2.4;
-            s.addShape(pptx.ShapeType.rect,{x:kx,y:ky,w:6.1,h:2.2,fill:{color:'090909'},line:{color:c,w:1}});
-            s.addShape(pptx.ShapeType.rect,{x:kx,y:ky,w:6.1,h:0.07,fill:{color:c}});
-            s.addText(l.toUpperCase(),{x:kx+0.2,y:ky+0.2,w:5.7,h:0.28,fontSize:9,color:MUTED,fontFace:'Arial',bold:true,charSpacing:1.5});
-            s.addText(v,{x:kx+0.2,y:ky+0.55,w:5.7,h:1.2,fontSize:36,bold:true,color:TEXT,fontFace:'Arial'});
-          });
-          break;}
-        case 'end':
-          s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:W,h:H,fill:{color:'030303'}});
-          s.addShape(pptx.ShapeType.rect,{x:0,y:H/2-0.02,w:W,h:0.04,fill:{color:P}});
-          s.addText('POKERSTARS',{x:0,y:H/2-0.85,w:W,h:0.6,fontSize:30,bold:true,color:TEXT,fontFace:'Arial',align:'center',charSpacing:5});
-          s.addText(campaign,{x:0,y:H/2+0.18,w:W,h:0.35,fontSize:13,color:MUTED,fontFace:'Arial',align:'center'});
-          break;
-      }
+    drawChart(s, metric1, 6.85, 1.55, 6.15, 2.2, vA1, vB1, lA, lB);
+    drawChart(s, metric2, 6.85, 4.05, 6.15, 2.1, vA2, vB2, lA, lB);
+
+    if (comment) s.addText(comment, {x:0.35,y:H-0.85,w:W-0.7,h:0.35,fontSize:9,color:MUTED,fontFace:'Arial',italic:true});
+  }
+
+  // ── Slide 4: Deep Dive ──
+  {
+    const s = pptx.addSlide();
+    s.background = {color: BG};
+    addHeader(s); addFooter(s, 4);
+    s.addText('DEEP DIVE', {x:0.35,y:0.72,w:12,h:0.42,fontSize:22,bold:true,color:TEXT,fontFace:'Arial'});
+
+    const colW = (W - 0.7 - 0.2) / 2;
+    // Left: retention
+    s.addText('RETENTION', {x:0.35,y:1.25,w:colW,h:0.22,fontSize:8,bold:true,color:P.length===6?'#'+P:P,fontFace:'Arial',charSpacing:1.5});
+    if (rptImages.retention) {
+      s.addImage({data:rptImages.retention,x:0.35,y:1.52,w:colW,h:2.8,sizing:{type:'contain',w:colW,h:2.8}});
     } else {
-      // Canvas slide — lay out blocks into a grid
-      addHeader(s);addFooter(s,slideNum++);
-      const blocks=slide.blocks||[];
-      if(!blocks.length)continue;
+      s.addShape(pptx.ShapeType.rect,{x:0.35,y:1.52,w:colW,h:2.8,fill:{color:'080808'},line:{color:'1A1A1A',w:0.5}});
+      s.addText('[Retention graph]',{x:0.35,y:2.8,w:colW,h:0.4,fontSize:9,color:'222233',fontFace:'Arial',align:'center',italic:true});
+    }
+    if (retText) s.addText(retText, {x:0.35,y:4.45,w:colW,h:1.7,fontSize:10,color:'CCCCDD',fontFace:'Arial',wrap:true,lineSpacingMultiple:1.4,valign:'top'});
 
-      // Group into rows
-      const rows=[];let cur=[];
-      blocks.forEach((blk,bi)=>{
-        if(blk.col==='full'){if(cur.length)rows.push(cur);rows.push([{blk,bi}]);cur=[];}
-        else{cur.push({blk,bi});const max=blk.col==='third'?3:2;if(cur.length>=max){rows.push(cur);cur=[];}}
-      });
-      if(cur.length)rows.push(cur);
+    // Right: sentiment
+    const rx = 0.35 + colW + 0.2;
+    s.addText('VIEWER SENTIMENT', {x:rx,y:1.25,w:colW,h:0.22,fontSize:8,bold:true,color:'#'+A,fontFace:'Arial',charSpacing:1.5});
+    if (rptImages.sentiment) {
+      s.addImage({data:rptImages.sentiment,x:rx,y:1.52,w:colW,h:2.8,sizing:{type:'contain',w:colW,h:2.8}});
+    } else {
+      s.addShape(pptx.ShapeType.rect,{x:rx,y:1.52,w:colW,h:2.8,fill:{color:'080808'},line:{color:'1A1A1A',w:0.5}});
+      s.addText('[Comments screenshot]',{x:rx,y:2.8,w:colW,h:0.4,fontSize:9,color:'222233',fontFace:'Arial',align:'center',italic:true});
+    }
+    if (sentText) s.addText(sentText, {x:rx,y:4.45,w:colW,h:1.7,fontSize:10,color:'CCCCDD',fontFace:'Arial',wrap:true,lineSpacingMultiple:1.4,valign:'top'});
+  }
 
-      // Distribute height equally across rows
-      const rowH=(CONTENT_H-GUTTER*(rows.length-1))/rows.length;
-      rows.forEach((row,ri)=>{
-        const blockW=(W-0.7-GUTTER*(row.length-1))/row.length;
-        const rowY=CONTENT_Y+ri*(rowH+GUTTER);
-        row.forEach(({blk},ci)=>{
-          const bx=0.35+ci*(blockW+GUTTER);
-          renderBlock(s,blk,bx,rowY,blockW,rowH);
-        });
-      });
+  // ── Slide 5: Learnings ──
+  {
+    const s = pptx.addSlide();
+    s.background = {color: BG};
+    addHeader(s); addFooter(s, 5);
+    s.addText('LEARNINGS & TAKEAWAYS', {x:0.35,y:0.72,w:12,h:0.42,fontSize:22,bold:true,color:TEXT,fontFace:'Arial'});
+    [l1,l2,l3].filter(Boolean).forEach((l,i) => {
+      const y = 1.35 + i * 1.3;
+      s.addShape(pptx.ShapeType.rect,{x:0.35,y,w:0.3,h:0.3,fill:{color:A},rounding:true});
+      s.addText(String(i+1),{x:0.35,y,w:0.3,h:0.3,fontSize:10,bold:true,color:'000000',fontFace:'Arial',align:'center',valign:'middle'});
+      s.addText(l,{x:0.8,y:y+0.02,w:W-1.2,h:0.28,fontSize:13,bold:true,color:TEXT,fontFace:'Arial'});
+    });
+    if (strategy) {
+      s.addShape(pptx.ShapeType.rect,{x:0.35,y:5.3,w:W-0.7,h:0.04,fill:{color:P}});
+      s.addText('STRATEGY FOR NEXT SERIES',{x:0.35,y:5.45,w:4,h:0.22,fontSize:8,bold:true,color:'#'+P,fontFace:'Arial',charSpacing:1.5});
+      s.addText(strategy,{x:0.35,y:5.72,w:W-0.7,h:1.1,fontSize:11,color:'CCCCDD',fontFace:'Arial',wrap:true,lineSpacingMultiple:1.5});
     }
   }
 
-  const fileName=(name||'Report').replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.pptx';
+  // ── Slide 6: End ──
+  {
+    const s = pptx.addSlide();
+    s.background = {color: '030303'};
+    s.addShape(pptx.ShapeType.rect,{x:0,y:H/2-0.02,w:W,h:0.04,fill:{color:P}});
+    s.addText('POKERSTARS',{x:0,y:H/2-0.9,w:W,h:0.6,fontSize:32,bold:true,color:TEXT,fontFace:'Arial',align:'center',charSpacing:5});
+    s.addText(sub+' · '+period,{x:0,y:H/2+0.18,w:W,h:0.35,fontSize:13,color:MUTED,fontFace:'Arial',align:'center'});
+  }
+
+  const fileName = (title||'Report').replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.pptx';
   pptx.writeFile({fileName});
 }
+
 
 
 // ══════════════════════════════════════════════
